@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: flashEng
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:flash_learn_mad}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:12345678}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      enabled: true
+
+jwt:
+  secretKey: ${JWT_SECRET_KEY:QhV1bbgiS2lzKg9ZCW2LyiOMr0popaPoaOdb4l+I68M=}
+
+word2vec:
+  model:
+    path: ${WORD2VEC_MODEL_PATH:classpath:GoogleNews-vectors-negative300-SLIM.bin}
+  max-suggestions: 10
+  min-similarity: 0.3
+
+cloudinary:
+  cloudName: ${CLOUDINARY_CLOUD_NAME:dqofcuddy}
+  apiKey: ${CLOUDINARY_API_KEY:876145164613944}
+  apiSecret: ${CLOUDINARY_API_SECRET:_fg29syjHV-witNIs4Z3psJdTQ0}
+
+
