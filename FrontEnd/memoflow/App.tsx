@@ -21,6 +21,10 @@ import { NotificationSettingsScreen } from './src/screens/NotificationSettingsSc
 import { ChangePasswordScreen } from './src/screens/ChangePasswordScreen';
 import { Footer } from './src/components/Footer';
 import { ScreenTransition } from './src/components/ScreenTransition';
+import { StoryListScreen } from './src/screens/StoryListScreen';
+import { StoryDetailScreen } from './src/screens/StoryDetailScreen';
+import { UserLessonProgress } from './src/types/story';
+import { mockStoryProgress } from './src/api/mockStoryData';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { ListeningPartsScreen } from './src/screens/ListeningPartsScreen';
@@ -31,6 +35,7 @@ import { BilingualScreen } from './src/screens/BilingualScreen';
 import { BilingualDetailScreen } from './src/screens/BilingualDetailScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+type Screen = 'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword' | 'StoryList' | 'StoryDetail';
 type Screen = 'Register' | 'Login' | 'ListeningParts' | 'ListeningLessons' | 'ListeningLessonDetail' | 'ListeningLessonResult' | 'Bilingual' | 'BilingualDetail' |'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword';
 
 export default function App() {
@@ -47,6 +52,8 @@ export default function App() {
   const [selectedExam, setSelectedExam] = useState('');
   const [isGlobalStudy, setIsGlobalStudy] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedStoryProgress, setSelectedStoryProgress] = useState<UserLessonProgress | null>(null);
+  const [storiesProgress, setStoriesProgress] = useState<UserLessonProgress[]>(mockStoryProgress);
   const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
   const [isResumeListening, setResumeListening] = useState<boolean>(true);
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
@@ -155,6 +162,7 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
+            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
             onNavigateToBilingual={() => {
               setPrevScreen('Home')
@@ -174,6 +182,7 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
+            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
             onNavigateToBilingual={() => {
               setPrevScreen('VocabularyLearning');
               setCurrentScreen('Bilingual');
@@ -342,6 +351,35 @@ export default function App() {
         return <NotificationSettingsScreen onBack={() => setCurrentScreen('Profile')} />;
       case 'ChangePassword':
         return <ChangePasswordScreen onBack={() => setCurrentScreen('Profile')} />;
+      case 'StoryList':
+        return (
+          <StoryListScreen
+            stories={storiesProgress}
+            onBack={() => setCurrentScreen('Home')}
+            onNavigateToStory={(progress) => {
+              setSelectedStoryProgress(progress);
+              setCurrentScreen('StoryDetail');
+            }}
+          />
+        );
+      case 'StoryDetail':
+        return selectedStoryProgress ? (
+          <StoryDetailScreen
+            progress={selectedStoryProgress}
+            onBack={() => {
+              setSelectedStoryProgress(null);
+              setCurrentScreen('StoryList');
+            }}
+            onComplete={() => {
+              // Update completion status in the master list
+              setStoriesProgress(prev => prev.map(s =>
+                s.id === selectedStoryProgress.id ? { ...s, isCompleted: true } : s
+              ));
+              // Update selection context
+              setSelectedStoryProgress(prev => prev ? { ...prev, isCompleted: true } : null);
+            }}
+          />
+        ) : null;
       default:
         return (
           <HomeScreen 
@@ -356,6 +394,7 @@ export default function App() {
             }}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
             onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
+            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
           />
         );
     }
@@ -363,7 +402,7 @@ export default function App() {
 
   const getActiveTab = (screen: Screen): string => {
     if (screen === 'Notifications') return 'Home';
-    if (['FlashcardSet', 'FlashcardStudy', 'CreateFlashcardSet', 'AddWord', 'FillBlankGame'].includes(screen)) return 'VocabularyLearning';
+    if (['FlashcardSet', 'FlashcardStudy', 'CreateFlashcardSet', 'AddWord', 'FillBlankGame', 'StoryList', 'StoryDetail'].includes(screen)) return 'VocabularyLearning';
     if (['VocabularyStats', 'VocabularyDailyStats', 'WordDetailStats', 'ListeningStats', 'ListeningExamDetail'].includes(screen)) return 'Stats';
     if (['Profile', 'EditProfile', 'NotificationSettings', 'ChangePassword'].includes(screen)) return 'Profile';
     return screen;
@@ -384,7 +423,7 @@ export default function App() {
           'Login',
           'Register',
           'ListeningLessonDetail',
-          'FlashcardStudy', 
+          'FlashcardStudy',
           'CreateFlashcardSet', 
           'AddWord',
           'FillBlankGame',
@@ -395,7 +434,8 @@ export default function App() {
           'ListeningExamDetail',
           'EditProfile',
           'NotificationSettings',
-          'ChangePassword'
+          'ChangePassword',
+          'StoryDetail'
         ].includes(currentScreen) && (
           <Footer 
             activeTab={getActiveTab(currentScreen)} 

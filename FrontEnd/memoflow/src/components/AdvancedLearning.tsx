@@ -8,9 +8,12 @@ type AdvancedItemProps = {
   subtitle: string;
   icon: React.ReactNode;
   iconBgColor: string;
+  onPress?: () => void;
   onNavigateToItem: () => void;
 };
 
+const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, iconBgColor, onPress }) => (
+  <TouchableOpacity style={styles.itemContainer} onPress={onPress}>
 const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, iconBgColor, onNavigateToItem }) => (
   <TouchableOpacity style={styles.itemContainer} onPress={onNavigateToItem}>
     <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
@@ -24,6 +27,7 @@ const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, icon
   </TouchableOpacity>
 );
 
+export const AdvancedLearning = ({ onNavigateToStoryList }: { onNavigateToStoryList?: () => void }) => {
 type AdvancedLearningProps = {
   onNavigateToBilingual: () => void;
 };
@@ -39,6 +43,7 @@ export const AdvancedLearning: React.FC<AdvancedLearningProps> = ({ onNavigateTo
           subtitle="Học từ vựng qua các mẩu chuyện"
           icon={<FontAwesome5 name="book-open" size={20} color="#EF4444" />}
           iconBgColor="#FEE2E2" // red-100
+          onPress={onNavigateToStoryList}
           onNavigateToItem={() => null}
         />
         <View style={styles.divider} />

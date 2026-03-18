@@ -13,12 +13,15 @@ type VocabularyLearningScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToFlashcards: () => void;
   onNavigateToGlobalStudy: () => void;
+  onNavigateToStoryList: () => void;
   onNavigateToBilingual: () => void;
 };
 
 export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> = ({ 
   onNavigateToNotifications,
   onNavigateToFlashcards,
+  onNavigateToGlobalStudy,
+  onNavigateToStoryList
   onNavigateToGlobalStudy,
   onNavigateToBilingual,
 }) => {
@@ -135,6 +138,8 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
                 onPress={() => {
                   if (method.title === 'Flashcard') {
                     onNavigateToFlashcards();
+                  } else if (method.title === 'Truyện chêm') {
+                    onNavigateToStoryList();
                   }
                   else if (method.title === 'Bài đọc song ngữ') {
                     onNavigateToBilingual();
