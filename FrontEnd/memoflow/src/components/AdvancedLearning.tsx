@@ -26,13 +26,16 @@ const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, icon
     <MaterialCommunityIcons name="chevron-right" size={24} color="#D1D5DB" />
   </TouchableOpacity>
 );
-
-export const AdvancedLearning = ({ onNavigateToStoryList }: { onNavigateToStoryList?: () => void }) => {
-type AdvancedLearningProps = {
-  onNavigateToBilingual: () => void;
-};
-
-export const AdvancedLearning: React.FC<AdvancedLearningProps> = ({ onNavigateToBilingual }) => {
+      type AdvancedLearningProps = {
+          onNavigateToStoryList?: () => void;
+          onNavigateToWordRaceList?: () => void;
+          onNavigateToBilingual?: () => void;
+      };
+export const AdvancedLearning: React.FC<AdvancedLearningProps> = ({
+          onNavigateToStoryList,
+          onNavigateToWordRaceList,
+          onNavigateToBilingual,
+      }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Học tập nâng cao</Text>
@@ -62,6 +65,7 @@ export const AdvancedLearning: React.FC<AdvancedLearningProps> = ({ onNavigateTo
           subtitle="Thách đấu điền từ vựng"
           icon={<FontAwesome5 name="robot" size={20} color="#EC4899" />}
           iconBgColor="#FCE7F3" // pink-100
+          onPress={onNavigateToWordRaceList}
           onNavigateToItem={() => null}
         />
       </View>

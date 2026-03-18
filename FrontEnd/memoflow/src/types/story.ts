@@ -8,15 +8,18 @@ export interface User {
   username: string;
   name: string;
   avatar?: string;
+  streakDays?: number;
 }
+
+export type LessonType = 'STORY' | 'WORD_RACE' | 'BILLINGUAL_ARTICLE' | 'TRUYEN_CHEM';
 
 export interface LearningLesson {
   id: number;
   title: string;
-  type: string; // e.g. "TRUYEN_CHEM"
+  type: string; // e.g. "TRUYEN_CHEM" | "WORD_RACE"
   description: string;
   image?: Media;
-  content: Record<string, any>; // JSON
+  content: any; // Flexible JSON content
   creator: User;
 }
 

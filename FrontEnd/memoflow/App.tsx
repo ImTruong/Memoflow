@@ -23,6 +23,8 @@ import { Footer } from './src/components/Footer';
 import { ScreenTransition } from './src/components/ScreenTransition';
 import { StoryListScreen } from './src/screens/StoryListScreen';
 import { StoryDetailScreen } from './src/screens/StoryDetailScreen';
+import { WordRaceListScreen } from './src/screens/WordRaceListScreen';
+import { WordRaceGameScreen } from './src/screens/WordRaceGameScreen';
 import { UserLessonProgress } from './src/types/story';
 import { mockStoryProgress } from './src/api/mockStoryData';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -34,8 +36,9 @@ import { ListeningLessonResultScreen } from './src/screens/ListeningLessonResult
 import { BilingualScreen } from './src/screens/BilingualScreen';
 import { BilingualDetailScreen } from './src/screens/BilingualDetailScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { mockWordRaceProgress } from './src/api/mockWordRaceData';
 
-type Screen = 'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword' | 'StoryList' | 'StoryDetail';
+type Screen = 'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword' | 'StoryList' | 'StoryDetail' | 'WordRaceList' | 'WordRaceGame';
 type Screen = 'Register' | 'Login' | 'ListeningParts' | 'ListeningLessons' | 'ListeningLessonDetail' | 'ListeningLessonResult' | 'Bilingual' | 'BilingualDetail' |'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword';
 
 export default function App() {
@@ -54,6 +57,8 @@ export default function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedStoryProgress, setSelectedStoryProgress] = useState<UserLessonProgress | null>(null);
   const [storiesProgress, setStoriesProgress] = useState<UserLessonProgress[]>(mockStoryProgress);
+  const [selectedWordRaceProgress, setSelectedWordRaceProgress] = useState<UserLessonProgress | null>(null);
+  const [wordRaceProgressList, setWordRaceProgressList] = useState<UserLessonProgress[]>(mockWordRaceProgress);
   const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
   const [isResumeListening, setResumeListening] = useState<boolean>(true);
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
@@ -163,6 +168,7 @@ export default function App() {
               setCurrentScreen('FlashcardStudy');
             }}
             onNavigateToStoryList={() => setCurrentScreen('StoryList')}
+            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
             onNavigateToBilingual={() => {
               setPrevScreen('Home')
@@ -183,6 +189,7 @@ export default function App() {
               setCurrentScreen('FlashcardStudy');
             }}
             onNavigateToStoryList={() => setCurrentScreen('StoryList')}
+            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
             onNavigateToBilingual={() => {
               setPrevScreen('VocabularyLearning');
               setCurrentScreen('Bilingual');
@@ -380,6 +387,32 @@ export default function App() {
             }}
           />
         ) : null;
+      case 'WordRaceList':
+        return (
+          <WordRaceListScreen
+            onBack={() => setCurrentScreen('VocabularyLearning')}
+            onNavigateToGame={(progress) => {
+              setSelectedWordRaceProgress(progress);
+              setCurrentScreen('WordRaceGame');
+            }}
+          />
+        );
+      case 'WordRaceGame':
+        return selectedWordRaceProgress ? (
+          <WordRaceGameScreen
+            progress={selectedWordRaceProgress}
+            onBack={() => {
+              setSelectedWordRaceProgress(null);
+              setCurrentScreen('WordRaceList');
+            }}
+            onComplete={(score) => {
+              setWordRaceProgressList(prev => prev.map(p =>
+                p.id === selectedWordRaceProgress.id ? { ...p, isCompleted: true, score } : p
+              ));
+              setSelectedWordRaceProgress(prev => prev ? { ...prev, isCompleted: true, score } : null);
+            }}
+          />
+        ) : null;
       default:
         return (
           <HomeScreen 
@@ -395,6 +428,7 @@ export default function App() {
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
             onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
             onNavigateToStoryList={() => setCurrentScreen('StoryList')}
+            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
           />
         );
     }
@@ -402,7 +436,7 @@ export default function App() {
 
   const getActiveTab = (screen: Screen): string => {
     if (screen === 'Notifications') return 'Home';
-    if (['FlashcardSet', 'FlashcardStudy', 'CreateFlashcardSet', 'AddWord', 'FillBlankGame', 'StoryList', 'StoryDetail'].includes(screen)) return 'VocabularyLearning';
+    if (['FlashcardSet', 'FlashcardStudy', 'CreateFlashcardSet', 'AddWord', 'FillBlankGame', 'StoryList', 'StoryDetail', 'WordRaceList', 'WordRaceGame'].includes(screen)) return 'VocabularyLearning';
     if (['VocabularyStats', 'VocabularyDailyStats', 'WordDetailStats', 'ListeningStats', 'ListeningExamDetail'].includes(screen)) return 'Stats';
     if (['Profile', 'EditProfile', 'NotificationSettings', 'ChangePassword'].includes(screen)) return 'Profile';
     return screen;
@@ -435,7 +469,8 @@ export default function App() {
           'EditProfile',
           'NotificationSettings',
           'ChangePassword',
-          'StoryDetail'
+          'StoryDetail',
+          'WordRaceGame'
         ].includes(currentScreen) && (
           <Footer 
             activeTab={getActiveTab(currentScreen)} 

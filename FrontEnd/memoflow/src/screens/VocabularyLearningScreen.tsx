@@ -14,6 +14,7 @@ type VocabularyLearningScreenProps = {
   onNavigateToFlashcards: () => void;
   onNavigateToGlobalStudy: () => void;
   onNavigateToStoryList: () => void;
+  onNavigateToWordRaceList: () => void;
   onNavigateToBilingual: () => void;
 };
 
@@ -21,15 +22,15 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
   onNavigateToNotifications,
   onNavigateToFlashcards,
   onNavigateToGlobalStudy,
-  onNavigateToStoryList
+  onNavigateToStoryList,
+  onNavigateToWordRaceList,
+  onNavigateToStoryList,
   onNavigateToGlobalStudy,
   onNavigateToBilingual,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const { profile } = useUser();
   const { reviewedTodayCount, dueTodayCount, totalReviewsCount, isLoading } = useDailyStats();
-
-
 
   const learningMethods = [
     {
@@ -81,6 +82,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
         streakDays={profile?.streakDays || 0}
         avatarUrl={profile?.avatar}
         notificationCount={3}
+
 
 
         showNotifications={showNotifications}
@@ -140,6 +142,8 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
                     onNavigateToFlashcards();
                   } else if (method.title === 'Truyện chêm') {
                     onNavigateToStoryList();
+                  } else if (method.title === 'Đua từ với Bot') {
+                    onNavigateToWordRaceList();
                   }
                   else if (method.title === 'Bài đọc song ngữ') {
                     onNavigateToBilingual();
