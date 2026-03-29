@@ -1,5 +1,6 @@
 package com.memoflow.memoflow.entity;
 
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -42,7 +43,11 @@ public class LearningLesson {
     private LearningActivity learningActivity;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+//    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User creator;
+
+    @OneToMany(mappedBy = "learningLesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuizGroup> quizGroups;
 
 }

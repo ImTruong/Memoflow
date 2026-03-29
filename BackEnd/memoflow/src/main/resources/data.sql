@@ -5,8 +5,9 @@ INSERT INTO roles (name, description) VALUES ('ROLE_ADMIN', 'Administrative user
 -- Insert Sample User (Password is 'password' BCrypt encoded if needed, or plain for demo)
 -- Note: You should use BCrypt for actual passwords.
 -- $2a$10$8.UnVuG9HHgffUDAlk8qnOgufOMfH7fV9s5GPO9E5X.i.o.E.6K/q corresponds to '123456'
-INSERT INTO users (name, email, password, role_id) 
-VALUES ('Alex Nguyen', 'alex.nguyen@example.com', '$2a$10$8.UnVuG9HHgffUDAlk8qnOgufOMfH7fV9s5GPO9E5X.i.o.E.6K/q', 1);
+INSERT INTO users (name, email, password, role_id, is_registered) VALUES
+-- pass: 123456
+('Alex Nguyen', 'alex.nguyen@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1);
 
 -- Insert Sample Media
 INSERT INTO media (url, public_id, type) VALUES ('https://i.pravatar.cc/300?img=11', 'avatars/default', 'IMAGE');
@@ -14,6 +15,25 @@ INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/
 INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/grammar', 'icons/grammar', 'IMAGE');
 INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/listening', 'icons/listening', 'IMAGE');
 INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/activity', 'icons/activity', 'IMAGE');
+INSERT INTO media (url, public_id, type) VALUES
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782857/01_rq1jig.mp3', '01_rq1jig', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/image/upload/v1774789477/01_lasasw.jpg', '', 'IMAGE'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782857/02_g06nwi.mp3', '02_g06nwi', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/image/upload/v1774789472/02_zuth4k.jpg', '', 'IMAGE'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782899/03_lrl3fa.mp3', '03_lrl3fa', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/image/upload/v1774789479/03_wnpxds.jpg', '', 'IMAGE'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782903/07_yzslmx.mp3', '', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782904/08_ngmng4.mp3', 'audio2', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782907/09_c51ubt.mp3', '', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782928/32-34_prmlco.mp3', 'audio2', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782876/35-37_kxxssj.mp3', '', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782931/38-40_rdjetj.mp3', '', 'AUDIO'),
+('https://picsum.photos/800/400?random=1', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=2', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=3', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=4', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=5', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=6', '', 'IMAGE');
 
 -- Update user with avatar
 UPDATE users SET avatar_media_id = 1 WHERE id = 1;
@@ -41,6 +61,103 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, us
     ('Ghi chú cá nhân 1', 'FLASHCARD', 'Học riêng tư phần 1', 1, 1, '{"privacyMode": "PRIVATE"}'),
     ('Ghi chú cá nhân 2', 'FLASHCARD', 'Học riêng tư phần 2', 1, 1, '{"privacyMode": "PRIVATE"}');
 
+INSERT INTO learning_lessons (title, type, description, learning_activity_id) VALUES
+    ('Test 01 - Part 1', 'LISTENING_PART_1', 'Luyện nghe part 1', 8),
+    ('Test 01 - Part 2', 'LISTENING_PART_2', 'Luyện nghe part 2', 8),
+    ('Test 01 - Part 3', 'LISTENING_PART_3', 'Luyện nghe part 3', 8),
+    ('Test 01 - Part 4', 'LISTENING_PART_4', 'Luyện nghe part 4', 8),
+    ('Test 02 - Part 1', 'LISTENING_PART_1', 'Luyện nghe part 1', 8),
+    ('Test 02 - Part 2', 'LISTENING_PART_2', 'Luyện nghe part 2', 8),
+    ('Test 02 - Part 3', 'LISTENING_PART_3', 'Luyện nghe part 3', 8),
+    ('Test 02 - Part 4', 'LISTENING_PART_4', 'Luyện nghe part 4', 8),
+    ('Test 03 - Part 1', 'LISTENING_PART_1', 'Luyện nghe part 1', 8),
+    ('Test 03 - Part 2', 'LISTENING_PART_2', 'Luyện nghe part 2', 8),
+    ('Test 03 - Part 3', 'LISTENING_PART_3', 'Luyện nghe part 3', 8),
+    ('Test 03 - Part 4', 'LISTENING_PART_4', 'Luyện nghe part 4', 8);
+
+INSERT INTO learning_lessons (title, type, description, learning_activity_id, content, image_media_id) VALUES
+    ('The Future of AI', 'BILINGUAL', 'Tương lai của AI', 3, '{
+      "createdAt": "2026-03-31 10:15:00.000000",
+      "views": 15,
+      "paragraphs": [
+        {
+          "order": 1,
+          "en": "Artificial Intelligence is no longer just a concept from science fiction movies. It is actively shaping how we interact with technology today.",
+          "vi": "Trí tuệ nhân tạo không còn chỉ là một khái niệm trong các bộ phim khoa học viễn tưởng. Nó đang tích cực định hình cách chúng ta tương tác với công nghệ ngày nay."
+        },
+        {
+          "order": 2,
+          "en": "Artificial Intelligence is increasingly integrated into our daily routines, from smart assistants that manage our schedules to recommendation systems that shape our entertainment choices.",
+          "vi": "Trí tuệ nhân tạo ngày càng được tích hợp vào các hoạt động thường nhật, từ trợ lý thông minh giúp quản lý lịch trình cho đến hệ thống gợi ý định hình thói quen giải trí của chúng ta."
+        },
+        {
+          "order": 3,
+          "en": "In conclusion, the future of Artificial Intelligence in everyday life will be defined not only by its ability to simplify tasks but also by how responsibly we choose to integrate it.",
+          "vi": "Tóm lại, tương lai của Trí tuệ nhân tạo trong đời sống hằng ngày sẽ không chỉ được định hình bởi khả năng đơn giản hóa công việc mà còn bởi cách chúng ta chọn tích hợp nó một cách có trách nhiệm."
+        }
+      ]
+    }', 18),
+    ('The Rise of Technology', 'BILINGUAL', 'Sự trỗi dậy của công nghệ', 3, '{
+      "createdAt":"2026-03-04 09:00:00.000000",
+      "views":12,
+      "paragraphs":[
+        {
+          "order":1,
+          "en":"Technology is rapidly transforming every aspect of our lives, from communication to education.",
+          "vi":"Công nghệ đang nhanh chóng thay đổi mọi khía cạnh của cuộc sống chúng ta, từ giao tiếp đến giáo dục."
+        }
+      ]
+    }', 19),
+
+    ('Healthy Living', 'BILINGUAL', 'Sống khỏe mạnh', 3, '{
+      "createdAt":"2026-03-05 08:30:00.000000",
+      "views":20,
+      "paragraphs":[
+        {
+          "order":1,
+          "en":"Healthy living involves balanced nutrition, regular exercise, and mindful habits.",
+          "vi":"Sống khỏe mạnh bao gồm chế độ dinh dưỡng cân bằng, tập thể dục thường xuyên và thói quen lành mạnh."
+        }
+      ]
+    }', 20),
+
+    ('Climate Change', 'BILINGUAL', 'Biến đổi khí hậu', 3, '{
+      "createdAt":"2026-03-06 11:00:00.000000",
+      "views":18,
+      "paragraphs":[
+        {
+          "order":1,
+          "en":"Climate change is one of the greatest challenges facing humanity today.",
+          "vi":"Biến đổi khí hậu là một trong những thách thức lớn nhất mà nhân loại đang phải đối mặt."
+        }
+      ]
+    }', 21),
+
+    ('Digital Education', 'BILINGUAL', 'Giáo dục số', 3, '{
+      "createdAt":"2026-03-07 14:20:00.000000",
+      "views":22,
+      "paragraphs":[
+        {
+          "order":1,
+          "en":"Digital education provides new opportunities for learning through online platforms and interactive tools.",
+          "vi":"Giáo dục số mang lại những cơ hội học tập mới thông qua các nền tảng trực tuyến và công cụ tương tác."
+        }
+      ]
+    }', 22),
+
+    ('Space Exploration', 'BILINGUAL', 'Khám phá vũ trụ', 3, '{
+      "createdAt":"2026-03-08 16:45:00.000000",
+      "views":30,
+      "paragraphs":[
+        {
+          "order":1,
+          "en":"Space exploration expands our understanding of the universe and inspires future generations.",
+          "vi":"Khám phá vũ trụ mở rộng hiểu biết của chúng ta về vũ trụ và truyền cảm hứng cho các thế hệ tương lai."
+        }
+      ]
+    }', 23);
+
+
 -- Create 2 words for each learning lesson
 INSERT INTO words (name, ipa, example, definition, learning_lesson_id) VALUES 
     ('Hello', '/həˈloʊ/', 'Hello! How are you today?', 'Một lời chào thân mật', 1),
@@ -52,4 +169,147 @@ INSERT INTO words (name, ipa, example, definition, learning_lesson_id) VALUES
     ('Study', '/ˈstʌdi/', 'I study English every night.', 'Học tập nghiên cứu', 4),
     ('Learn', '/lɜːrn/', 'It is never too late to learn.', 'Học được một kỹ năng mới', 4);
 
+INSERT INTO quiz_groups (order_index, audio_media_id, image_media_id, learning_lesson_id, type, transcript, translation) VALUES
+(1, 6, 7, 5, 'LISTENING_PART_1', '(A) A woman is painting a house.\n(B) A woman is watering a plant.\n(C) A woman is fixing a door.\n(D) A woman is sweeping a walkway.', '(A) Một người phụ nữ đang sơn nhà.\n(B) Một người phụ nữ đang tưới cây.\n(C) Một người phụ nữ đang sửa cửa.\n(D) Một người phụ nữ đang quét lối đi.'),
+(2, 8, 9, 5, 'LISTENING_PART_1', '(A) They’re folding some papers.\n(B) They’re putting a picture in a frame.\n(C) They’re studying a drawing.\n(D) They’re closing a window.', '(A) Họ đang gấp vài tờ giấy.\n(B) Họ đang đặt một bức tranh vào khung.\n(C) Họ đang nghiên cứu một bản vẽ.\n(D) Họ đang đóng cửa sổ.'),
+(3, 10, 11, 5, 'LISTENING_PART_1', '(A) The man is turning on a light.\n(B) The man is giving the woman a book.\n(C) The woman is posting signs on a wall.\n(D) The woman is typing on a keyboard.', '(A) Người đàn ông đang bật đèn.\n(B) Người đàn ông đang đưa cho người phụ nữ một cuốn sách.\n(C) Người phụ nữ đang dán biển báo lên tường.\n(D) Người phụ nữ đang gõ bàn phím.'),
+(1, 12, NULL, 6, 'LISTENING_PART_2', 'Who wants to organize the patient files?\n(A) Min-Su would like to.\n(B) Our phone number has changed.\n(C) A well-run organization.', 'Ai muốn sắp xếp hồ sơ bệnh nhân?\n(A) Min-Su muốn làm việc đó.\n(B) Số điện thoại của chúng tôi đã thay đổi.\n(C) Một tổ chức được quản lý tốt.'),
+(2, 13, NULL, 6, 'LISTENING_PART_2', 'Why didn’t Miranda shut down the computers yesterday?\n(A) Yes, my new laptop.\n(B) Outside of office 101.\n(C) Because she left early.', 'Tại sao Miranda không tắt máy tính hôm qua?\n(A) Vâng, chiếc laptop mới của tôi.\n(B) Bên ngoài văn phòng 101.\n(C) Bởi vì cô ấy về sớm.'),
+(3, 14, NULL, 6, 'LISTENING_PART_2', 'Would you like the pie or the pudding for dessert?\n(A) About five dollars.\n(B) The pie sounds delicious.\n(C) I just put it on.', 'Bạn muốn ăn bánh pie hay pudding cho món tráng miệng?\n(A) Khoảng năm đô la.\n(B) Bánh pie nghe có vẻ ngon.\n(C) Tôi vừa mới mặc nó vào.'),
+(1, 15, NULL, 7, 'LISTENING_PART_3', 'M-Au: Hi, Maria. Were you able to start on the wedding cakes yet?\nW-Br: Yes, I’ve started on the Anderson order. It’s a little more complex than I thought it would be.\nM-Au: Yes, they’re more complicated and they do take a little more time, but it’ll be worth it.\nW-Br: Right. We can definitely increase our bakery’s sales by offering wedding cakes. Take a look—is the color of this frosting OK?\nM-Au: Actually, the order called for a dark pink. This is a little too pale. Let me get some more food coloring from the supply closet.', 'M-Au: Chào Maria. Bạn đã bắt đầu làm bánh cưới chưa?\nW-Br: Vâng, tôi đã bắt đầu đơn hàng của Anderson. Nó hơi phức tạp hơn tôi nghĩ.\nM-Au: Đúng vậy, chúng phức tạp hơn và mất nhiều thời gian hơn, nhưng sẽ rất đáng giá.\nW-Br: Đúng rồi. Chúng ta chắc chắn có thể tăng doanh số bằng cách cung cấp bánh cưới. Nhìn này—màu kem này ổn chứ?\nM-Au: Thực ra, đơn hàng yêu cầu màu hồng đậm. Cái này hơi nhạt quá. Để tôi lấy thêm màu thực phẩm từ tủ đồ.'),
+(2, 16, NULL, 7, 'LISTENING_PART_3', 'M-Cn: Hi, Joanne. I didn’t know you rode a bike to work. When did you start doing that?\nW-Am: Last week. The town just added a new bike lane on Felton Road, so now I can ride here.\nM-Cn: That’s great. I heard the town government is planning to add bike lanes on some other roads too.\nW-Am: It’s really convenient. My commute to work used to be an hour by bus, and now it’s only 25 minutes.\nM-Cn: Wow. You know, I’m a member of a local bike-riding club that takes tours on the weekends. You should join. It’s a great group.', 'M-Cn: Chào Joanne. Tôi không biết bạn đi xe đạp đến chỗ làm. Bạn bắt đầu từ khi nào vậy?\nW-Am: Tuần trước. Thị trấn vừa thêm một làn đường xe đạp trên đường Felton, nên giờ tôi có thể đi xe đến đây.\nM-Cn: Thật tuyệt. Tôi nghe nói chính quyền thị trấn đang có kế hoạch thêm làn đường xe đạp trên vài con đường khác nữa.\nW-Am: Rất tiện lợi. Trước đây tôi mất một giờ đi xe buýt để đến chỗ làm, còn bây giờ chỉ mất 25 phút.\nM-Cn: Wow. Bạn biết không, tôi là thành viên của một câu lạc bộ đi xe đạp địa phương, họ tổ chức các chuyến đi vào cuối tuần. Bạn nên tham gia. Đó là một nhóm rất tuyệt.'),
+(3, 17, NULL, 7, 'LISTENING_PART_3', 'M-Au: Hello, Ms. Wilson? This is Oliver Lewis calling from Kardack Engineering. I reviewed your application for the mechanical engineer position and would like to interview you.\nW-Am: Oh, I’m happy to hear that.\nM-Au: Good. I’ll transfer you to my administrative assistant. He’ll make the arrangements for the interview.\nW-Am: Great.\nM-Cn: Hello, Ms. Wilson. This is Mr. Lewis’ assistant, Martin. I’m wondering if Wednesday at nine a.m. works for you.\nW-Am: Yes, that’s perfect. Now, I’ve never been to your office complex before. Where can I find directions?\nM-Cn: I’ll e-mail those to you.', 'M-Au: Xin chào cô Wilson? Đây là Oliver Lewis gọi từ Kardack Engineering. Tôi đã xem xét đơn ứng tuyển của cô cho vị trí kỹ sư cơ khí và muốn phỏng vấn cô.\nW-Am: Ôi, tôi rất vui khi nghe điều đó.\nM-Au: Tốt. Tôi sẽ chuyển máy cho trợ lý hành chính của tôi. Anh ấy sẽ sắp xếp buổi phỏng vấn.\nW-Am: Tuyệt vời.\nM-Cn: Xin chào cô Wilson. Tôi là Martin, trợ lý của ông Lewis. Tôi muốn hỏi liệu thứ Tư lúc 9 giờ sáng có phù hợp với cô không.\nW-Am: Vâng, rất hoàn hảo. Tôi chưa từng đến khu văn phòng của các anh trước đây. Tôi có thể tìm chỉ dẫn ở đâu?\nM-Cn: Tôi sẽ gửi email cho cô.'),
+(1, 15, NULL, 8, 'LISTENING_PART_4', 'M-Au: Hi, Maria. Were you able to start on the wedding cakes yet?\nW-Br: Yes, I’ve started on the Anderson order. It’s a little more complex than I thought it would be.\nM-Au: Yes, they’re more complicated and they do take a little more time, but it’ll be worth it.\nW-Br: Right. We can definitely increase our bakery’s sales by offering wedding cakes. Take a look—is the color of this frosting OK?\nM-Au: Actually, the order called for a dark pink. This is a little too pale. Let me get some more food coloring from the supply closet.', 'M-Au: Chào Maria. Bạn đã bắt đầu làm bánh cưới chưa?\nW-Br: Vâng, tôi đã bắt đầu đơn hàng của Anderson. Nó hơi phức tạp hơn tôi nghĩ.\nM-Au: Đúng vậy, chúng phức tạp hơn và mất nhiều thời gian hơn, nhưng sẽ rất đáng giá.\nW-Br: Đúng rồi. Chúng ta chắc chắn có thể tăng doanh số bằng cách cung cấp bánh cưới. Nhìn này—màu kem này ổn chứ?\nM-Au: Thực ra, đơn hàng yêu cầu màu hồng đậm. Cái này hơi nhạt quá. Để tôi lấy thêm màu thực phẩm từ tủ đồ.'),
+(2, 16, NULL, 8, 'LISTENING_PART_4', 'M-Cn: Hi, Joanne. I didn’t know you rode a bike to work. When did you start doing that?\nW-Am: Last week. The town just added a new bike lane on Felton Road, so now I can ride here.\nM-Cn: That’s great. I heard the town government is planning to add bike lanes on some other roads too.\nW-Am: It’s really convenient. My commute to work used to be an hour by bus, and now it’s only 25 minutes.\nM-Cn: Wow. You know, I’m a member of a local bike-riding club that takes tours on the weekends. You should join. It’s a great group.', 'M-Cn: Chào Joanne. Tôi không biết bạn đi xe đạp đến chỗ làm. Bạn bắt đầu từ khi nào vậy?\nW-Am: Tuần trước. Thị trấn vừa thêm một làn đường xe đạp trên đường Felton, nên giờ tôi có thể đi xe đến đây.\nM-Cn: Thật tuyệt. Tôi nghe nói chính quyền thị trấn đang có kế hoạch thêm làn đường xe đạp trên vài con đường khác nữa.\nW-Am: Rất tiện lợi. Trước đây tôi mất một giờ đi xe buýt để đến chỗ làm, còn bây giờ chỉ mất 25 phút.\nM-Cn: Wow. Bạn biết không, tôi là thành viên của một câu lạc bộ đi xe đạp địa phương, họ tổ chức các chuyến đi vào cuối tuần. Bạn nên tham gia. Đó là một nhóm rất tuyệt.'),
+(3, 17, NULL, 8, 'LISTENING_PART_4', 'M-Au: Hello, Ms. Wilson? This is Oliver Lewis calling from Kardack Engineering. I reviewed your application for the mechanical engineer position and would like to interview you.\nW-Am: Oh, I’m happy to hear that.\nM-Au: Good. I’ll transfer you to my administrative assistant. He’ll make the arrangements for the interview.\nW-Am: Great.\nM-Cn: Hello, Ms. Wilson. This is Mr. Lewis’ assistant, Martin. I’m wondering if Wednesday at nine a.m. works for you.\nW-Am: Yes, that’s perfect. Now, I’ve never been to your office complex before. Where can I find directions?\nM-Cn: I’ll e-mail those to you.', 'M-Au: Xin chào cô Wilson? Đây là Oliver Lewis gọi từ Kardack Engineering. Tôi đã xem xét đơn ứng tuyển của cô cho vị trí kỹ sư cơ khí và muốn phỏng vấn cô.\nW-Am: Ôi, tôi rất vui khi nghe điều đó.\nM-Au: Tốt. Tôi sẽ chuyển máy cho trợ lý hành chính của tôi. Anh ấy sẽ sắp xếp buổi phỏng vấn.\nW-Am: Tuyệt vời.\nM-Cn: Xin chào cô Wilson. Tôi là Martin, trợ lý của ông Lewis. Tôi muốn hỏi liệu thứ Tư lúc 9 giờ sáng có phù hợp với cô không.\nW-Am: Vâng, rất hoàn hảo. Tôi chưa từng đến khu văn phòng của các anh trước đây. Tôi có thể tìm chỉ dẫn ở đâu?\nM-Cn: Tôi sẽ gửi email cho cô.');
 
+INSERT INTO quiz_questions (order_index, quiz_group_id, question_text, type, translation) VALUES
+(1, 1, '', '', NULL),
+(1, 2, '', '', NULL),
+(1, 3, '', '', NULL),
+(1, 4, '', '', NULL),
+(1, 5, '', '', NULL),
+(1, 6, '', '', NULL),
+(1, 7, 'What is the main topic of the talk?', '', 'Chủ đề chính của bài nói là gì?\n(A) Thành tựu của công ty.\n(B) Sự kiện sắp tới.\n(C) Phúc lợi nhân viên.\n(D) Kết quả tài chính.'),
+(2, 7, 'What does the speaker say about the schedule?', '', 'Người nói đề cập gì về lịch trình?\n(A) Nó sẽ bị trì hoãn.\n(B) Nó vẫn giữ nguyên.\n(C) Nó sẽ được rút ngắn.\n(D) Nó sẽ được kéo dài.'),
+(3, 7, 'What should the audience do next?', '', 'Khán giả nên làm gì tiếp theo?\n(A) Gửi phản hồi.\n(B) Tham dự một cuộc họp.\n(C) Xem lại tài liệu.\n(D) Liên hệ phòng nhân sự.'),
+(1, 8, 'Who is the intended audience of the announcement?', '', 'Đối tượng mà thông báo hướng tới là ai?\n(A) Nhân viên.\n(B) Khách hàng.\n(C) Nhà đầu tư.\n(D) Nhà cung cấp.'),
+(2, 8, 'What is mentioned about the new policy?', '', 'Chính sách mới được đề cập như thế nào?\n(A) Nó sẽ bắt đầu từ tháng sau.\n(B) Nó là tùy chọn.\n(C) Nó sẽ thay thế chính sách cũ.\n(D) Nó yêu cầu đào tạo.'),
+(3, 8, 'What is the speaker’s tone?', '', 'Giọng điệu của người nói là gì?\n(A) Khích lệ.\n(B) Trung lập.\n(C) Phê phán.\n(D) Hài hước.'),
+(1, 9, 'What is the main topic of the talk?', '', 'Chủ đề chính của bài nói là gì?\n(A) Thành tựu của công ty.\n(B) Sự kiện sắp tới.\n(C) Phúc lợi nhân viên.\n(D) Kết quả tài chính.'),
+(2, 9, 'What does the speaker say about the schedule?', '', 'Người nói đề cập gì về lịch trình?\n(A) Nó sẽ bị trì hoãn.\n(B) Nó vẫn giữ nguyên.\n(C) Nó sẽ được rút ngắn.\n(D) Nó sẽ được kéo dài.'),
+(3, 9, 'What should the audience do next?', '', 'Khán giả nên làm gì tiếp theo?\n(A) Gửi phản hồi.\n(B) Tham dự một cuộc họp.\n(C) Xem lại tài liệu.\n(D) Liên hệ phòng nhân sự.'),
+(1, 10, 'Who is the intended audience of the announcement?', '', 'Đối tượng mà thông báo hướng tới là ai?\n(A) Nhân viên.\n(B) Khách hàng.\n(C) Nhà đầu tư.\n(D) Nhà cung cấp.'),
+(2, 10, 'What is mentioned about the new policy?', '', 'Chính sách mới được đề cập như thế nào?\n(A) Nó sẽ bắt đầu từ tháng sau.\n(B) Nó là tùy chọn.\n(C) Nó sẽ thay thế chính sách cũ.\n(D) Nó yêu cầu đào tạo.'),
+(3, 10, 'What is the speaker’s tone?', '', 'Giọng điệu của người nói là gì?\n(A) Khích lệ.\n(B) Trung lập.\n(C) Phê phán.\n(D) Hài hước.'),
+(1, 11, 'What is the main topic of the talk?', '', 'Chủ đề chính của bài nói là gì?\n(A) Thành tựu của công ty.\n(B) Sự kiện sắp tới.\n(C) Phúc lợi nhân viên.\n(D) Kết quả tài chính.'),
+(2, 11, 'What does the speaker say about the schedule?', '', 'Người nói đề cập gì về lịch trình?\n(A) Nó sẽ bị trì hoãn.\n(B) Nó vẫn giữ nguyên.\n(C) Nó sẽ được rút ngắn.\n(D) Nó sẽ được kéo dài.'),
+(3, 11, 'What should the audience do next?', '', 'Khán giả nên làm gì tiếp theo?\n(A) Gửi phản hồi.\n(B) Tham dự một cuộc họp.\n(C) Xem lại tài liệu.\n(D) Liên hệ phòng nhân sự.'),
+(1, 12, 'Who is the intended audience of the announcement?', '', 'Đối tượng mà thông báo hướng tới là ai?\n(A) Nhân viên.\n(B) Khách hàng.\n(C) Nhà đầu tư.\n(D) Nhà cung cấp.'),
+(2, 12, 'What is mentioned about the new policy?', '', 'Chính sách mới được đề cập như thế nào?\n(A) Nó sẽ bắt đầu từ tháng sau.\n(B) Nó là tùy chọn.\n(C) Nó sẽ thay thế chính sách cũ.\n(D) Nó yêu cầu đào tạo.'),
+(3, 12, 'What is the speaker’s tone?', '', 'Giọng điệu của người nói là gì?\n(A) Khích lệ.\n(B) Trung lập.\n(C) Phê phán.\n(D) Hài hước.');
+
+INSERT INTO quiz_options (is_correct, order_index, quiz_question_id, option_text) VALUES
+(0, 1, 1, ''),
+(1, 2, 1, ''),
+(0, 3, 1, ''),
+(0, 4, 1, ''),
+(1, 1, 2, ''),
+(0, 2, 2, ''),
+(0, 3, 2, ''),
+(0, 4, 2, ''),
+(0, 1, 3, ''),
+(0, 2, 3, ''),
+(0, 3, 3, ''),
+(1, 4, 3, ''),
+(0, 2, 4, ''),
+(1, 3, 4, ''),
+(0, 4, 4, ''),
+(1, 2, 5, ''),
+(0, 3, 5, ''),
+(0, 4, 5, ''),
+(0, 2, 6, ''),
+(0, 3, 6, ''),
+(1, 4, 6, ''),
+(0, 1, 7, 'Company achievements'),
+(1, 2, 7, 'Upcoming events'),
+(0, 3, 7, 'Employee benefits'),
+(0, 4, 7, 'Financial results'),
+(0, 1, 8, 'It will be delayed'),
+(1, 2, 8, 'It remains unchanged'),
+(0, 3, 8, 'It will be shortened'),
+(0, 4, 8, 'It will be extended'),
+(1, 1, 9, 'Submit feedback'),
+(0, 2, 9, 'Attend a meeting'),
+(0, 3, 9, 'Review documents'),
+(0, 4, 9, 'Contact HR'),
+(1, 1, 10, 'Employees'),
+(0, 2, 10, 'Customers'),
+(0, 3, 10, 'Investors'),
+(0, 4, 10, 'Suppliers'),
+(0, 1, 11, 'It will start next month'),
+(1, 2, 11, 'It is optional'),
+(0, 3, 11, 'It replaces the old one'),
+(0, 4, 11, 'It requires training'),
+(1, 1, 12, 'Encouraging'),
+(0, 2, 12, 'Neutral'),
+(0, 3, 12, 'Critical'),
+(0, 4, 12, 'Humorous'),
+(0, 1, 13, 'Company achievements'),
+(1, 2, 13, 'Upcoming events'),
+(0, 3, 13, 'Employee benefits'),
+(0, 4, 13, 'Financial results'),
+(0, 1, 14, 'It will be delayed'),
+(1, 2, 14, 'It remains unchanged'),
+(0, 3, 14, 'It will be shortened'),
+(0, 4, 14, 'It will be extended'),
+(1, 1, 15, 'Submit feedback'),
+(0, 2, 15, 'Attend a meeting'),
+(0, 3, 15, 'Review documents'),
+(0, 4, 15, 'Contact HR'),
+(1, 1, 16, 'Employees'),
+(0, 2, 16, 'Customers'),
+(0, 3, 16, 'Investors'),
+(0, 4, 16, 'Suppliers'),
+(0, 1, 17, 'It will start next month'),
+(1, 2, 17, 'It is optional'),
+(0, 3, 17, 'It replaces the old one'),
+(0, 4, 17, 'It requires training'),
+(1, 1, 18, 'Encouraging'),
+(0, 2, 18, 'Neutral'),
+(0, 3, 18, 'Critical'),
+(0, 4, 18, 'Humorous'),
+(0, 1, 19, 'Company achievements'),
+(1, 2, 19, 'Upcoming events'),
+(0, 3, 19, 'Employee benefits'),
+(0, 4, 19, 'Financial results'),
+(0, 1, 20, 'It will be delayed'),
+(1, 2, 20, 'It remains unchanged'),
+(0, 3, 20, 'It will be shortened'),
+(0, 4, 20, 'It will be extended'),
+(1, 1, 21, 'Submit feedback'),
+(0, 2, 21, 'Attend a meeting'),
+(0, 3, 21, 'Review documents'),
+(0, 4, 21, 'Contact HR'),
+(1, 1, 22, 'Employees'),
+(0, 2, 22, 'Customers'),
+(0, 3, 22, 'Investors'),
+(0, 4, 22, 'Suppliers'),
+(0, 1, 23, 'It will start next month'),
+(1, 2, 23, 'It is optional'),
+(0, 3, 23, 'It replaces the old one'),
+(0, 4, 23, 'It requires training'),
+(1, 1, 24, 'Encouraging'),
+(0, 2, 24, 'Neutral'),
+(0, 3, 24, 'Critical'),
+(0, 4, 24, 'Humorous');
+
+INSERT INTO user_lesson_progress (is_completed, learning_lesson_id, user_id, created_at) VALUES
+(1, 5, 1, '2026-03-01 10:15:00'),
+(0, 9,  1, '2026-03-05 14:30:00'),
+(1, 6, 1, '2026-03-10 09:45:00'),
+(0, 10, 1, '2026-03-12 16:20:00'),
+(1, 7,  1, '2026-03-15 08:50:00'),
+(0, 11, 1, '2026-03-18 19:05:00'),
+(1, 8,  1, '2026-03-15 08:50:00'),
+(0, 12, 1, '2026-03-18 19:05:00');

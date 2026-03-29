@@ -5,9 +5,10 @@ import { colors, typography } from '../theme/colors';
 
 type DiscoverLessonsProps = {
   onNavigateToLearning?: () => void;
+  onNavigateToListeningParts?: () => void;
 };
 
-export const DiscoverLessons: React.FC<DiscoverLessonsProps> = ({ onNavigateToLearning }) => {
+export const DiscoverLessons: React.FC<DiscoverLessonsProps> = ({ onNavigateToLearning, onNavigateToListeningParts }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Khám phá bài học</Text>
@@ -49,7 +50,7 @@ export const DiscoverLessons: React.FC<DiscoverLessonsProps> = ({ onNavigateToLe
         </TouchableOpacity>
 
         {/* Listening Topic */}
-        <TouchableOpacity style={[styles.subCard, styles.subCardListening]}>
+        <TouchableOpacity style={[styles.subCard, styles.subCardListening]} onPress={onNavigateToListeningParts}>
           <View style={[styles.subIconContainer, styles.subIconListening]}>
             <FontAwesome5 name="headphones" size={20} color="#FFF" />
           </View>

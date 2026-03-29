@@ -9,7 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "user_lesson_progress")
+@Table(name = "user_lesson_progress", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "learning_lesson_id"})})
 @Getter
 @Setter
 @NoArgsConstructor

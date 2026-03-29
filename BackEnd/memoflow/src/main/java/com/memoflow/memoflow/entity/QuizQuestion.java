@@ -3,6 +3,8 @@ package com.memoflow.memoflow.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "quiz_questions")
 @Getter
@@ -27,4 +29,10 @@ public class QuizQuestion {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_group_id", nullable = false)
     private QuizGroup quizGroup;
+
+    @OneToMany(mappedBy = "quizQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuizOption> quizOptions;
+
+    @Column(name="translation")
+    private String translation;
 }

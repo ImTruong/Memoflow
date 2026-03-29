@@ -1,7 +1,9 @@
-export const API_BASE_URL = 'http://192.168.1.148:8080';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const API_BASE_URL = 'http://172.17.43.14:8080';
 
 // Note: In a real app, this would be managed by an Auth context/Redux
-export const AUTH_BEARER_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4Lm5ndXllbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6MSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTc3MzU2OTExOCwiZXhwIjoxNzc0NDMzMTE4fQ.HdM1VzLYimekeY-Gv8rOFejajjY_QL-GdweWbaOS8fc';
+// export const AUTH_BEARER_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4Lm5ndXllbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6MSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTc3MzU2OTExOCwiZXhwIjoxNzc0NDMzMTE4fQ.HdM1VzLYimekeY-Gv8rOFejajjY_QL-GdweWbaOS8fc';
 
 /**
  * Robust check if a body is FormData
@@ -17,8 +19,11 @@ const isFormData = (body: any): boolean => {
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
+  const TOKEN = await AsyncStorage.getItem('authToken');
+  
   const headers: Record<string, string> = {
-    ...(AUTH_BEARER_TOKEN ? { Authorization: `Bearer ${AUTH_BEARER_TOKEN}` } : {}),
+    // ...(AUTH_BEARER_TOKEN ? { Authorization: `Bearer ${AUTH_BEARER_TOKEN}` } : {}),
+    ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
 
@@ -47,6 +52,9 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
 
 
   if (!response.ok) {
+    if(response.status === 401 || response.status === 403) {
+      await AsyncStorage.removeItem('authToken');
+    }
     // Try to get error message from body
     let errorMessage = `Lỗi HTTP: ${response.status}`;
     try {

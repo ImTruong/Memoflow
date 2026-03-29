@@ -5,19 +5,22 @@ import { colors, typography } from '../theme/colors';
 import { NotificationOverlay } from '../components/NotificationOverlay';
 
 import { useUser } from '../hooks/useUser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProfileScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToEditProfile: () => void;
   onNavigateToNotificationSettings: () => void;
   onNavigateToChangePassword: () => void;
+  onNavigateToLogin: () => void;
 };
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ 
   onNavigateToNotifications,
   onNavigateToEditProfile,
   onNavigateToNotificationSettings,
-  onNavigateToChangePassword
+  onNavigateToChangePassword,
+  onNavigateToLogin,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const { profile } = useUser();
@@ -122,7 +125,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
 
           {/* Logout Section */}
-          <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8}
+            onPress={async () => {
+              await AsyncStorage.removeItem('authToken');
+              onNavigateToLogin();
+            }}>
             <Text style={styles.logoutText}>Đăng xuất</Text>
           </TouchableOpacity>
         </ScrollView>

@@ -1,24 +1,14 @@
 package com.memoflow.memoflow.service.impl;
 
 import com.memoflow.memoflow.dto.request.CreateFlashcardLearningLessonRequest;
+import com.memoflow.memoflow.dto.request.SubmitListeningLessonRequest;
 import com.memoflow.memoflow.dto.request.UpdateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.response.FlashcardLessonDetailResponse;
-import com.memoflow.memoflow.dto.response.FlashcardLessonResponse;
-import com.memoflow.memoflow.dto.response.FlashcardLessonSummaryResponse;
-import com.memoflow.memoflow.dto.response.PageResponse;
-import com.memoflow.memoflow.dto.response.WordResponse;
+import com.memoflow.memoflow.dto.response.*;
+import com.memoflow.memoflow.entity.*;
 import com.memoflow.memoflow.exception.ResourceNotFoundException;
-import com.memoflow.memoflow.entity.LearningActivity;
-import com.memoflow.memoflow.entity.LearningLesson;
-import com.memoflow.memoflow.entity.Media;
+import com.memoflow.memoflow.repository.*;
 import com.memoflow.memoflow.security.UserPrincipal;
-import com.memoflow.memoflow.entity.User;
 import com.memoflow.memoflow.entity.enums.MediaType;
-import com.memoflow.memoflow.repository.FlashcardReviewRepository;
-import com.memoflow.memoflow.repository.LearningActivityRepository;
-import com.memoflow.memoflow.repository.LearningLessonRepository;
-import com.memoflow.memoflow.repository.UserRepository;
-import com.memoflow.memoflow.repository.WordRepository;
 import com.memoflow.memoflow.service.CloudinaryService;
 import com.memoflow.memoflow.service.LearningLessonService;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +37,10 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     private final FlashcardReviewRepository flashcardReviewRepository;
     private final ModelMapper modelMapper;
     private final CloudinaryService cloudinaryService;
+    private final UserLessonProgressRepository userLessonProgressRepository;
+    private final QuizQuestionRepository quizQuestionRepository;
+    private final QuizOptionRepository quizOptionRepository;
+    private final UserQuizAnswerRepository userQuizAnswerRepository;
 
     @Override
     public FlashcardLessonResponse createFlashcardLesson(Long learningActivityId,
@@ -266,5 +258,283 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 .lessonInfo(lessonResponse)
                 .words(wordsPageResponse)
                 .build();
+    }
+
+    @Override
+    public PageResponse<ListeningLessonResponse> getListeningLessons(
+            UserPrincipal userPrincipal,
+            Long part,
+            String status,
+            Pageable pageable) {
+        String type="LISTENING_PART_"+part;
+        Page<ListeningLessonResponse> responsesPage=learningLessonRepository.findListeningLessons(
+                userPrincipal.getId(),type,status,pageable);
+        return PageResponse.<ListeningLessonResponse>builder()
+                .content(responsesPage.getContent())
+                .pageNumber(responsesPage.getNumber())
+                .pageSize(responsesPage.getSize())
+                .totalElements(responsesPage.getTotalElements())
+                .totalPages(responsesPage.getTotalPages())
+                .last(responsesPage.isLast())
+                .build();
+    }
+
+    @Override
+    public ListeningLessonDetailResponse getListeningLessonDetail(Long lessonId) {
+        LearningLesson lesson = learningLessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        return ListeningLessonDetailResponse.builder()
+                .lessonId(lesson.getId())
+                .title(lesson.getTitle())
+                .type(lesson.getType())
+                .groups(
+                        lesson.getQuizGroups().stream()
+                                .sorted(Comparator.comparing(QuizGroup::getOrderIndex))
+                                .map(group ->
+                                        ListeningLessonDetailResponse.GroupResponse.builder()
+                                                .groupId(group.getId())
+                                                .audio(group.getAudio() != null ? new ListeningLessonDetailResponse.MediaResponse(group.getAudio().getUrl()) : null)
+                                                .images(group.getImage() != null ? new ListeningLessonDetailResponse.MediaResponse(group.getImage().getUrl()) : null)
+                                                .quizzes(
+                                                        group.getQuizQuestions().stream()
+                                                                .sorted(Comparator.comparing(QuizQuestion::getOrderIndex))
+                                                                .map(q ->
+                                                                        ListeningLessonDetailResponse.QuizResponse.builder()
+                                                                                .quizId(q.getId())
+                                                                                .questionText(q.getQuestionText() != null ? q.getQuestionText() : "")
+                                                                                .options(
+                                                                                        q.getQuizOptions().stream()
+                                                                                                .sorted(Comparator.comparing(QuizOption::getOrderIndex))
+                                                                                                .map(opt ->
+                                                                                                        ListeningLessonDetailResponse.OptionResponse.builder()
+                                                                                                                .optionId(opt.getId())
+                                                                                                                .optionText(opt.getOptionText() != null ? opt.getOptionText() : "")
+                                                                                                                .build()
+                                                                                                ).collect(Collectors.toList())
+                                                                                )
+                                                                                .build()
+                                                                ).collect(Collectors.toList())
+                                                )
+                                                .build()
+                                ).collect(Collectors.toList())
+                )
+                .build();
+    }
+
+    @Override
+    public void submitListeningLesson(UserPrincipal userPrincipal, Long lessonId,
+                                      SubmitListeningLessonRequest request, boolean isCompleted) {
+        LearningLesson lesson = learningLessonRepository.findById(lessonId).orElseThrow();
+        User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
+
+        UserLessonProgress progress = userLessonProgressRepository
+                .findByUserIdAndLearningLessonId(user.getId(), lesson.getId());
+        if (progress == null) {
+            progress = UserLessonProgress.builder()
+                    .user(user)
+                    .learningLesson(lesson)
+                    .build();
+        }
+        progress.setIsCompleted(isCompleted);
+
+        userLessonProgressRepository.save(progress);
+        Set<Long> submittedQuizIds = request.getAnswers().stream()
+                .map(SubmitListeningLessonRequest.Answer::getQuizId)
+                .collect(Collectors.toSet());
+
+        List<UserQuizAnswer> existingAnswers = userQuizAnswerRepository.findByUserId(user.getId());
+        for (UserQuizAnswer existing : existingAnswers) {
+            if (!submittedQuizIds.contains(existing.getQuizQuestion().getId())) {
+                userQuizAnswerRepository.delete(existing);
+            }
+        }
+
+        for (SubmitListeningLessonRequest.Answer ans : request.getAnswers()) {
+            QuizQuestion question = quizQuestionRepository.findById(ans.getQuizId()).orElseThrow();
+            UserQuizAnswer existing = userQuizAnswerRepository
+                    .findByUserIdAndQuizQuestionId(user.getId(), question.getId())
+                    .orElse(null);
+
+            if (ans.getOptionId() == null) {
+                if (existing != null) {
+                    userQuizAnswerRepository.delete(existing);
+                }
+            } else {
+                QuizOption option = quizOptionRepository.findById(ans.getOptionId()).orElseThrow();
+                if (existing != null) {
+                    existing.setQuizOption(option);
+                    userQuizAnswerRepository.save(existing);
+                } else {
+                    UserQuizAnswer userAnswer = UserQuizAnswer.builder()
+                            .user(user)
+                            .quizQuestion(question)
+                            .quizOption(option)
+                            .build();
+                    userQuizAnswerRepository.save(userAnswer);
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public ListeningLessonSubmissionResponse getListeningSubmission(UserPrincipal userPrincipal, Long lessonId) {
+        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), lessonId);
+
+        List<ListeningLessonSubmissionResponse.Answer> answers = userAnswers.stream()
+                .map(ans -> {
+                    ListeningLessonSubmissionResponse.Answer answer = new ListeningLessonSubmissionResponse.Answer();
+                    answer.setQuizId(ans.getQuizQuestion().getId());
+                    answer.setOptionId(ans.getQuizOption() != null ? ans.getQuizOption().getId() : null);
+                    return answer;
+                })
+                .toList();
+
+        ListeningLessonSubmissionResponse response = new ListeningLessonSubmissionResponse();
+        response.setLessonId(lessonId);
+        response.setAnswers(answers);
+
+        return response;
+    }
+
+    @Override
+    public ListeningResultResponse getListeningResult(UserPrincipal userPrincipal, Long lessonId) {
+
+        LearningLesson lesson = learningLessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), lessonId);
+
+        int totalQuestion = lesson.getQuizGroups().stream()
+                .mapToInt(group -> group.getQuizQuestions().size())
+                .sum();
+
+        int score = (int) userAnswers.stream()
+                .filter(ans -> ans.getQuizOption() != null && Boolean.TRUE.equals(ans.getQuizOption().getIsCorrect()))
+                .count();
+
+        ListeningResultResponse response = new ListeningResultResponse();
+        response.setLessonId(lesson.getId());
+        response.setTitle(lesson.getTitle());
+        response.setType(lesson.getType());
+        response.setTotalQuestion(totalQuestion);
+        response.setScore(score);
+
+        List<ListeningResultResponse.GroupResult> groupResults = lesson.getQuizGroups().stream().map(group -> {
+            ListeningResultResponse.GroupResult groupResult = new ListeningResultResponse.GroupResult();
+            groupResult.setGroupId(group.getId());
+
+            groupResult.setAudio(group.getAudio() != null
+                    ? new ListeningResultResponse.Media(group.getAudio().getUrl())
+                    : null);
+
+            groupResult.setImages(group.getImage() != null
+                    ? new ListeningResultResponse.Media(group.getImage().getUrl())
+                    : null);
+
+            groupResult.setTranscript(group.getTranscript());
+            groupResult.setTranslation(group.getTranslation());
+
+            List<ListeningResultResponse.QuizResult> quizResults = group.getQuizQuestions().stream().map(q -> {
+                ListeningResultResponse.QuizResult quizResult = new ListeningResultResponse.QuizResult();
+                quizResult.setQuizId(q.getId());
+                quizResult.setQuestionText(q.getQuestionText());
+                quizResult.setTranslation(q.getTranslation());
+
+                // tìm đáp án user chọn
+                Integer userAnswerId = userAnswers.stream()
+                        .filter(ans -> ans.getQuizQuestion().getId().equals(q.getId()))
+                        .map(ans -> ans.getQuizOption() != null ? ans.getQuizOption().getId().intValue() : null)
+                        .findFirst().orElse(null);
+                quizResult.setUserAnswer(userAnswerId);
+
+                List<ListeningResultResponse.OptionResult> optionResults = q.getQuizOptions().stream().map(opt ->
+                        new ListeningResultResponse.OptionResult(
+                                opt.getId().intValue(),
+                                opt.getOptionText(),
+                                opt.getIsCorrect()
+                        )
+                ).collect(Collectors.toList());
+
+                quizResult.setOptions(optionResults);
+                return quizResult;
+            }).collect(Collectors.toList());
+
+            groupResult.setQuizzes(quizResults);
+            return groupResult;
+        }).collect(Collectors.toList());
+
+        response.setGroups(groupResults);
+        return response;
+    }
+
+    @Override
+    public PageResponse<BilingualResponse> searchBilingual(String keyword, Pageable pageable, String filter) {
+        Page<LearningLesson> responsesPage;
+        if("newest".equals(filter)){
+            responsesPage = learningLessonRepository.findBilingualNewest(keyword,pageable);
+        }
+        else if("oldest".equals(filter)){
+            responsesPage = learningLessonRepository.findBilingualOldest(keyword,pageable);
+        }
+        else{
+            responsesPage = learningLessonRepository.findBilingualPopular(keyword,pageable);
+        }
+        List<BilingualResponse> content = responsesPage.getContent().stream()
+                .map(l -> new BilingualResponse(
+                        l.getId(),
+                        l.getTitle(),
+                        l.getDescription(),
+                        l.getContent(),
+                        l.getImage() != null ? new BilingualResponse.Media(l.getImage().getUrl()) : null
+                ))
+                .collect(Collectors.toList());
+
+        return PageResponse.<BilingualResponse>builder()
+                .content(content)
+                .pageNumber(responsesPage.getNumber())
+                .pageSize(responsesPage.getSize())
+                .totalElements(responsesPage.getTotalElements())
+                .totalPages(responsesPage.getTotalPages())
+                .last(responsesPage.isLast())
+                .build();
+    }
+
+    @Override
+    public BilingualResponse getBilingualById(Long id) {
+        LearningLesson lesson = learningLessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        return new BilingualResponse(
+                lesson.getId(),
+                lesson.getTitle(),
+                lesson.getDescription(),
+                lesson.getContent(),
+                lesson.getImage() != null ? new BilingualResponse.Media(lesson.getImage().getUrl()) : null
+        );
+    }
+
+    @Override
+    public void markAsSeen(Long lessonId, UserPrincipal userPrincipal) {
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        learningLessonRepository.incrementViews(lessonId);
+        LearningLesson lesson = learningLessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        UserLessonProgress progress = userLessonProgressRepository
+                .findByUserAndLearningLesson(user, lesson)
+                .orElse(UserLessonProgress.builder()
+                        .user(user)
+                        .learningLesson(lesson)
+                        .build());
+
+        progress.setIsCompleted(true);
+        progress.setProgressPercent(100.0);
+        progress.setCompletedAt(LocalDateTime.now());
+
+        userLessonProgressRepository.save(progress);
     }
 }

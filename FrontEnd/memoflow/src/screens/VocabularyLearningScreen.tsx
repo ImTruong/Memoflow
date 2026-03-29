@@ -13,12 +13,14 @@ type VocabularyLearningScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToFlashcards: () => void;
   onNavigateToGlobalStudy: () => void;
+  onNavigateToBilingual: () => void;
 };
 
 export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> = ({ 
   onNavigateToNotifications,
   onNavigateToFlashcards,
-  onNavigateToGlobalStudy
+  onNavigateToGlobalStudy,
+  onNavigateToBilingual,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const { profile } = useUser();
@@ -44,7 +46,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
       backgroundColor: '#FFFBEB',
     },
     {
-      title: 'Bài viết song ngữ',
+      title: 'Bài đọc song ngữ',
       subtitle: 'Đọc hiểu Anh-Việt mỗi ngày',
       icon: 'translate',
       iconType: 'material' as const,
@@ -133,6 +135,9 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
                 onPress={() => {
                   if (method.title === 'Flashcard') {
                     onNavigateToFlashcards();
+                  }
+                  else if (method.title === 'Bài đọc song ngữ') {
+                    onNavigateToBilingual();
                   }
                 }}
               />

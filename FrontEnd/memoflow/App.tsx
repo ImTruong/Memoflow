@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -21,11 +21,20 @@ import { NotificationSettingsScreen } from './src/screens/NotificationSettingsSc
 import { ChangePasswordScreen } from './src/screens/ChangePasswordScreen';
 import { Footer } from './src/components/Footer';
 import { ScreenTransition } from './src/components/ScreenTransition';
+import { LoginScreen } from './src/screens/LoginScreen';
+import { RegisterScreen } from './src/screens/RegisterScreen';
+import { ListeningPartsScreen } from './src/screens/ListeningPartsScreen';
+import { ListeningLessonsScreen } from './src/screens/ListeningLessonsScreen';
+import { ListeningLessonDetailScreen } from './src/screens/ListeningLessonDetailScreen';
+import { ListeningLessonResultScreen } from './src/screens/ListeningLessonResultScreen';
+import { BilingualScreen } from './src/screens/BilingualScreen';
+import { BilingualDetailScreen } from './src/screens/BilingualDetailScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type Screen = 'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword';
+type Screen = 'Register' | 'Login' | 'ListeningParts' | 'ListeningLessons' | 'ListeningLessonDetail' | 'ListeningLessonResult' | 'Bilingual' | 'BilingualDetail' |'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('Home');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('Login');
   const [editMode, setEditMode] = useState(false);
   const [wordEditMode, setWordEditMode] = useState(false);
   const [initialWord, setInitialWord] = useState('');
@@ -38,9 +47,102 @@ export default function App() {
   const [selectedExam, setSelectedExam] = useState('');
   const [isGlobalStudy, setIsGlobalStudy] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
+  const [isResumeListening, setResumeListening] = useState<boolean>(true);
+  const [prevScreen, setPrevScreen] = useState<Screen>('Home');
+
+  useEffect(() => {
+  const initAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        setCurrentScreen('Login');
+      } else {
+        setCurrentScreen('Home');
+      }
+    } catch (error) {
+      setCurrentScreen('Login');
+    }
+  };
+  initAuth();
+}, []);
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case 'Login':
+        return (
+          <LoginScreen
+            onNavigateToHome={() => setCurrentScreen('Home')}
+            onNavigateToRegister={() => setCurrentScreen('Register')}
+          />
+        );
+      case 'Register':
+        return (
+          <RegisterScreen
+            onNavigateToLogin={() => setCurrentScreen('Login')}
+            onNavigateToHome={() => setCurrentScreen('Home')}
+          />
+        );
+
+      case 'ListeningParts':
+        return (
+          <ListeningPartsScreen
+            onBack={() => setCurrentScreen('Home')}
+            onNavigateToListeningLessons={(part) => {
+              setSelectedListeningPart(part);
+              setCurrentScreen('ListeningLessons');
+            }}
+          />
+        );
+      case 'ListeningLessons':
+        return (
+          <ListeningLessonsScreen
+            onBack={() => setCurrentScreen('ListeningParts')}
+            onNavigateToListeningLessonDetail={(lessonId, isResumeListening) => {
+              setSelectedLessonId(lessonId);
+              setCurrentScreen('ListeningLessonDetail');
+              setResumeListening(isResumeListening)
+            }}
+            onNavigateToListeningLessonResult={(lessonId) => {
+              setSelectedLessonId(lessonId);
+              setCurrentScreen('ListeningLessonResult');
+            }}
+            listeningPart={selectedListeningPart || 1}
+          />
+        );
+      case 'ListeningLessonDetail':
+        return (
+          <ListeningLessonDetailScreen
+            onBack={() => setCurrentScreen('ListeningLessons')}
+            onNavigateToListeningLessonResult={() => setCurrentScreen('ListeningLessonResult')}
+            listeningLessonId={selectedLessonId || 0}
+            isResumeListening={isResumeListening}
+          />
+        );
+      case 'ListeningLessonResult':
+        return (
+          <ListeningLessonResultScreen
+            onBack={() => setCurrentScreen('ListeningLessons')}
+            listeningLessonId={selectedLessonId || 0}
+          />
+        );
+      case 'Bilingual':
+        return (
+          <BilingualScreen
+            onBack={() => setCurrentScreen(prevScreen)}
+            onNavigateToBilingualDetailScreen={(lessonId) => {
+              setSelectedLessonId(lessonId);
+              setCurrentScreen('BilingualDetail')
+            }}
+          />
+        );
+      case 'BilingualDetail':
+        return (
+          <BilingualDetailScreen
+            onBack={() => setCurrentScreen('Bilingual')}
+            lessonId={selectedLessonId || 0}
+          />
+        );
       case 'Home':
         return (
           <HomeScreen 
@@ -52,6 +154,11 @@ export default function App() {
               setOnlyDue(true);
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
+            }}
+            onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
+            onNavigateToBilingual={() => {
+              setPrevScreen('Home')
+              setCurrentScreen('Bilingual')
             }}
           />
         );
@@ -66,6 +173,10 @@ export default function App() {
               setOnlyDue(true);
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
+            }}
+            onNavigateToBilingual={() => {
+              setPrevScreen('VocabularyLearning');
+              setCurrentScreen('Bilingual');
             }}
           />
         );
@@ -222,6 +333,7 @@ export default function App() {
             onNavigateToEditProfile={() => setCurrentScreen('EditProfile')}
             onNavigateToNotificationSettings={() => setCurrentScreen('NotificationSettings')}
             onNavigateToChangePassword={() => setCurrentScreen('ChangePassword')}
+            onNavigateToLogin={() => setCurrentScreen('Login')}
           />
         );
       case 'EditProfile':
@@ -242,6 +354,8 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
+            onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
+            onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
           />
         );
     }
@@ -267,6 +381,9 @@ export default function App() {
         </SafeAreaView>
         
         {![
+          'Login',
+          'Register',
+          'ListeningLessonDetail',
           'FlashcardStudy', 
           'CreateFlashcardSet', 
           'AddWord',
