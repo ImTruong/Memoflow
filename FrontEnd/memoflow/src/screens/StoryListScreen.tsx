@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -7,7 +7,8 @@ import {
   FlatList, 
   TextInput, 
   Image,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
@@ -25,14 +26,40 @@ interface StoryListScreenProps {
 export const StoryListScreen: React.FC<StoryListScreenProps> = ({ stories, onBack, onNavigateToStory }) => {
   const [activeTab, setActiveTab] = useState<'TRUYEN' | 'DA_DOC'>('TRUYEN');
   const [searchQuery, setSearchQuery] = useState('');
+  const horizontalScrollRef = useRef<FlatList>(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
-  const filteredStories = stories.filter(progress => {
-    const matchesSearch = progress.learningLesson.title.toLowerCase().includes(searchQuery.toLowerCase());
-    if (activeTab === 'TRUYEN') {
-      return matchesSearch && !progress.isCompleted;
-    } else {
-      return matchesSearch && progress.isCompleted;
-    }
+  const handleTabPress = (tab: 'TRUYEN' | 'DA_DOC') => {
+    setActiveTab(tab);
+    horizontalScrollRef.current?.scrollToIndex({ 
+      index: tab === 'TRUYEN' ? 0 : 1, 
+      animated: true 
+    });
+  };
+
+  const handleScrollEnd = (e: any) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / width);
+    setActiveTab(index === 0 ? 'TRUYEN' : 'DA_DOC');
+  };
+
+  // Interpolations for smooth UI
+  const truyenOpacity = scrollX.interpolate({
+    inputRange: [0, width],
+    outputRange: [1, 0.5],
+    extrapolate: 'clamp',
+  });
+
+  const daDocOpacity = scrollX.interpolate({
+    inputRange: [0, width],
+    outputRange: [0.5, 1],
+    extrapolate: 'clamp',
+  });
+
+  const indicatorTranslateX = scrollX.interpolate({
+    inputRange: [0, width],
+    outputRange: [0, width / 2],
+    extrapolate: 'clamp',
   });
 
   const renderStoryCard = ({ item, index }: { item: UserLessonProgress, index: number }) => {
@@ -55,11 +82,11 @@ export const StoryListScreen: React.FC<StoryListScreenProps> = ({ stories, onBac
               {lesson.description}
             </Text>
             <TouchableOpacity 
-              style={[styles.readButton, { backgroundColor: activeTab === 'TRUYEN' ? '#EBF8F2' : '#F3E8FF' }]}
+              style={[styles.readButton, { backgroundColor: item.isCompleted ? '#F3E8FF' : '#EBF8F2' }]}
               onPress={() => onNavigateToStory(item)}
             >
-              <Text style={[styles.readButtonText, { color: activeTab === 'TRUYEN' ? '#38A169' : '#805AD5' }]}>
-                {activeTab === 'TRUYEN' ? 'Đọc ngay' : 'Đọc lại'}
+              <Text style={[styles.readButtonText, { color: item.isCompleted ? '#805AD5' : '#38A169' }]}>
+                {item.isCompleted ? 'Đọc lại' : 'Đọc ngay'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -95,33 +122,64 @@ export const StoryListScreen: React.FC<StoryListScreenProps> = ({ stories, onBac
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'TRUYEN' && styles.activeTab]} 
-          onPress={() => setActiveTab('TRUYEN')}
-        >
-          <Text style={[styles.tabText, activeTab === 'TRUYEN' && styles.activeTabText]}>TRUYỆN</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'DA_DOC' && styles.activeTab]} 
-          onPress={() => setActiveTab('DA_DOC')}
-        >
-          <Text style={[styles.tabText, activeTab === 'DA_DOC' && styles.activeTabText]}>ĐÃ ĐỌC XONG</Text>
-        </TouchableOpacity>
+      <View style={styles.tabsWrapper}>
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity 
+            style={styles.tab} 
+            onPress={() => handleTabPress('TRUYEN')}
+          >
+            <Animated.Text style={[styles.tabText, { opacity: truyenOpacity, color: truyenOpacity.interpolate({ inputRange: [0.5, 1], outputRange: [colors.textSecondary, colors.primary] }) }]}>
+              TRUYỆN
+            </Animated.Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.tab} 
+            onPress={() => handleTabPress('DA_DOC')}
+          >
+            <Animated.Text style={[styles.tabText, { opacity: daDocOpacity, color: daDocOpacity.interpolate({ inputRange: [0.5, 1], outputRange: [colors.textSecondary, colors.primary] }) }]}>
+              ĐÃ ĐỌC XONG
+            </Animated.Text>
+          </TouchableOpacity>
+        </View>
+        {/* Animated Underline */}
+        <Animated.View style={[styles.activeIndicator, { transform: [{ translateX: indicatorTranslateX }] }]} />
       </View>
 
-      {/* Story List */}
-      <FlatList
-        data={filteredStories}
-        renderItem={renderStoryCard}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Không tìm thấy truyện nào.</Text>
+      {/* Story List with Horizontal Swipe */}
+      <Animated.FlatList
+        ref={horizontalScrollRef as any}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+        data={['TRUYEN', 'DA_DOC']}
+        keyExtractor={item => item}
+        renderItem={({ item: tab }) => (
+          <View style={{ width: width }}>
+            <FlatList
+              data={stories.filter(p => {
+                const matchesSearch = p.learningLesson.title.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesSearch && (tab === 'TRUYEN' ? !p.isCompleted : p.isCompleted);
+              })}
+              renderItem={renderStoryCard}
+              keyExtractor={item => item.id.toString()}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    {tab === 'TRUYEN' ? 'Chưa có truyện nào cần đọc.' : 'Bạn chưa hoàn thành truyện nào.'}
+                  </Text>
+                </View>
+              }
+            />
           </View>
-        }
+        )}
       />
     </View>
   );
@@ -165,11 +223,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textPrimary,
   },
-  tabsContainer: {
-    flexDirection: 'row',
+  tabsWrapper: {
+    position: 'relative',
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
     marginBottom: 8,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: width / 2,
+    height: 3,
+    backgroundColor: colors.primary,
   },
   tab: {
     flex: 1,

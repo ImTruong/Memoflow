@@ -153,7 +153,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
   const handleUserSubmit = async () => {
     if (!inputText.trim() || isBotThinking || isGameEnded || turn === 'BOT') return;
     
-    const fullWord = nextLetter ? nextLetter.toLowerCase() + inputText.trim().toLowerCase() : inputText.trim().toLowerCase();
+    const fullWord = inputText.trim().toLowerCase();
     
     const validation = await validateWord(fullWord);
     
@@ -300,7 +300,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setShowExitModal(true)} style={styles.backButton}>
+        <TouchableOpacity onPress={() => isGameEnded ? onBack() : setShowExitModal(true)} style={styles.backButton}>
            <Ionicons name="arrow-back" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{lesson.title}</Text>
@@ -375,15 +375,9 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
         <View style={styles.inputContainer}>
           <View style={styles.inputRow}>
             <View style={[styles.inputWrapper, turn === 'BOT' && { opacity: 0.5 }]}>
-              {nextLetter && (
-                <View style={styles.prefixContainer}>
-                   <Text style={styles.nextLetterHint}>{nextLetter.toUpperCase()}</Text>
-                   <View style={styles.prefixDivider} />
-                </View>
-              )}
               <TextInput 
                 style={styles.input}
-                placeholder={turn === 'BOT' ? "Đang chờ Bot..." : "Gõ phần còn lại..."}
+                placeholder={turn === 'BOT' ? "Đang chờ Bot..." : (nextLetter ? `Bắt đầu bằng '${nextLetter.toUpperCase()}'...` : "Nhập từ để bắt đầu...")}
                 value={inputText}
                 onChangeText={setInputText}
                 autoCapitalize="none"
@@ -470,7 +464,10 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
                 setBotScore(0);
                 setGameResult(null);
                 setIsGameEnded(false);
+                setShowResultModal(false);
                 setNextLetter('');
+                setInputText('');
+                setIsBotThinking(false);
                 setTimeLeft(config.timeLimit || 15);
                 setTurn('USER');
               }}>
@@ -690,12 +687,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
   },
-  nextLetterHint: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginRight: 4,
-  },
+
   input: {
     flex: 1,
     fontSize: 18,
@@ -964,17 +956,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  prefixContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  prefixDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: '#E5E7EB',
-    marginLeft: 8,
-  },
+
   resultBadgeSmall: {
     width: 36,
     height: 36,

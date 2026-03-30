@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  Image, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
   Dimensions,
   Modal
 } from 'react-native';
@@ -32,7 +32,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
 
   const handleStartGame = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
     if (!selectedProgress) return;
-    
+
     // Clone and update difficulty
     const updatedProgress = {
       ...selectedProgress,
@@ -44,7 +44,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
         }
       }
     };
-    
+
     setShowLevelModal(false);
     onNavigateToGame(updatedProgress);
   };
@@ -63,14 +63,11 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Banner with Scrabble Background */}
         <View style={styles.bannerContainer}>
-          <Image 
-            source={{ uri: "https://t3.ftcdn.net/jpg/01/71/61/52/360_F_171615291_S0Z48O54uB0L5L4X8H4pLkNnF6u1t2fO.jpg" }} // Placeholder scrabble bg
+          <Image
+            source={{ uri: "https://static.edupia.vn/uploads/photos/42.%20Game%20ti%E1%BA%BFng%20Anh%205/game%20noi%20tu.png" }} // Placeholder scrabble bg
             style={styles.bannerImage}
             resizeMode="cover"
           />
-          <View style={styles.bannerOverlay}>
-            <Text style={styles.bannerText}>START NOW</Text>
-          </View>
         </View>
 
         {/* Mode List */}
@@ -78,30 +75,30 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
           {mockWordRaceProgress.map((progress, index) => {
             const lesson = progress.learningLesson;
             const content = lesson.content;
-            
+
             return (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={progress.id}
                 style={styles.modeCard}
                 onPress={() => handleSelectMode(progress)}
                 activeOpacity={0.9}
               >
                 <View style={[styles.idBar, { backgroundColor: content.accentColor || colors.primary }]} />
-                
+
                 <View style={styles.cardContent}>
                   <View style={[styles.iconBox, { backgroundColor: content.bgColor }]}>
-                     {/* Using Dynamic Icons based on content config */}
-                     <MaterialCommunityIcons 
-                        name={(content.icon || "play") as any} 
-                        size={40} 
-                        color={content.accentColor || colors.primary} 
-                     />
+                    {/* Using Dynamic Icons based on content config */}
+                    <MaterialCommunityIcons
+                      name={(content.icon || "play") as any}
+                      size={40}
+                      color={content.accentColor || colors.primary}
+                    />
                   </View>
-                  
+
                   <View style={styles.infoArea}>
                     <Text style={styles.modeTitle}>{lesson.title}</Text>
                     <Text style={styles.modeDesc}>{lesson.description}</Text>
-                    
+
                     <View style={styles.ruleTags}>
                       <View style={styles.tag}>
                         <Ionicons name="trophy-outline" size={14} color="#6B7280" />
@@ -123,7 +120,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
 
                 {/* Start Button style as in image: but here we make the card itself clickable */}
                 <View style={styles.arrowIcon}>
-                   <Ionicons name="chevron-forward" size={24} color="#D1D5DB" />
+                  <Ionicons name="chevron-forward" size={24} color="#D1D5DB" />
                 </View>
               </TouchableOpacity>
             );
@@ -133,9 +130,9 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
 
       {/* Level Selection Modal */}
       <Modal visible={showLevelModal} transparent={true} statusBarTranslucent animationType="fade">
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
           onPress={() => setShowLevelModal(false)}
         >
           <View style={styles.modalContent}>
@@ -147,7 +144,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
             </View>
 
             <View style={styles.levelOptions}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.levelBtn, { backgroundColor: '#ECFDF5', borderColor: '#10B981' }]}
                 onPress={() => handleStartGame('EASY')}
               >
@@ -160,7 +157,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.levelBtn, { backgroundColor: '#FFFBEB', borderColor: '#F59E0B' }]}
                 onPress={() => handleStartGame('MEDIUM')}
               >
@@ -173,7 +170,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.levelBtn, { backgroundColor: '#FEF2F2', borderColor: '#EF4444' }]}
                 onPress={() => handleStartGame('HARD')}
               >
