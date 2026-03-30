@@ -15,6 +15,7 @@ type VocabularyLearningScreenProps = {
   onNavigateToGlobalStudy: () => void;
   onNavigateToStoryList: () => void;
   onNavigateToWordRaceList: () => void;
+  onNavigateToWordHuntList: () => void;
   onNavigateToBilingual: () => void;
 };
 
@@ -24,6 +25,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
   onNavigateToGlobalStudy,
   onNavigateToStoryList,
   onNavigateToWordRaceList,
+  onNavigateToWordHuntList,
   onNavigateToBilingual,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -143,7 +145,9 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
                   } else if (method.title === 'Đua từ với Bot') {
                     onNavigateToWordRaceList();
                   }
-                  else if (method.title === 'Bài đọc song ngữ') {
+                  else if (method.title === 'Tinh mắt tìm từ') {
+                    onNavigateToWordHuntList();
+                  } else if (method.title === 'Bài đọc song ngữ') {
                     onNavigateToBilingual();
                   }
                 }}

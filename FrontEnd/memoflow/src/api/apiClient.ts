@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_BASE_URL = 'http://172.17.43.14:8080';
+export const API_BASE_URL = 'http://192.168.1.38:8080';
 
 // Note: In a real app, this would be managed by an Auth context/Redux
 // export const AUTH_BEARER_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4Lm5ndXllbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6MSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTc3MzU2OTExOCwiZXhwIjoxNzc0NDMzMTE4fQ.HdM1VzLYimekeY-Gv8rOFejajjY_QL-GdweWbaOS8fc';
+// export const AUTH_BEARER_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4Lm5ndXllbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6MSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTc3NDg2NzMyNCwiZXhwIjoxODA2NDAzMzI0fQ.LlGEU9slJfLAcCV8eWXxoTfrNHkSmX40i43Gl9qNoTs';
 
 /**
  * Robust check if a body is FormData

@@ -11,7 +11,23 @@ export interface User {
   streakDays?: number;
 }
 
-export type LessonType = 'STORY' | 'WORD_RACE' | 'BILLINGUAL_ARTICLE' | 'TRUYEN_CHEM';
+export interface LearningMode {
+  id: number;
+  name: string;
+  description?: string;
+  icon?: Media;
+}
+
+export interface LearningActivity {
+  id: number;
+  title: string;
+  description: string;
+  type?: number;
+  icon?: Media;
+  learningMode?: LearningMode;
+}
+
+export type LessonType = 'STORY' | 'WORD_RACE' | 'WORD_HUNT' | 'BILLINGUAL_ARTICLE' | 'TRUYEN_CHEM';
 
 export interface LearningLesson {
   id: number;
@@ -21,6 +37,7 @@ export interface LearningLesson {
   image?: Media;
   content: any; // Flexible JSON content
   creator: User;
+  learningActivity?: LearningActivity;
 }
 
 export interface UserLessonProgress {

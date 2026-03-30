@@ -37,6 +37,10 @@ import { BilingualScreen } from './src/screens/BilingualScreen';
 import { BilingualDetailScreen } from './src/screens/BilingualDetailScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockWordRaceProgress } from './src/api/mockWordRaceData';
+import { WordHuntListScreen } from './src/screens/WordHuntListScreen';
+import { WordHuntGameScreen } from './src/screens/WordHuntGameScreen';
+import { mockWordHuntProgress } from './src/api/mockWordHuntData';
+import { WordHuntProgress } from './src/types/wordHunt';
 
 type Screen =
   | 'Register'
@@ -67,6 +71,8 @@ type Screen =
   | 'StoryDetail'
   | 'WordRaceList'
   | 'WordRaceGame'
+  | 'WordHuntList'
+  | 'WordHuntGame'
   | 'Bilingual'
   | 'BilingualDetail';
 
@@ -88,6 +94,8 @@ export default function App() {
   const [storiesProgress, setStoriesProgress] = useState<UserLessonProgress[]>(mockStoryProgress);
   const [selectedWordRaceProgress, setSelectedWordRaceProgress] = useState<UserLessonProgress | null>(null);
   const [wordRaceProgressList, setWordRaceProgressList] = useState<UserLessonProgress[]>(mockWordRaceProgress);
+  const [selectedWordHuntProgress, setSelectedWordHuntProgress] = useState<WordHuntProgress | null>(null);
+  const [wordHuntProgressList, setWordHuntProgressList] = useState<WordHuntProgress[]>(mockWordHuntProgress);
   const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
   const [isResumeListening, setResumeListening] = useState<boolean>(true);
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
@@ -219,6 +227,7 @@ export default function App() {
             }}
             onNavigateToStoryList={() => setCurrentScreen('StoryList')}
             onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToWordHuntList={() => setCurrentScreen('WordHuntList')}
             onNavigateToBilingual={() => {
               setPrevScreen('VocabularyLearning');
               setCurrentScreen('Bilingual');
@@ -442,6 +451,54 @@ export default function App() {
             }}
           />
         ) : null;
+      case 'WordHuntList':
+        return (
+          <WordHuntListScreen
+            progresses={wordHuntProgressList}
+            onBack={() => setCurrentScreen('VocabularyLearning')}
+            onNavigateToGame={(progress) => {
+              setSelectedWordHuntProgress(progress);
+              setCurrentScreen('WordHuntGame');
+            }}
+          />
+        );
+      case 'WordHuntGame':
+        return selectedWordHuntProgress ? (
+          <WordHuntGameScreen
+            progress={selectedWordHuntProgress}
+            onBack={() => {
+              setSelectedWordHuntProgress(null);
+              setCurrentScreen('WordHuntList');
+            }}
+            onFinish={(payload) => {
+              setWordHuntProgressList(prev => prev.map(item => {
+                if (item.id !== payload.progressId) return item;
+
+                return {
+                  ...item,
+                  isCompleted: payload.isCompleted,
+                  progressPercent: payload.progressPercent,
+                  score: payload.score,
+                  completedAt: payload.completedAt,
+                  hintsUsedToday: payload.hintsUsedToday,
+                };
+              }));
+
+              setSelectedWordHuntProgress(prev => {
+                if (!prev || prev.id !== payload.progressId) return prev;
+
+                return {
+                  ...prev,
+                  isCompleted: payload.isCompleted,
+                  progressPercent: payload.progressPercent,
+                  score: payload.score,
+                  completedAt: payload.completedAt,
+                  hintsUsedToday: payload.hintsUsedToday,
+                };
+              });
+            }}
+          />
+        ) : null;
       default:
         return (
           <HomeScreen 
@@ -465,7 +522,7 @@ export default function App() {
 
   const getActiveTab = (screen: Screen): string => {
     if (screen === 'Notifications') return 'Home';
-    if (['FlashcardSet', 'FlashcardStudy', 'CreateFlashcardSet', 'AddWord', 'FillBlankGame', 'StoryList', 'StoryDetail', 'WordRaceList', 'WordRaceGame'].includes(screen)) return 'VocabularyLearning';
+    if (['FlashcardSet', 'FlashcardStudy', 'CreateFlashcardSet', 'AddWord', 'FillBlankGame', 'StoryList', 'StoryDetail', 'WordRaceList', 'WordRaceGame', 'WordHuntList', 'WordHuntGame'].includes(screen)) return 'VocabularyLearning';
     if (['VocabularyStats', 'VocabularyDailyStats', 'WordDetailStats', 'ListeningStats', 'ListeningExamDetail'].includes(screen)) return 'Stats';
     if (['Profile', 'EditProfile', 'NotificationSettings', 'ChangePassword'].includes(screen)) return 'Profile';
     return screen;
@@ -499,7 +556,9 @@ export default function App() {
           'NotificationSettings',
           'ChangePassword',
           'StoryDetail',
-          'WordRaceGame'
+          'WordRaceGame',
+          'WordHuntList',
+          'WordHuntGame'
         ].includes(currentScreen) && (
           <Footer 
             activeTab={getActiveTab(currentScreen)} 
