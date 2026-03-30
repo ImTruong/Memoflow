@@ -88,6 +88,22 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
                 ? '#FFFFFF'
                 : '#F8FAFC';
 
+            const iconBackground = isCompleted
+              ? '#DCFCE7'
+              : isCurrent && unlocked
+                ? '#FFF1E7'
+                : unlocked
+                  ? content.cardColor
+                  : '#E2E8F0';
+
+            const iconColor = isCompleted
+              ? '#16A34A'
+              : isCurrent && unlocked
+                ? '#F97316'
+                : unlocked
+                  ? content.iconColor
+                  : '#94A3B8';
+
             return (
               <TouchableOpacity
                 key={progress.id}
@@ -116,17 +132,19 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
                 <View style={[
                   styles.iconArea,
                   {
-                    backgroundColor: unlocked ? content.cardColor : '#E2E8F0',
+                    backgroundColor: iconBackground,
                   },
                 ]}>
                   <MaterialCommunityIcons
                     name={content.icon as any}
                     size={34}
-                    color={unlocked ? content.iconColor : '#94A3B8'}
+                    color={iconColor}
                   />
                 </View>
 
-                <Text style={[styles.title, !unlocked && styles.lockedText]}>{progress.learningLesson.title}</Text>
+                <Text style={[styles.title, !unlocked && styles.lockedText]} numberOfLines={1}>
+                  {progress.learningLesson.title}
+                </Text>
 
                 {isCompleted && (
                   <View style={styles.completedRow}>
@@ -280,7 +298,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 3,

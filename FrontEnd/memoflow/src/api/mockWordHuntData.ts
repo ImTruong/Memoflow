@@ -41,7 +41,7 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       content: {
         categoryKey: 'animals',
         categoryLabel: 'Animals',
-        boardSize: 8,
+        boardSize: 6,
         timeLimitSeconds: 105,
         targetWordCount: 5,
         maxHintsPerDay: 3,
@@ -80,7 +80,7 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       content: {
         categoryKey: 'nature',
         categoryLabel: 'Nature',
-        boardSize: 9,
+        boardSize: 8,
         timeLimitSeconds: 105,
         targetWordCount: 5,
         maxHintsPerDay: 3,
@@ -156,7 +156,7 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       content: {
         categoryKey: 'travel',
         categoryLabel: 'Travel',
-        boardSize: 9,
+        boardSize: 8,
         timeLimitSeconds: 120,
         targetWordCount: 6,
         maxHintsPerDay: 3,

@@ -12,7 +12,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { WordHuntCell, WordHuntProgress } from '../types/wordHunt';
-import { fetchVietnameseMeaning, isEnglishWord } from '../api/wordHuntApi';
+import { fetchVietnameseMeaning } from '../api/wordHuntApi';
 import { generateWordHuntBoard } from '../utils/wordHuntBoard';
 
 const { width } = Dimensions.get('window');
@@ -24,6 +24,7 @@ const CELL_GAP = 4;
 const MIN_CELL_SIZE = 23;
 const MAX_CELL_SIZE = 36;
 const BOARD_BORDER_WIDTH = 2;
+const DIRECTION_LOCK_DISTANCE = 1.6;
 
 type FinishPayload = {
   progressId: number;
@@ -45,9 +46,14 @@ type WordHuntGameScreenProps = {
   onFinish: (payload: FinishPayload) => void;
 };
 
+type DragDirection = {
+  rowStep: number;
+  colStep: number;
+};
+
 const toCellKey = (row: number, col: number): string => `${row}-${col}`;
 
-const DIRECTION_STEPS: Array<{ rowStep: number; colStep: number }> = [
+const DIRECTION_STEPS: DragDirection[] = [
   { rowStep: 0, colStep: 1 },
   { rowStep: 1, colStep: 1 },
   { rowStep: 1, colStep: 0 },
@@ -58,23 +64,28 @@ const DIRECTION_STEPS: Array<{ rowStep: number; colStep: number }> = [
   { rowStep: -1, colStep: 1 },
 ];
 
-const getSnappedLineCells = (start: WordHuntCell, end: WordHuntCell, boardSize: number): WordHuntCell[] => {
-  const rowDelta = end.row - start.row;
-  const colDelta = end.col - start.col;
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(max, value));
+};
 
-  if (rowDelta === 0 && colDelta === 0) {
-    return [start];
-  }
-
+const getDirectionByDelta = (rowDelta: number, colDelta: number): DragDirection => {
   const angle = Math.atan2(rowDelta, colDelta);
   const directionIndex = Math.round(angle / (Math.PI / 4));
   const normalizedIndex = ((directionIndex % 8) + 8) % 8;
-  const direction = DIRECTION_STEPS[normalizedIndex];
+  return DIRECTION_STEPS[normalizedIndex];
+};
 
-  const steps = Math.max(Math.abs(rowDelta), Math.abs(colDelta));
+const getDirectionalLineCells = (
+  start: WordHuntCell,
+  direction: DragDirection,
+  steps: number,
+  boardSize: number
+): WordHuntCell[] => {
+  const safeSteps = Math.max(0, steps);
+
   const cells: WordHuntCell[] = [];
 
-  for (let i = 0; i <= steps; i += 1) {
+  for (let i = 0; i <= safeSteps; i += 1) {
     const row = start.row + i * direction.rowStep;
     const col = start.col + i * direction.colStep;
 
@@ -86,6 +97,34 @@ const getSnappedLineCells = (start: WordHuntCell, end: WordHuntCell, boardSize: 
   }
 
   return cells;
+};
+
+const getStepsByFingerDistance = (
+  start: WordHuntCell,
+  localX: number,
+  localY: number,
+  boardGridSize: number,
+  step: number,
+  cellSize: number,
+  direction: DragDirection
+): number => {
+  const clampedX = clamp(localX, 0, boardGridSize);
+  const clampedY = clamp(localY, 0, boardGridSize);
+
+  const startCenterX = start.col * step + cellSize / 2;
+  const startCenterY = start.row * step + cellSize / 2;
+
+  const dx = clampedX - startCenterX;
+  const dy = clampedY - startCenterY;
+
+  // Project finger movement onto locked direction axis.
+  const directionNormSq =
+    direction.rowStep * direction.rowStep + direction.colStep * direction.colStep;
+  const axisProjectionRaw = (dy / step) * direction.rowStep + (dx / step) * direction.colStep;
+  const axisProjection = axisProjectionRaw / Math.max(directionNormSq, 1);
+
+  // Require crossing most of a cell before advancing to next one.
+  return Math.max(0, Math.floor(axisProjection + 0.15));
 };
 
 const formatTime = (seconds: number): string => {
@@ -103,7 +142,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   const content = progress.learningLesson.content;
   const boardSize = useMemo(() => {
     const raw = Number(content.boardSize) || 10;
-    return Math.max(8, Math.min(10, raw));
+    return Math.max(6, Math.min(10, raw));
   }, [content.boardSize]);
 
   const lessonWords = useMemo(
@@ -115,7 +154,9 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   const [foundWords, setFoundWords] = useState<Set<string>>(new Set());
   const [foundCellKinds, setFoundCellKinds] = useState<Record<string, 'normal' | 'hint'>>({});
   const [selectedCells, setSelectedCells] = useState<WordHuntCell[]>([]);
+  const selectedCellsRef = useRef<WordHuntCell[]>([]);
   const [dragStart, setDragStart] = useState<WordHuntCell | null>(null);
+  const [dragDirection, setDragDirection] = useState<DragDirection | null>(null);
   const [timeLeft, setTimeLeft] = useState(content.timeLimitSeconds);
   const [hintsUsed, setHintsUsed] = useState(progress.hintsUsedToday ?? 0);
   const [activeHintWord, setActiveHintWord] = useState<string | null>(null);
@@ -126,7 +167,6 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   const [showLoseModal, setShowLoseModal] = useState(false);
   const [foundPopup, setFoundPopup] = useState<FoundPopup | null>(null);
   const [pendingWin, setPendingWin] = useState(false);
-  const [isCheckingWord, setIsCheckingWord] = useState(false);
 
   const boardMaxWidth = Math.min(width - BOARD_MARGIN_HORIZONTAL * 2, 420);
   const rawCellSize = Math.floor(
@@ -178,14 +218,40 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     }, 1800);
   }, []);
 
+  const setSelection = useCallback((cells: WordHuntCell[]) => {
+    selectedCellsRef.current = cells;
+    setSelectedCells(cells);
+  }, []);
+
   const getCellFromLocalPoint = useCallback(
-    (localX: number, localY: number): WordHuntCell | null => {
-      if (localX < -step / 2 || localY < -step / 2 || localX > boardGridSize + step / 2 || localY > boardGridSize + step / 2) {
+    (localX: number, localY: number, mode: 'strict' | 'drag' = 'drag'): WordHuntCell | null => {
+      if (localX < 0 || localY < 0 || localX > boardGridSize || localY > boardGridSize) {
         return null;
       }
 
-      const col = Math.max(0, Math.min(boardSize - 1, Math.round(localX / step)));
-      const row = Math.max(0, Math.min(boardSize - 1, Math.round(localY / step)));
+      if (mode === 'strict') {
+        const col = Math.floor(localX / step);
+        const row = Math.floor(localY / step);
+
+        if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) {
+          return null;
+        }
+
+        const offsetX = localX - col * step;
+        const offsetY = localY - row * step;
+        if (offsetX < 0 || offsetY < 0 || offsetX > cellSize || offsetY > cellSize) {
+          return null;
+        }
+
+        return {
+          row,
+          col,
+          letter: boardData.board[row][col],
+        };
+      }
+
+      const col = Math.max(0, Math.min(boardSize - 1, Math.floor(localX / step)));
+      const row = Math.max(0, Math.min(boardSize - 1, Math.floor(localY / step)));
 
       if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) {
         return null;
@@ -197,7 +263,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         letter: boardData.board[row][col],
       };
     },
-    [boardData.board, boardGridSize, boardSize, step]
+    [boardData.board, boardGridSize, boardSize, cellSize, step]
   );
 
   const mapLineWithLetters = useCallback(
@@ -211,7 +277,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
 
   const evaluateSelection = useCallback(
     async (lineCells: WordHuntCell[]) => {
-      if (lineCells.length < 2 || isCheckingWord) {
+      if (lineCells.length < 2) {
         return;
       }
 
@@ -224,15 +290,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
       });
 
       if (!matched) {
-        setIsCheckingWord(true);
-        const english = await isEnglishWord(selectedWord.toLowerCase());
-        setIsCheckingWord(false);
-
-        if (english) {
-          showTransientError(`"${selectedWord}" la tu tieng Anh nhung khong nam trong danh sach.`);
-        } else {
-          showTransientError('Tu duoc chon khong chinh xac');
-        }
+        showTransientError('Tu duoc chon khong chinh xac');
         return;
       }
 
@@ -267,7 +325,6 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     [
       activeHintWord,
       foundWords,
-      isCheckingWord,
       placedWordsMap,
       showTransientError,
       targetWordCount,
@@ -281,8 +338,9 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     setBoardData(regenerated);
     setFoundWords(new Set());
     setFoundCellKinds({});
-    setSelectedCells([]);
+    setSelection([]);
     setDragStart(null);
+    setDragDirection(null);
     setTimeLeft(content.timeLimitSeconds);
     setActiveHintWord(null);
     setShowLoseModal(false);
@@ -290,7 +348,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     setFoundPopup(null);
     setPendingWin(false);
     setErrorMessage(null);
-  }, [boardSize, content.timeLimitSeconds, lessonWords]);
+  }, [boardSize, content.timeLimitSeconds, lessonWords, setSelection]);
 
   const finishGame = useCallback(
     (isCompleted: boolean) => {
@@ -315,37 +373,84 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         onStartShouldSetPanResponder: () => !isGameEnded,
         onMoveShouldSetPanResponder: () => !isGameEnded,
         onPanResponderGrant: (event) => {
-          const cell = getCellFromLocalPoint(event.nativeEvent.locationX, event.nativeEvent.locationY);
+          const cell = getCellFromLocalPoint(event.nativeEvent.locationX, event.nativeEvent.locationY, 'strict');
           if (!cell) return;
           setDragStart(cell);
-          setSelectedCells([cell]);
+          setDragDirection(null);
+          setSelection([cell]);
         },
         onPanResponderMove: (event) => {
           if (!dragStart) return;
-          const targetCell = getCellFromLocalPoint(event.nativeEvent.locationX, event.nativeEvent.locationY);
+          const localX = event.nativeEvent.locationX;
+          const localY = event.nativeEvent.locationY;
+
+          const targetCell = getCellFromLocalPoint(localX, localY);
           if (!targetCell) return;
 
-          const line = getSnappedLineCells(dragStart, targetCell, boardSize);
-          if (line.length === 0) {
-            setSelectedCells([dragStart]);
+          const rowDelta = targetCell.row - dragStart.row;
+          const colDelta = targetCell.col - dragStart.col;
+          const dragDistance = Math.hypot(rowDelta, colDelta);
+
+          if (dragDistance < 0.2) {
+            setSelection([dragStart]);
             return;
           }
 
-          setSelectedCells(mapLineWithLetters(line));
+          // Soft-lock direction only after a meaningful drag distance to avoid wrong early lock.
+          const shouldLockDirection = !dragDirection && dragDistance >= DIRECTION_LOCK_DISTANCE;
+          const direction = dragDirection || getDirectionByDelta(rowDelta, colDelta);
+
+          if (shouldLockDirection) {
+            setDragDirection(direction);
+          }
+
+          const steps = getStepsByFingerDistance(
+            dragStart,
+            localX,
+            localY,
+            boardGridSize,
+            step,
+            cellSize,
+            direction
+          );
+
+          const line = getDirectionalLineCells(dragStart, direction, steps, boardSize);
+          if (line.length === 0) {
+            setSelection([dragStart]);
+            return;
+          }
+
+          setSelection(mapLineWithLetters(line));
         },
         onPanResponderRelease: async () => {
-          if (selectedCells.length > 1) {
-            await evaluateSelection(selectedCells);
-          }
+          const currentLine = selectedCellsRef.current;
           setDragStart(null);
-          setSelectedCells([]);
+          setDragDirection(null);
+          setSelection([]);
+
+          if (currentLine.length > 1) {
+            await evaluateSelection(currentLine);
+          }
         },
         onPanResponderTerminate: () => {
           setDragStart(null);
-          setSelectedCells([]);
+          setDragDirection(null);
+          setSelection([]);
         },
       }),
-    [boardSize, dragStart, evaluateSelection, getCellFromLocalPoint, isGameEnded, mapLineWithLetters, selectedCells]
+    [
+      boardSize,
+      boardGridSize,
+      cellSize,
+      dragDirection,
+      dragStart,
+      evaluateSelection,
+      getCellFromLocalPoint,
+      isGameEnded,
+      mapLineWithLetters,
+      setSelection,
+      step,
+    ]
   );
 
   useEffect(() => {
@@ -417,6 +522,14 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     return bars;
   }, [foundCount, targetWordCount]);
 
+  const selectedWordPreview = useMemo(() => {
+    if (selectedCells.length === 0) {
+      return '';
+    }
+
+    return selectedCells.map((cell) => cell.letter).join('');
+  }, [selectedCells]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -443,6 +556,11 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
           <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color="#FFFFFF" />
           <Text style={styles.hintButtonText}>HINT</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.dragWordBanner}>
+        <Text style={styles.dragWordLabel}>DANG KEO</Text>
+        <Text style={styles.dragWordValue}>{selectedWordPreview || '...'}</Text>
       </View>
 
       {currentHintMeaning && (
@@ -486,18 +604,18 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
                   let textColor = '#1F2937';
 
                   if (foundKind === 'normal') {
-                    backgroundColor = '#F97316';
-                    textColor = '#FFFFFF';
-                  }
-
-                  if (foundKind === 'hint') {
                     backgroundColor = '#22C55E';
                     textColor = '#FFFFFF';
                   }
 
+                  if (foundKind === 'hint') {
+                    backgroundColor = '#16A34A';
+                    textColor = '#FFFFFF';
+                  }
+
                   if (isSelected && !foundKind) {
-                    backgroundColor = '#FDBA74';
-                    textColor = '#7C2D12';
+                    backgroundColor = '#DCFCE7';
+                    textColor = '#14532D';
                   }
 
                   return (
@@ -752,6 +870,32 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     marginTop: 2,
+  },
+  dragWordBanner: {
+    marginHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dragWordLabel: {
+    fontSize: 11,
+    color: '#166534',
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  dragWordValue: {
+    fontSize: 16,
+    color: '#14532D',
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   activeHintBanner: {
     marginHorizontal: 12,

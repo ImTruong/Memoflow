@@ -474,12 +474,18 @@ export default function App() {
               setWordHuntProgressList(prev => prev.map(item => {
                 if (item.id !== payload.progressId) return item;
 
+                const wasCompleted = item.isCompleted;
+                const nextCompleted = wasCompleted || payload.isCompleted;
+                const nextProgressPercent = nextCompleted
+                  ? 100
+                  : Math.max(item.progressPercent, payload.progressPercent);
+
                 return {
                   ...item,
-                  isCompleted: payload.isCompleted,
-                  progressPercent: payload.progressPercent,
+                  isCompleted: nextCompleted,
+                  progressPercent: nextProgressPercent,
                   score: payload.score,
-                  completedAt: payload.completedAt,
+                  completedAt: nextCompleted ? (item.completedAt || payload.completedAt) : item.completedAt,
                   hintsUsedToday: payload.hintsUsedToday,
                 };
               }));
@@ -487,12 +493,18 @@ export default function App() {
               setSelectedWordHuntProgress(prev => {
                 if (!prev || prev.id !== payload.progressId) return prev;
 
+                const wasCompleted = prev.isCompleted;
+                const nextCompleted = wasCompleted || payload.isCompleted;
+                const nextProgressPercent = nextCompleted
+                  ? 100
+                  : Math.max(prev.progressPercent, payload.progressPercent);
+
                 return {
                   ...prev,
-                  isCompleted: payload.isCompleted,
-                  progressPercent: payload.progressPercent,
+                  isCompleted: nextCompleted,
+                  progressPercent: nextProgressPercent,
                   score: payload.score,
-                  completedAt: payload.completedAt,
+                  completedAt: nextCompleted ? (prev.completedAt || payload.completedAt) : prev.completedAt,
                   hintsUsedToday: payload.hintsUsedToday,
                 };
               });
