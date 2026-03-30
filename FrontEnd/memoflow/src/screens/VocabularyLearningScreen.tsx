@@ -24,8 +24,6 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
   onNavigateToGlobalStudy,
   onNavigateToStoryList,
   onNavigateToWordRaceList,
-  onNavigateToStoryList,
-  onNavigateToGlobalStudy,
   onNavigateToBilingual,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);

@@ -29,8 +29,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToWordRaceList,
   onNavigateToListeningParts,
   onNavigateToBilingual,
-  onNavigateToGlobalStudy,
-  onNavigateToStoryList
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const { profile } = useUser();
@@ -63,14 +61,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               onPress={onNavigateToGlobalStudy}
             />
           )}
-          <DiscoverLessons onNavigateToLearning={onNavigateToLearning} />
+          <DiscoverLessons
+            onNavigateToLearning={onNavigateToLearning}
+            onNavigateToListeningParts={onNavigateToListeningParts}
+          />
           <AdvancedLearning
             onNavigateToStoryList={onNavigateToStoryList}
             onNavigateToWordRaceList={onNavigateToWordRaceList}
+            onNavigateToBilingual={onNavigateToBilingual}
           />
-          <AdvancedLearning onNavigateToStoryList={onNavigateToStoryList} />
-          <DiscoverLessons onNavigateToLearning={onNavigateToLearning} onNavigateToListeningParts={onNavigateToListeningParts} />
-          <AdvancedLearning onNavigateToBilingual={onNavigateToBilingual}/>
         </ScrollView>
 
         {showNotifications && (

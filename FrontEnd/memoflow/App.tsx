@@ -38,8 +38,37 @@ import { BilingualDetailScreen } from './src/screens/BilingualDetailScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockWordRaceProgress } from './src/api/mockWordRaceData';
 
-type Screen = 'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword' | 'StoryList' | 'StoryDetail' | 'WordRaceList' | 'WordRaceGame';
-type Screen = 'Register' | 'Login' | 'ListeningParts' | 'ListeningLessons' | 'ListeningLessonDetail' | 'ListeningLessonResult' | 'Bilingual' | 'BilingualDetail' |'Home' | 'Notifications' | 'VocabularyLearning' | 'FlashcardSet' | 'CreateFlashcardSet' | 'AddWord' | 'FlashcardStudy' | 'FillBlankGame' | 'Stats' | 'VocabularyStats' | 'VocabularyDailyStats' | 'WordDetailStats' | 'ListeningStats' | 'ListeningExamDetail' | 'Profile' | 'EditProfile' | 'NotificationSettings' | 'ChangePassword';
+type Screen =
+  | 'Register'
+  | 'Login'
+  | 'Home'
+  | 'Notifications'
+  | 'VocabularyLearning'
+  | 'FlashcardSet'
+  | 'CreateFlashcardSet'
+  | 'AddWord'
+  | 'FlashcardStudy'
+  | 'FillBlankGame'
+  | 'Stats'
+  | 'VocabularyStats'
+  | 'VocabularyDailyStats'
+  | 'WordDetailStats'
+  | 'ListeningStats'
+  | 'ListeningExamDetail'
+  | 'ListeningParts'
+  | 'ListeningLessons'
+  | 'ListeningLessonDetail'
+  | 'ListeningLessonResult'
+  | 'Profile'
+  | 'EditProfile'
+  | 'NotificationSettings'
+  | 'ChangePassword'
+  | 'StoryList'
+  | 'StoryDetail'
+  | 'WordRaceList'
+  | 'WordRaceGame'
+  | 'Bilingual'
+  | 'BilingualDetail';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('Login');
