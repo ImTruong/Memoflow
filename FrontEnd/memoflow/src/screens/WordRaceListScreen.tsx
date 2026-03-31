@@ -5,48 +5,42 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
-  Dimensions,
   Modal
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
-import { mockWordRaceProgress } from '../api/mockWordRaceData';
-import { UserLessonProgress } from '../types/story';
+import { mockWordRaceLessons } from '../api/mockWordRaceData';
+import { LearningLesson } from '../types/story';
+import { BotDifficulty, WordRaceLessonContent } from '../types/wordRace';
 
-const { width, height } = Dimensions.get('window');
+const CARD_ACCENTS = ['#D53F8C', '#319795', '#D97706', '#374151'];
+const CARD_BACKGROUNDS = ['#FDE2E2', '#E6FFFA', '#FEF3C7', '#F3F4F6'];
+const CARD_ICONS: Array<'play-circle' | 'close-circle-outline' | 'flash' | 'timer-sand'> = [
+  'play-circle',
+  'close-circle-outline',
+  'flash',
+  'timer-sand',
+];
 
 interface WordRaceListScreenProps {
   onBack: () => void;
-  onNavigateToGame: (progress: UserLessonProgress) => void;
+  onNavigateToGame: (lesson: LearningLesson, difficulty: BotDifficulty) => void;
 }
 
 export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, onNavigateToGame }) => {
-  const [selectedProgress, setSelectedProgress] = useState<UserLessonProgress | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<LearningLesson | null>(null);
   const [showLevelModal, setShowLevelModal] = useState(false);
 
-  const handleSelectMode = (progress: UserLessonProgress) => {
-    setSelectedProgress(progress);
+  const handleSelectMode = (lesson: LearningLesson) => {
+    setSelectedLesson(lesson);
     setShowLevelModal(true);
   };
 
-  const handleStartGame = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
-    if (!selectedProgress) return;
-
-    // Clone and update difficulty
-    const updatedProgress = {
-      ...selectedProgress,
-      learningLesson: {
-        ...selectedProgress.learningLesson,
-        content: {
-          ...selectedProgress.learningLesson.content,
-          botDifficulty: difficulty
-        }
-      }
-    };
+  const handleStartGame = (difficulty: BotDifficulty) => {
+    if (!selectedLesson) return;
 
     setShowLevelModal(false);
-    onNavigateToGame(updatedProgress);
+    onNavigateToGame(selectedLesson, difficulty);
   };
 
   return (
@@ -61,37 +55,37 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Banner with Scrabble Background */}
+        {/* Banner */}
         <View style={styles.bannerContainer}>
-          <Image
-            source={{ uri: "https://static.edupia.vn/uploads/photos/42.%20Game%20ti%E1%BA%BFng%20Anh%205/game%20noi%20tu.png" }} // Placeholder scrabble bg
-            style={styles.bannerImage}
-            resizeMode="cover"
-          />
+          <View style={styles.bannerOverlay}>
+            <Text style={styles.bannerText}>NOI TU</Text>
+            <Text style={styles.bannerSubText}>Chon che do va cap do de bat dau</Text>
+          </View>
         </View>
 
         {/* Mode List */}
         <View style={styles.listContainer}>
-          {mockWordRaceProgress.map((progress, index) => {
-            const lesson = progress.learningLesson;
-            const content = lesson.content;
+          {mockWordRaceLessons.map((lesson, index) => {
+            const content = lesson.content as WordRaceLessonContent;
+            const accentColor = CARD_ACCENTS[index % CARD_ACCENTS.length];
+            const iconBackground = CARD_BACKGROUNDS[index % CARD_BACKGROUNDS.length];
+            const iconName = CARD_ICONS[index % CARD_ICONS.length];
 
             return (
               <TouchableOpacity
-                key={progress.id}
+                key={lesson.id}
                 style={styles.modeCard}
-                onPress={() => handleSelectMode(progress)}
+                onPress={() => handleSelectMode(lesson)}
                 activeOpacity={0.9}
               >
-                <View style={[styles.idBar, { backgroundColor: content.accentColor || colors.primary }]} />
+                <View style={[styles.idBar, { backgroundColor: accentColor }]} />
 
                 <View style={styles.cardContent}>
-                  <View style={[styles.iconBox, { backgroundColor: content.bgColor }]}>
-                    {/* Using Dynamic Icons based on content config */}
+                  <View style={[styles.iconBox, { backgroundColor: iconBackground }]}>
                     <MaterialCommunityIcons
-                      name={(content.icon || "play") as any}
+                      name={iconName as any}
                       size={40}
-                      color={content.accentColor || colors.primary}
+                      color={accentColor}
                     />
                   </View>
 
@@ -220,25 +214,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 24,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
   },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.8,
-  },
   bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   bannerText: {
     fontSize: 28,
@@ -246,6 +234,12 @@ const styles = StyleSheet.create({
     color: '#374151',
     letterSpacing: 4,
     textDecorationLine: 'underline',
+  },
+  bannerSubText: {
+    marginTop: 10,
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
   },
   listContainer: {
     padding: 16,

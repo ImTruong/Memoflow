@@ -1,15 +1,9 @@
-import { User, Media } from "./story";
-
 export type BotDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface WordRaceRule {
   targetScore: number;
   timeLimit: number; // in seconds
   forbiddenEndings?: string[]; // e.g., ['s', 'e']
-  botDifficulty: BotDifficulty;
-  icon?: string;
-  bgColor?: string;
-  accentColor?: string;
 }
 
 export interface WordRaceMessage {

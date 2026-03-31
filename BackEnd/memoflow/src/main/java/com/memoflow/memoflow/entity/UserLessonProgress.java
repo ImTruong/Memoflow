@@ -2,10 +2,10 @@ package com.memoflow.memoflow.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -39,6 +39,13 @@ public class UserLessonProgress {
 
     @Column(name = "score")
     private Integer score; // Dùng cho game hoặc quiz nếu cần
+
+    @Column(name = "hints_used_today")
+    @Builder.Default
+    private Integer hintsUsedToday = 0;
+
+    @Column(name = "hints_used_date")
+    private LocalDate hintsUsedDate;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
