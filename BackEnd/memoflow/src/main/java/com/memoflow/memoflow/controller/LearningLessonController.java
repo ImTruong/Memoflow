@@ -3,8 +3,6 @@ package com.memoflow.memoflow.controller;
 import com.memoflow.memoflow.dto.request.CreateFlashcardLearningLessonRequest;
 import com.memoflow.memoflow.dto.request.SubmitListeningLessonRequest;
 import com.memoflow.memoflow.dto.request.UpdateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.CreateStoryLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.UpdateStoryLearningLessonRequest;
 import com.memoflow.memoflow.dto.response.*;
 import com.memoflow.memoflow.security.UserPrincipal;
 import com.memoflow.memoflow.service.LearningLessonService;
@@ -16,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,38 +32,6 @@ public class LearningLessonController {
                 userPrincipal);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Flashcard lesson created successfully"));
-    }
-
-    @PostMapping(value = "/learning-activities/{learningActivityId}/story-lessons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@securityService.isActivityExist(#learningActivityId) and hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<StoryLessonResponse>> createStoryLesson(
-            @PathVariable Long learningActivityId,
-            @Valid @RequestPart("payload") CreateStoryLearningLessonRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        StoryLessonResponse response = learningLessonService.createStoryLesson(learningActivityId, request, image, userPrincipal);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Story lesson created successfully"));
-    }
-
-    @PutMapping(value = "/story-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<StoryLessonResponse>> updateStoryLesson(
-            @PathVariable Long id,
-            @Valid @RequestPart("payload") UpdateStoryLearningLessonRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        StoryLessonResponse response = learningLessonService.updateStoryLesson(id, request, image, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(response, "Story lesson updated successfully"));
-    }
-
-    @DeleteMapping("/story-lessons/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteStoryLesson(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        learningLessonService.deleteStoryLesson(id, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(null, "Story lesson deleted successfully"));
     }
 
     @PutMapping(value = "/flashcard-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -191,29 +156,5 @@ public class LearningLessonController {
     ) {
         learningLessonService.markAsSeen(id, userPrincipal);
         return ResponseEntity.ok(ApiResponse.success(null, "Lesson marked as seen"));
-    }
-
-    @GetMapping("/story-lessons")
-    public ResponseEntity<ApiResponse<PageResponse<StoryLessonProgressResponse>>> getStoryLessons(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            Pageable pageable) {
-        PageResponse<StoryLessonProgressResponse> response = learningLessonService.getStoryLessons(userPrincipal, pageable);
-        return ResponseEntity.ok(ApiResponse.success(response, "Story lessons retrieved successfully"));
-    }
-
-    @GetMapping("/story-lessons/{id}")
-    public ResponseEntity<ApiResponse<StoryLessonProgressResponse>> getStoryLessonDetail(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        StoryLessonProgressResponse response = learningLessonService.getStoryLessonDetail(id, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(response, "Story lesson detail retrieved successfully"));
-    }
-
-    @PostMapping("/story-lessons/{id}/complete")
-    public ResponseEntity<ApiResponse<Void>> completeStoryLesson(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        learningLessonService.completeStoryLesson(id, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(null, "Story lesson completed"));
     }
 }
