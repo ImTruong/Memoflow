@@ -415,3 +415,17 @@ INSERT INTO user_lesson_progress (is_completed, learning_lesson_id, user_id, cre
 (0, 11, 1, '2026-03-18 19:05:00'),
 (1, 8,  1, '2026-03-15 08:50:00'),
 (0, 12, 1, '2026-03-18 19:05:00');
+
+INSERT INTO learning_lessons (title, type, description, learning_activity_id, content) VALUES
+('Animals', 'WORD_HUNT', 'Tim 5 tu vung chu de dong vat trong 01:45.', 5, '{"categoryKey":"animals","categoryLabel":"Animals","boardSize":6,"timeLimitSeconds":105,"targetWordCount":5,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 5 tu","words":["LION","TIGER","RABBIT","HORSE","SNAKE","MONKEY"]}'),
+('Nature', 'WORD_HUNT', 'Tap trung nhin nhanh, tim du 5 tu trong chu de thien nhien.', 5, '{"categoryKey":"nature","categoryLabel":"Nature","boardSize":8,"timeLimitSeconds":105,"targetWordCount":5,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 5 tu","words":["RIVER","MOUNTAIN","FOREST","RAIN","CLOUD","STONE"]}'),
+('Food', 'WORD_HUNT', 'Man dang choi: tim du 5 tu truoc khi het gio.', 5, '{"categoryKey":"food","categoryLabel":"Food","boardSize":10,"timeLimitSeconds":105,"targetWordCount":5,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 5 tu","words":["PIZZA","CAKE","SOUP","TACO","RICE","STEAK","BURGER"]}'),
+('Travel', 'WORD_HUNT', 'Mo khoa sau khi hoan thanh Food.', 5, '{"categoryKey":"travel","categoryLabel":"Travel","boardSize":8,"timeLimitSeconds":120,"targetWordCount":6,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 6 tu","unlockRequirementText":"Can vuot qua Food de mo khoa","words":["HOTEL","FLIGHT","PASSPORT","TICKET","LUGGAGE","BEACH"]}'),
+('Sports', 'WORD_HUNT', 'Mo khoa sau khi hoan thanh Travel.', 5, '{"categoryKey":"sports","categoryLabel":"Sports","boardSize":10,"timeLimitSeconds":120,"targetWordCount":6,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 6 tu","unlockRequirementText":"Can vuot qua Travel de mo khoa","words":["TENNIS","SOCCER","BOXING","RUNNING","SWIM","VOLLEY"]}'),
+('Technology', 'WORD_HUNT', 'Mo khoa sau khi hoan thanh Sports.', 5, '{"categoryKey":"technology","categoryLabel":"Technology","boardSize":10,"timeLimitSeconds":150,"targetWordCount":7,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 7 tu","unlockRequirementText":"Can vuot qua Sports de mo khoa","words":["SERVER","ROUTER","CODING","BINARY","MOBILE","CLOUD","SCREEN"]}');
+
+INSERT INTO learning_lessons (title, type, description, learning_activity_id, content) VALUES
+('Hoc viec so dang', 'WORD_RACE', 'Nguoi dat 40 diem truoc se thang. Che do luyen tap co ban.', 4, '{"targetScore":40,"timeLimit":15,"forbiddenEndings":[]}'),
+('Noi khong voi so nhieu', 'WORD_RACE', 'Nguoi dat 50 diem truoc va khong ket thuc bang ''s'' se thang.', 4, '{"targetScore":50,"timeLimit":12,"forbiddenEndings":["s"]}'),
+('E ... Em la khong the', 'WORD_RACE', 'Nguoi dat 50 diem truoc va khong ket thuc bang ''e'' se thang.', 4, '{"targetScore":50,"timeLimit":10,"forbiddenEndings":["e"]}'),
+('Chay dua tu than', 'WORD_RACE', 'Thoi gian dien bi rut ngan va dat 50 diem truoc se thang.', 4, '{"targetScore":50,"timeLimit":5,"forbiddenEndings":[]}');

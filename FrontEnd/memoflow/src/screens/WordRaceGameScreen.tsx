@@ -16,18 +16,20 @@ import {
 // (Keep or adjust imports as needed)
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
-import { UserLessonProgress } from '../types/story';
+import { LearningLesson } from '../types/story';
+import { BotDifficulty, WordRaceLessonContent } from '../types/wordRace';
 import { WordRaceMessage } from '../types/wordRace';
 
 const { width } = Dimensions.get('window');
 
 interface WordRaceGameScreenProps {
-  progress: UserLessonProgress;
+  lesson: LearningLesson;
+  difficulty: BotDifficulty;
   onBack: () => void;
   onComplete: (score: number) => void;
 }
 
-const getDifficultyLabel = (difficulty: string) => {
+const getDifficultyLabel = (difficulty: BotDifficulty) => {
   switch (difficulty) {
     case 'EASY': return 'Dễ';
     case 'MEDIUM': return 'Trung bình';
@@ -36,7 +38,14 @@ const getDifficultyLabel = (difficulty: string) => {
   }
 };
 
-export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress, onBack, onComplete }) => {
+export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, difficulty, onBack, onComplete }) => {
+  const config = (lesson.content || {}) as WordRaceLessonContent;
+  const targetScore = Number(config.targetScore) || 40;
+  const timeLimit = Number(config.timeLimit) || 15;
+  const forbiddenEndings = Array.isArray(config.forbiddenEndings)
+    ? config.forbiddenEndings.map((ending) => ending.toLowerCase())
+    : undefined;
+
   // --- Game State ---
   const [messages, setMessages] = useState<WordRaceMessage[]>([]);
   const [userScore, setUserScore] = useState(0);
@@ -45,7 +54,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
   const [isBotThinking, setIsBotThinking] = useState(false);
   const [nextLetter, setNextLetter] = useState<string>('');
   const [turn, setTurn] = useState<'USER' | 'BOT'>('USER');
-  const [timeLeft, setTimeLeft] = useState(progress.learningLesson.content.timeLimit || 15);
+  const [timeLeft, setTimeLeft] = useState(timeLimit);
   
   // --- UI/UX State ---
   const [showExitModal, setShowExitModal] = useState(false);
@@ -56,9 +65,6 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
   const [isGameEnded, setIsGameEnded] = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
-  const lesson = progress.learningLesson;
-  const config = lesson.content;
-  const targetScore = config.targetScore || 40;
 
   // --- Scroll Fix ---
   useEffect(() => {
@@ -99,9 +105,9 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
     }
 
     // Check forbidden endings
-    if (config.forbiddenEndings) {
+    if (forbiddenEndings) {
       const lastChar = word[word.length - 1].toLowerCase();
-      if (config.forbiddenEndings.includes(lastChar)) {
+      if (forbiddenEndings.includes(lastChar)) {
         return { valid: false, reason: `Không được kết thúc bằng chữ '${lastChar.toUpperCase()}'!` };
       }
     }
@@ -147,7 +153,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
     }
     
     setNextLetter(word[word.length - 1].toLowerCase());
-    setTimeLeft(config.timeLimit || 15);
+    setTimeLeft(timeLimit);
   };
 
   const handleUserSubmit = async () => {
@@ -179,7 +185,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
   const startBotTurn = async (letter: string) => {
     setIsBotThinking(true);
     
-    const thinkingTime = config.botDifficulty === 'HARD' ? 800 : (config.botDifficulty === 'MEDIUM' ? 1500 : 2500);
+    const thinkingTime = difficulty === 'HARD' ? 800 : (difficulty === 'MEDIUM' ? 1500 : 2500);
     await new Promise(r => setTimeout(r, thinkingTime));
     
     if (isGameEnded) {
@@ -195,12 +201,12 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
         const wordStr = w.word;
         if (wordStr.length < 3) return false;
         if (messages.find(m => m.word.toLowerCase() === wordStr.toLowerCase())) return false;
-        if (config.forbiddenEndings) {
-          if (config.forbiddenEndings.includes(wordStr[wordStr.length - 1].toLowerCase())) return false;
+        if (forbiddenEndings) {
+          if (forbiddenEndings.includes(wordStr[wordStr.length - 1].toLowerCase())) return false;
         }
         
-        if (config.botDifficulty === 'EASY' && wordStr.length > 4) return false;
-        if (config.botDifficulty === 'MEDIUM' && wordStr.length > 7) return false;
+        if (difficulty === 'EASY' && wordStr.length > 4) return false;
+        if (difficulty === 'MEDIUM' && wordStr.length > 7) return false;
         
         return true;
       });
@@ -211,9 +217,9 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
 
       if (possibleWords.length > 0 && !isGameEnded) {
         // Sort by difficulty
-        if (config.botDifficulty === 'HARD') {
+        if (difficulty === 'HARD') {
           possibleWords.sort((a: any, b: any) => b.word.length - a.word.length);
-        } else if (config.botDifficulty === 'EASY') {
+        } else if (difficulty === 'EASY') {
           possibleWords.sort((a: any, b: any) => a.word.length - b.word.length);
         }
 
@@ -431,7 +437,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
             </Text>
 
             <View style={styles.levelBadge}>
-               <Text style={styles.levelText}>Cấp độ: {getDifficultyLabel(config.botDifficulty)}</Text>
+               <Text style={styles.levelText}>Cấp độ: {getDifficultyLabel(difficulty)}</Text>
             </View>
 
             <View style={styles.resultScoreRow}>
@@ -468,7 +474,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ progress
                 setNextLetter('');
                 setInputText('');
                 setIsBotThinking(false);
-                setTimeLeft(config.timeLimit || 15);
+                setTimeLeft(timeLimit);
                 setTurn('USER');
               }}>
                 <View style={styles.mainActionIcon}>

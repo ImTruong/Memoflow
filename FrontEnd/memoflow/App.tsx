@@ -25,7 +25,7 @@ import { StoryListScreen } from './src/screens/StoryListScreen';
 import { StoryDetailScreen } from './src/screens/StoryDetailScreen';
 import { WordRaceListScreen } from './src/screens/WordRaceListScreen';
 import { WordRaceGameScreen } from './src/screens/WordRaceGameScreen';
-import { UserLessonProgress } from './src/types/story';
+import { LearningLesson, UserLessonProgress } from './src/types/story';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { ListeningPartsScreen } from './src/screens/ListeningPartsScreen';
@@ -35,13 +35,13 @@ import { ListeningLessonResultScreen } from './src/screens/ListeningLessonResult
 import { BilingualScreen } from './src/screens/BilingualScreen';
 import { BilingualDetailScreen } from './src/screens/BilingualDetailScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mockWordRaceProgress } from './src/api/mockWordRaceData';
 import { WordHuntListScreen } from './src/screens/WordHuntListScreen';
 import { WordHuntGameScreen } from './src/screens/WordHuntGameScreen';
-import { mockWordHuntProgress } from './src/api/mockWordHuntData';
 import { WordHuntProgress } from './src/types/wordHunt';
 import { AiAssistantScreen } from './src/screens/AiAssistantScreen';
 import { storyApi } from './src/api/storyApi';
+import { prefetchVietnameseMeanings, wordHuntApi } from './src/api/wordHuntApi';
+import { BotDifficulty } from './src/types/wordRace';
 
 type Screen =
   | 'Register'
@@ -96,10 +96,10 @@ export default function App() {
   const [storiesProgress, setStoriesProgress] = useState<UserLessonProgress[]>([]);
   const [isStoryLoading, setIsStoryLoading] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
-  const [selectedWordRaceProgress, setSelectedWordRaceProgress] = useState<UserLessonProgress | null>(null);
-  const [wordRaceProgressList, setWordRaceProgressList] = useState<UserLessonProgress[]>(mockWordRaceProgress);
+  const [selectedWordRaceLesson, setSelectedWordRaceLesson] = useState<LearningLesson | null>(null);
+  const [selectedWordRaceDifficulty, setSelectedWordRaceDifficulty] = useState<BotDifficulty>('MEDIUM');
   const [selectedWordHuntProgress, setSelectedWordHuntProgress] = useState<WordHuntProgress | null>(null);
-  const [wordHuntProgressList, setWordHuntProgressList] = useState<WordHuntProgress[]>(mockWordHuntProgress);
+  const [wordHuntProgressList, setWordHuntProgressList] = useState<WordHuntProgress[]>([]);
   const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
   const [isResumeListening, setResumeListening] = useState<boolean>(true);
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
@@ -151,9 +151,45 @@ export default function App() {
     }
   };
 
+  const loadWordHuntLessons = async () => {
+    try {
+      const response = await wordHuntApi.getWordHuntLessons(0, 50);
+      setWordHuntProgressList(response.data.content);
+    } catch (error) {
+      console.error('Failed to load Word Hunt lessons', error);
+    }
+  };
+
+  const warmWordHuntMeanings = (wordHuntProgress: WordHuntProgress) => {
+    const { words, targetWordCount } = wordHuntProgress.learningLesson.content;
+    prefetchVietnameseMeanings(words.slice(0, targetWordCount));
+  };
+
+  const refreshWordHuntDetail = async (lessonId: number) => {
+    try {
+      const response = await wordHuntApi.getWordHuntLessonDetail(lessonId);
+      const detail = response.data;
+
+      warmWordHuntMeanings(detail);
+
+      setSelectedWordHuntProgress(detail);
+      setWordHuntProgressList(prev => prev.map(item =>
+        item.learningLesson.id === lessonId ? detail : item
+      ));
+    } catch (error) {
+      console.error('Failed to load Word Hunt lesson detail', error);
+    }
+  };
+
   useEffect(() => {
     if (currentScreen === 'StoryList') {
       void loadStoryLessons();
+    }
+  }, [currentScreen]);
+
+  useEffect(() => {
+    if (currentScreen === 'WordHuntList') {
+      void loadWordHuntLessons();
     }
   }, [currentScreen]);
 
@@ -490,26 +526,23 @@ export default function App() {
         return (
           <WordRaceListScreen
             onBack={() => setCurrentScreen('VocabularyLearning')}
-            onNavigateToGame={(progress) => {
-              setSelectedWordRaceProgress(progress);
+            onNavigateToGame={(lesson, difficulty) => {
+              setSelectedWordRaceLesson(lesson);
+              setSelectedWordRaceDifficulty(difficulty);
               setCurrentScreen('WordRaceGame');
             }}
           />
         );
       case 'WordRaceGame':
-        return selectedWordRaceProgress ? (
+        return selectedWordRaceLesson ? (
           <WordRaceGameScreen
-            progress={selectedWordRaceProgress}
+            lesson={selectedWordRaceLesson}
+            difficulty={selectedWordRaceDifficulty}
             onBack={() => {
-              setSelectedWordRaceProgress(null);
+              setSelectedWordRaceLesson(null);
               setCurrentScreen('WordRaceList');
             }}
-            onComplete={(score) => {
-              setWordRaceProgressList(prev => prev.map(p =>
-                p.id === selectedWordRaceProgress.id ? { ...p, isCompleted: true, score } : p
-              ));
-              setSelectedWordRaceProgress(prev => prev ? { ...prev, isCompleted: true, score } : null);
-            }}
+            onComplete={() => {}}
           />
         ) : null;
       case 'WordHuntList':
@@ -517,9 +550,12 @@ export default function App() {
           <WordHuntListScreen
             progresses={wordHuntProgressList}
             onBack={() => setCurrentScreen('VocabularyLearning')}
-            onNavigateToGame={(progress) => {
+            onNavigateToGame={async (progress) => {
+              warmWordHuntMeanings(progress);
               setSelectedWordHuntProgress(progress);
               setCurrentScreen('WordHuntGame');
+
+              void refreshWordHuntDetail(progress.learningLesson.id);
             }}
           />
         );
@@ -531,44 +567,31 @@ export default function App() {
               setSelectedWordHuntProgress(null);
               setCurrentScreen('WordHuntList');
             }}
-            onFinish={(payload) => {
-              setWordHuntProgressList(prev => prev.map(item => {
-                if (item.id !== payload.progressId) return item;
+            onFinish={async (payload) => {
+              if (!selectedWordHuntProgress) {
+                return;
+              }
 
-                const wasCompleted = item.isCompleted;
-                const nextCompleted = wasCompleted || payload.isCompleted;
-                const nextProgressPercent = nextCompleted
-                  ? 100
-                  : Math.max(item.progressPercent, payload.progressPercent);
+              try {
+                const response = await wordHuntApi.updateWordHuntProgress(
+                  selectedWordHuntProgress.learningLesson.id,
+                  {
+                    isCompleted: payload.isCompleted,
+                    progressPercent: payload.progressPercent,
+                    score: payload.score,
+                    hintsUsedToday: payload.hintsUsedToday,
+                    hintsUsedDate: payload.hintsUsedDate,
+                  }
+                );
 
-                return {
-                  ...item,
-                  isCompleted: nextCompleted,
-                  progressPercent: nextProgressPercent,
-                  score: payload.score,
-                  completedAt: nextCompleted ? (item.completedAt || payload.completedAt) : item.completedAt,
-                  hintsUsedToday: payload.hintsUsedToday,
-                };
-              }));
-
-              setSelectedWordHuntProgress(prev => {
-                if (!prev || prev.id !== payload.progressId) return prev;
-
-                const wasCompleted = prev.isCompleted;
-                const nextCompleted = wasCompleted || payload.isCompleted;
-                const nextProgressPercent = nextCompleted
-                  ? 100
-                  : Math.max(prev.progressPercent, payload.progressPercent);
-
-                return {
-                  ...prev,
-                  isCompleted: nextCompleted,
-                  progressPercent: nextProgressPercent,
-                  score: payload.score,
-                  completedAt: nextCompleted ? (prev.completedAt || payload.completedAt) : prev.completedAt,
-                  hintsUsedToday: payload.hintsUsedToday,
-                };
-              });
+                const updated = response.data;
+                setSelectedWordHuntProgress(updated);
+                setWordHuntProgressList(prev => prev.map(item =>
+                  item.learningLesson.id === updated.learningLesson.id ? updated : item
+                ));
+              } catch (error) {
+                console.error('Failed to update Word Hunt progress', error);
+              }
             }}
           />
         ) : null;

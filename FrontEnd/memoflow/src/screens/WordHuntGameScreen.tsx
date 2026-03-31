@@ -12,7 +12,11 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { WordHuntCell, WordHuntProgress } from '../types/wordHunt';
-import { fetchVietnameseMeaning } from '../api/wordHuntApi';
+import {
+  fetchVietnameseMeaning,
+  getCachedVietnameseMeaning,
+  prefetchVietnameseMeanings,
+} from '../api/wordHuntApi';
 import { generateWordHuntBoard } from '../utils/wordHuntBoard';
 
 const { width } = Dimensions.get('window');
@@ -33,6 +37,7 @@ type FinishPayload = {
   score: number;
   completedAt?: string;
   hintsUsedToday: number;
+  hintsUsedDate: string;
 };
 
 type FoundPopup = {
@@ -138,6 +143,14 @@ const formatTime = (seconds: number): string => {
   return `${minute}:${second}`;
 };
 
+const getTodayDateKey = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress, onBack, onFinish }) => {
   const content = progress.learningLesson.content;
   const boardSize = useMemo(() => {
@@ -146,7 +159,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   }, [content.boardSize]);
 
   const lessonWords = useMemo(
-    () => content.words.slice(0, content.targetWordCount).map((item) => ({ ...item, word: item.word.toUpperCase() })),
+    () => content.words.slice(0, content.targetWordCount).map((word) => word.toUpperCase()),
     [content.words, content.targetWordCount]
   );
 
@@ -158,8 +171,16 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   const [dragStart, setDragStart] = useState<WordHuntCell | null>(null);
   const [dragDirection, setDragDirection] = useState<DragDirection | null>(null);
   const [timeLeft, setTimeLeft] = useState(content.timeLimitSeconds);
-  const [hintsUsed, setHintsUsed] = useState(progress.hintsUsedToday ?? 0);
+  const [hintsUsed, setHintsUsed] = useState(() => {
+    const today = getTodayDateKey();
+    if (progress.hintsUsedDate && progress.hintsUsedDate !== today) {
+      return 0;
+    }
+
+    return progress.hintsUsedToday ?? 0;
+  });
   const [activeHintWord, setActiveHintWord] = useState<string | null>(null);
+  const [hintMeaning, setHintMeaning] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showHintConfirm, setShowHintConfirm] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -178,35 +199,46 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   const letterFontSize = Math.max(14, Math.min(22, Math.floor(cellSize * 0.52)));
   const step = cellSize + CELL_GAP;
 
-  const wordMeaningMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const item of lessonWords) {
-      map[item.word] = item.meaningVi;
-    }
-
-    return map;
-  }, [lessonWords]);
-
-  const placedWordsMap = useMemo(() => {
-    const map: Record<string, { meaningVi: string }> = {};
-    for (const placed of boardData.placedWords) {
-      map[placed.word] = { meaningVi: placed.meaningVi };
-    }
-    return map;
-  }, [boardData.placedWords]);
-
-  const targetWords = useMemo(
-    () => lessonWords.filter((item) => placedWordsMap[item.word]),
-    [lessonWords, placedWordsMap]
-  );
+  const targetWords = useMemo(() => {
+    const placedWordSet = new Set(boardData.placedWords.map((placed) => placed.word));
+    return lessonWords.filter((word) => placedWordSet.has(word));
+  }, [boardData.placedWords, lessonWords]);
   const targetWordCount = targetWords.length;
   const foundCount = foundWords.size;
 
   const isGameEnded = showWinModal || showLoseModal;
 
-  const currentHintMeaning = activeHintWord ? wordMeaningMap[activeHintWord] : null;
+  const currentHintMeaning = activeHintWord ? hintMeaning : null;
 
   const clearErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wordMeaningMapRef = useRef<Record<string, string>>({});
+
+  const getKnownMeaning = useCallback((word: string): string | null => {
+    const upperWord = word.toUpperCase();
+    const localMeaning = wordMeaningMapRef.current[upperWord];
+    if (localMeaning) {
+      return localMeaning;
+    }
+
+    return getCachedVietnameseMeaning(upperWord);
+  }, []);
+
+  const loadMeaningForWord = useCallback(
+    async (word: string): Promise<string> => {
+      const upperWord = word.toUpperCase();
+      const knownMeaning = getKnownMeaning(upperWord);
+      if (knownMeaning) {
+        wordMeaningMapRef.current[upperWord] = knownMeaning;
+        return knownMeaning;
+      }
+
+      const fetchedMeaning = await fetchVietnameseMeaning(upperWord);
+      const resolvedMeaning = fetchedMeaning || 'Tu vung tieng Anh';
+      wordMeaningMapRef.current[upperWord] = resolvedMeaning;
+      return resolvedMeaning;
+    },
+    [getKnownMeaning]
+  );
 
   const showTransientError = useCallback((message: string) => {
     setErrorMessage(message);
@@ -276,7 +308,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   );
 
   const evaluateSelection = useCallback(
-    async (lineCells: WordHuntCell[]) => {
+    (lineCells: WordHuntCell[]) => {
       if (lineCells.length < 2) {
         return;
       }
@@ -284,9 +316,9 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
       const selectedWord = lineCells.map((cell) => cell.letter).join('');
       const reversedWord = selectedWord.split('').reverse().join('');
 
-      const matched = targetWords.find((item) => {
-        if (foundWords.has(item.word)) return false;
-        return item.word === selectedWord || item.word === reversedWord;
+      const matched = targetWords.find((word) => {
+        if (foundWords.has(word)) return false;
+        return word === selectedWord || word === reversedWord;
       });
 
       if (!matched) {
@@ -294,8 +326,8 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         return;
       }
 
-      const hintMatched = activeHintWord === matched.word;
-      setFoundWords((prev) => new Set(prev).add(matched.word));
+      const hintMatched = activeHintWord === matched;
+      setFoundWords((prev) => new Set(prev).add(matched));
       setFoundCellKinds((prev) => {
         const next = { ...prev };
         for (const cell of lineCells) {
@@ -308,13 +340,19 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         setActiveHintWord(null);
       }
 
-      const fallbackMeaning = wordMeaningMap[matched.word] || placedWordsMap[matched.word]?.meaningVi || '';
-      const apiMeaning = fallbackMeaning ? null : await fetchVietnameseMeaning(matched.word);
-      const meaning = fallbackMeaning || apiMeaning || 'Tu vung tieng Anh';
+      const initialMeaning = getKnownMeaning(matched) || 'Dang tai nghia...';
 
       setFoundPopup({
-        word: matched.word,
-        meaning,
+        word: matched,
+        meaning: initialMeaning,
+      });
+
+      void loadMeaningForWord(matched).then((resolvedMeaning) => {
+        setFoundPopup((prev) =>
+          prev && prev.word === matched
+            ? { ...prev, meaning: resolvedMeaning }
+            : prev
+        );
       });
 
       const nextCount = foundWords.size + 1;
@@ -325,11 +363,11 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     [
       activeHintWord,
       foundWords,
-      placedWordsMap,
+      getKnownMeaning,
+      loadMeaningForWord,
       showTransientError,
       targetWordCount,
       targetWords,
-      wordMeaningMap,
     ]
   );
 
@@ -343,6 +381,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     setDragDirection(null);
     setTimeLeft(content.timeLimitSeconds);
     setActiveHintWord(null);
+    setHintMeaning(null);
     setShowLoseModal(false);
     setShowWinModal(false);
     setFoundPopup(null);
@@ -359,6 +398,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         progressPercent: isCompleted ? 100 : Math.max(progress.progressPercent, progressPercent),
         score: foundWords.size,
         hintsUsedToday: hintsUsed,
+        hintsUsedDate: getTodayDateKey(),
         completedAt: isCompleted ? new Date().toISOString() : progress.completedAt,
       };
 
@@ -422,14 +462,14 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
 
           setSelection(mapLineWithLetters(line));
         },
-        onPanResponderRelease: async () => {
+        onPanResponderRelease: () => {
           const currentLine = selectedCellsRef.current;
           setDragStart(null);
           setDragDirection(null);
           setSelection([]);
 
           if (currentLine.length > 1) {
-            await evaluateSelection(currentLine);
+            evaluateSelection(currentLine);
           }
         },
         onPanResponderTerminate: () => {
@@ -478,6 +518,37 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     };
   }, []);
 
+  useEffect(() => {
+    prefetchVietnameseMeanings(lessonWords);
+    void Promise.allSettled(lessonWords.map((word) => loadMeaningForWord(word)));
+  }, [lessonWords, loadMeaningForWord]);
+
+  useEffect(() => {
+    if (!activeHintWord) {
+      setHintMeaning(null);
+      return;
+    }
+
+    let isCancelled = false;
+    const immediateMeaning = getKnownMeaning(activeHintWord);
+    setHintMeaning(immediateMeaning || 'Dang tai nghia...');
+
+    const loadHintMeaning = async () => {
+      const meaning = await loadMeaningForWord(activeHintWord);
+      if (isCancelled) {
+        return;
+      }
+
+      setHintMeaning(meaning);
+    };
+
+    void loadHintMeaning();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeHintWord, getKnownMeaning, loadMeaningForWord]);
+
   const hintRemaining = Math.max(content.maxHintsPerDay - hintsUsed, 0);
 
   const requestHint = () => {
@@ -491,7 +562,6 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
 
   const confirmHint = () => {
     const remainingWords = targetWords
-      .map((item) => item.word)
       .filter((word) => !foundWords.has(word));
 
     if (remainingWords.length === 0) {
@@ -563,14 +633,14 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         <Text style={styles.dragWordValue}>{selectedWordPreview || '...'}</Text>
       </View>
 
-      {currentHintMeaning && (
+      {activeHintWord && (
         <View style={styles.activeHintBanner}>
           <View style={styles.activeHintIcon}>
             <Ionicons name="bulb-outline" size={14} color="#CA8A04" />
           </View>
           <View>
             <Text style={styles.activeHintTitle}>ACTIVE HINT</Text>
-            <Text style={styles.activeHintText}>Goi y: {currentHintMeaning}</Text>
+            <Text style={styles.activeHintText}>Goi y: {currentHintMeaning || 'Dang tai nghia...'}</Text>
           </View>
         </View>
       )}
@@ -717,6 +787,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
                   progressPercent: Math.max(progress.progressPercent, progressPercent),
                   score: foundWords.size,
                   hintsUsedToday: hintsUsed,
+                  hintsUsedDate: getTodayDateKey(),
                   completedAt: progress.completedAt,
                 });
                 setShowExitConfirm(false);

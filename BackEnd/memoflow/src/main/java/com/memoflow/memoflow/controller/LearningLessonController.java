@@ -36,38 +36,6 @@ public class LearningLessonController {
                 .body(ApiResponse.success(response, "Flashcard lesson created successfully"));
     }
 
-    @PostMapping(value = "/learning-activities/{learningActivityId}/story-lessons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("@securityService.isActivityExist(#learningActivityId) and hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<StoryLessonResponse>> createStoryLesson(
-            @PathVariable Long learningActivityId,
-            @Valid @RequestPart("payload") CreateStoryLearningLessonRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        StoryLessonResponse response = learningLessonService.createStoryLesson(learningActivityId, request, image, userPrincipal);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Story lesson created successfully"));
-    }
-
-    @PutMapping(value = "/story-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<StoryLessonResponse>> updateStoryLesson(
-            @PathVariable Long id,
-            @Valid @RequestPart("payload") UpdateStoryLearningLessonRequest request,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        StoryLessonResponse response = learningLessonService.updateStoryLesson(id, request, image, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(response, "Story lesson updated successfully"));
-    }
-
-    @DeleteMapping("/story-lessons/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteStoryLesson(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        learningLessonService.deleteStoryLesson(id, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(null, "Story lesson deleted successfully"));
-    }
-
     @PutMapping(value = "/flashcard-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("@securityService.isFlashcardLessonOwner(#id, #userPrincipal.id)")
     public ResponseEntity<ApiResponse<FlashcardLessonResponse>> updateFlashcardLesson(
@@ -244,29 +212,5 @@ public class LearningLessonController {
     public ResponseEntity<ApiResponse<Void>> deleteLesson(@PathVariable Long id) {
         learningLessonService.deleteBilingualLesson(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Bilingual lesson deleted successfully"));
-    }
-
-    @GetMapping("/story-lessons")
-    public ResponseEntity<ApiResponse<PageResponse<StoryLessonProgressResponse>>> getStoryLessons(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            Pageable pageable) {
-        PageResponse<StoryLessonProgressResponse> response = learningLessonService.getStoryLessons(userPrincipal, pageable);
-        return ResponseEntity.ok(ApiResponse.success(response, "Story lessons retrieved successfully"));
-    }
-
-    @GetMapping("/story-lessons/{id}")
-    public ResponseEntity<ApiResponse<StoryLessonProgressResponse>> getStoryLessonDetail(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        StoryLessonProgressResponse response = learningLessonService.getStoryLessonDetail(id, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(response, "Story lesson detail retrieved successfully"));
-    }
-
-    @PostMapping("/story-lessons/{id}/complete")
-    public ResponseEntity<ApiResponse<Void>> completeStoryLesson(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        learningLessonService.completeStoryLesson(id, userPrincipal);
-        return ResponseEntity.ok(ApiResponse.success(null, "Story lesson completed"));
     }
 }

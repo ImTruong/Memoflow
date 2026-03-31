@@ -1,12 +1,5 @@
 import { LearningLesson, UserLessonProgress } from './story';
 
-export type WordHuntDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
-
-export interface WordHuntVocabularyItem {
-  word: string;
-  meaningVi: string;
-}
-
 export interface WordHuntLessonContent {
   categoryKey: string;
   categoryLabel: string;
@@ -14,13 +7,9 @@ export interface WordHuntLessonContent {
   timeLimitSeconds: number;
   targetWordCount: number;
   maxHintsPerDay: number;
-  difficulty: WordHuntDifficulty;
-  icon: string;
-  cardColor: string;
-  iconColor: string;
   objectiveText: string;
   unlockRequirementText?: string;
-  words: WordHuntVocabularyItem[];
+  words: string[];
 }
 
 export interface WordHuntLesson extends LearningLesson {
@@ -31,6 +20,7 @@ export interface WordHuntLesson extends LearningLesson {
 export interface WordHuntProgress extends Omit<UserLessonProgress, 'learningLesson'> {
   learningLesson: WordHuntLesson;
   hintsUsedToday?: number;
+  hintsUsedDate?: string;
 }
 
 export interface WordHuntCell {
@@ -41,6 +31,5 @@ export interface WordHuntCell {
 
 export interface WordHuntPlacedWord {
   word: string;
-  meaningVi: string;
   cells: WordHuntCell[];
 }

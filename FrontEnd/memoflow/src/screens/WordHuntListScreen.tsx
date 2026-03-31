@@ -93,7 +93,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
               : isCurrent && unlocked
                 ? '#FFF1E7'
                 : unlocked
-                  ? content.cardColor
+                  ? '#EEF2FF'
                   : '#E2E8F0';
 
             const iconColor = isCompleted
@@ -101,8 +101,17 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
               : isCurrent && unlocked
                 ? '#F97316'
                 : unlocked
-                  ? content.iconColor
+                  ? '#3B82F6'
                   : '#94A3B8';
+
+            const cardIcon = !unlocked
+              ? 'lock-outline'
+              : isCompleted
+                ? 'check-decagram'
+                : isCurrent
+                  ? 'play-circle'
+                  : 'magnify';
+            const showActiveBadge = isCurrent && unlocked && !isCompleted;
 
             return (
               <TouchableOpacity
@@ -123,7 +132,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
                   onNavigateToGame(progress);
                 }}
               >
-                {isCurrent && unlocked && !isCompleted && (
+                {showActiveBadge && (
                   <View style={styles.activeBadge}>
                     <Text style={styles.activeBadgeText}>DANG CHOI</Text>
                   </View>
@@ -131,12 +140,13 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
 
                 <View style={[
                   styles.iconArea,
+                  showActiveBadge && styles.iconAreaWithBadge,
                   {
                     backgroundColor: iconBackground,
                   },
                 ]}>
                   <MaterialCommunityIcons
-                    name={content.icon as any}
+                    name={cardIcon as any}
                     size={34}
                     color={iconColor}
                   />
@@ -277,8 +287,8 @@ const styles = StyleSheet.create({
   },
   activeBadge: {
     position: 'absolute',
-    top: -9,
-    right: 10,
+    top: 8,
+    right: 8,
     zIndex: 3,
     borderRadius: 12,
     backgroundColor: '#F97316',
@@ -296,6 +306,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
+  },
+  iconAreaWithBadge: {
+    marginTop: 16,
   },
   title: {
     fontSize: 20,

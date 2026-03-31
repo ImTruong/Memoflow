@@ -1,4 +1,4 @@
-import { WordHuntCell, WordHuntPlacedWord, WordHuntVocabularyItem } from '../types/wordHunt';
+import { WordHuntCell, WordHuntPlacedWord } from '../types/wordHunt';
 
 type Direction = {
   rowStep: number;
@@ -64,7 +64,6 @@ function canPlaceWord(
 function placeWord(
   board: string[][],
   word: string,
-  meaningVi: string,
   startRow: number,
   startCol: number,
   direction: Direction
@@ -80,7 +79,6 @@ function placeWord(
 
   return {
     word,
-    meaningVi,
     cells,
   };
 }
@@ -99,11 +97,11 @@ function normalizeWord(word: string): string {
   return word.trim().toUpperCase().replace(/[^A-Z]/g, '');
 }
 
-export function generateWordHuntBoard(words: WordHuntVocabularyItem[], size: number): GeneratedBoard {
+export function generateWordHuntBoard(words: string[], size: number): GeneratedBoard {
   const sanitizedWords = words
-    .map((item) => ({ ...item, word: normalizeWord(item.word) }))
-    .filter((item) => item.word.length >= 2)
-    .sort((a, b) => b.word.length - a.word.length);
+    .map(normalizeWord)
+    .filter((word) => word.length >= 2)
+    .sort((a, b) => b.length - a.length);
 
   if (sanitizedWords.length === 0) {
     return {
@@ -117,7 +115,7 @@ export function generateWordHuntBoard(words: WordHuntVocabularyItem[], size: num
     const placedWords: WordHuntPlacedWord[] = [];
     let allPlaced = true;
 
-    for (const item of sanitizedWords) {
+    for (const word of sanitizedWords) {
       let placed = false;
 
       for (let attempt = 0; attempt < 220; attempt += 1) {
@@ -125,11 +123,11 @@ export function generateWordHuntBoard(words: WordHuntVocabularyItem[], size: num
         const startRow = randomInt(size);
         const startCol = randomInt(size);
 
-        if (!canPlaceWord(board, item.word, startRow, startCol, direction)) {
+        if (!canPlaceWord(board, word, startRow, startCol, direction)) {
           continue;
         }
 
-        const placement = placeWord(board, item.word, item.meaningVi, startRow, startCol, direction);
+        const placement = placeWord(board, word, startRow, startCol, direction);
         placedWords.push(placement);
         placed = true;
         break;
