@@ -7,12 +7,12 @@ import {
   FlatList, 
   TextInput, 
   Image,
+  ActivityIndicator,
   Dimensions,
   Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
-import { mockStoryProgress } from '../api/mockStoryData';
 import { UserLessonProgress } from '../types/story';
 
 const { width } = Dimensions.get('window');
@@ -21,9 +21,19 @@ interface StoryListScreenProps {
   stories: UserLessonProgress[];
   onBack: () => void;
   onNavigateToStory: (progress: UserLessonProgress) => void;
+  isLoading?: boolean;
+  error?: string | null;
+  onRefresh?: () => void;
 }
 
-export const StoryListScreen: React.FC<StoryListScreenProps> = ({ stories, onBack, onNavigateToStory }) => {
+export const StoryListScreen: React.FC<StoryListScreenProps> = ({
+  stories,
+  onBack,
+  onNavigateToStory,
+  isLoading = false,
+  error = null,
+  onRefresh,
+}) => {
   const [activeTab, setActiveTab] = useState<'TRUYEN' | 'DA_DOC'>('TRUYEN');
   const [searchQuery, setSearchQuery] = useState('');
   const horizontalScrollRef = useRef<FlatList>(null);
@@ -146,41 +156,57 @@ export const StoryListScreen: React.FC<StoryListScreenProps> = ({ stories, onBac
       </View>
 
       {/* Story List with Horizontal Swipe */}
-      <Animated.FlatList
-        ref={horizontalScrollRef as any}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScrollEnd}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-        data={['TRUYEN', 'DA_DOC']}
-        keyExtractor={item => item}
-        renderItem={({ item: tab }) => (
-          <View style={{ width: width }}>
-            <FlatList
-              data={stories.filter(p => {
-                const matchesSearch = p.learningLesson.title.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesSearch && (tab === 'TRUYEN' ? !p.isCompleted : p.isCompleted);
-              })}
-              renderItem={renderStoryCard}
-              keyExtractor={item => item.id.toString()}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
-                    {tab === 'TRUYEN' ? 'Chưa có truyện nào cần đọc.' : 'Bạn chưa hoàn thành truyện nào.'}
-                  </Text>
-                </View>
-              }
-            />
-          </View>
-        )}
-      />
+      {isLoading && stories.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Đang tải truyện...</Text>
+        </View>
+      ) : error && stories.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>{error}</Text>
+          {onRefresh && (
+            <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
+              <Text style={styles.retryButtonText}>Tải lại</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : (
+        <Animated.FlatList
+          ref={horizontalScrollRef as any}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleScrollEnd}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
+          data={['TRUYEN', 'DA_DOC']}
+          keyExtractor={item => item}
+          renderItem={({ item: tab }) => (
+            <View style={{ width: width }}>
+              <FlatList
+                data={stories.filter(p => {
+                  const matchesSearch = p.learningLesson.title.toLowerCase().includes(searchQuery.toLowerCase());
+                  return matchesSearch && (tab === 'TRUYEN' ? !p.isCompleted : p.isCompleted);
+                })}
+                renderItem={renderStoryCard}
+                keyExtractor={item => item.id.toString()}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>
+                      {tab === 'TRUYEN' ? 'Chưa có truyện nào cần đọc.' : 'Bạn chưa hoàn thành truyện nào.'}
+                    </Text>
+                  </View>
+                }
+              />
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -324,5 +350,28 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
   },
 });

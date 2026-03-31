@@ -19,6 +19,8 @@ public interface LearningLessonRepository extends JpaRepository<LearningLesson, 
 
     List<LearningLesson> findByType(String type);
 
+        Page<LearningLesson> findByType(String type, Pageable pageable);
+
     Page<LearningLesson> findByCreatorId(Long userId, Pageable pageable);
 
     @Query(value = "SELECT * FROM learning_lessons l WHERE JSON_EXTRACT(l.content, '$.privacyMode') = 'PUBLIC'", nativeQuery = true)

@@ -12,10 +12,86 @@ import {
   Animated
 } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 import { colors, typography } from '../theme/colors';
 import { UserLessonProgress, StoryVocabulary, StoryContent } from '../types/story';
+import { fetchVietnameseMeaning } from '../api/wordHuntApi';
 
 const { width, height } = Dimensions.get('window');
+const DICTIONARY_ENDPOINT = 'https://api.dictionaryapi.dev/api/v2/entries/en';
+
+type DictionaryInfo = Pick<StoryVocabulary, 'pos' | 'meaning' | 'phonetic' | 'audioUrl'>;
+
+const getWordKey = (word: string) => word.trim().toLowerCase();
+
+const needsLookup = (vocab: StoryVocabulary) => {
+  return !vocab.meaning || !vocab.phonetic || !vocab.pos || !vocab.audioUrl;
+};
+
+const getMergedVocab = (
+  vocab: StoryVocabulary,
+  cache: Record<string, DictionaryInfo>
+): StoryVocabulary => {
+  const key = getWordKey(vocab.word);
+  const cached = cache[key];
+
+  if (!cached) {
+    return vocab;
+  }
+
+  return {
+    ...vocab,
+    pos: vocab.pos ?? cached.pos,
+    meaning: vocab.meaning ?? cached.meaning,
+    phonetic: vocab.phonetic ?? cached.phonetic,
+    audioUrl: vocab.audioUrl ?? cached.audioUrl,
+  };
+};
+
+const fetchDictionaryEntry = async (word: string): Promise<DictionaryInfo | null> => {
+  const response = await fetch(`${DICTIONARY_ENDPOINT}/${encodeURIComponent(word)}`);
+  if (!response.ok) return null;
+
+  const payload = await response.json();
+  const entry = Array.isArray(payload) ? payload[0] : null;
+  if (!entry) return null;
+
+  const phonetic = entry.phonetic || entry.phonetics?.find((p: any) => p.text)?.text || '';
+  const audioUrl = entry.phonetics?.find((p: any) => p.audio)?.audio || '';
+  const pos = entry.meanings?.[0]?.partOfSpeech || '';
+  const meaning = entry.meanings?.[0]?.definitions?.[0]?.definition || '';
+
+  const info: DictionaryInfo = {};
+  if (phonetic) info.phonetic = phonetic;
+  if (audioUrl) info.audioUrl = audioUrl;
+  if (pos) info.pos = pos;
+  if (meaning) info.meaning = meaning;
+
+  return Object.keys(info).length ? info : null;
+};
+
+const fetchDictionaryInfo = async (word: string): Promise<DictionaryInfo | null> => {
+  const normalized = getWordKey(word);
+  if (!normalized) return null;
+
+  const [dictionaryInfo, vietnameseMeaning] = await Promise.all([
+    fetchDictionaryEntry(normalized),
+    fetchVietnameseMeaning(normalized),
+  ]);
+
+  const merged: DictionaryInfo = {};
+  if (dictionaryInfo?.phonetic) merged.phonetic = dictionaryInfo.phonetic;
+  if (dictionaryInfo?.audioUrl) merged.audioUrl = dictionaryInfo.audioUrl;
+  if (dictionaryInfo?.pos) merged.pos = dictionaryInfo.pos;
+
+  if (vietnameseMeaning) {
+    merged.meaning = vietnameseMeaning;
+  } else if (dictionaryInfo?.meaning) {
+    merged.meaning = dictionaryInfo.meaning;
+  }
+
+  return Object.keys(merged).length ? merged : null;
+};
 
 interface StoryDetailScreenProps {
   progress: UserLessonProgress;
@@ -27,12 +103,87 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
   const [selectedWord, setSelectedWord] = useState<StoryVocabulary | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showFinishedToast, setShowFinishedToast] = useState(false);
+  const [dictionaryCache, setDictionaryCache] = useState<Record<string, DictionaryInfo>>({});
+  const [loadingWords, setLoadingWords] = useState<Record<string, boolean>>({});
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const lastTap = useRef<number>(0);
+  const requestedWordsRef = useRef<Record<string, boolean>>({});
   
   const lesson = progress.learningLesson;
   const content = lesson.content as StoryContent;
+  const selectedWordDetails = selectedWord ? getMergedVocab(selectedWord, dictionaryCache) : null;
 
   const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  const requestDictionaryInfo = async (word: string) => {
+    const key = getWordKey(word);
+    if (!key || requestedWordsRef.current[key]) {
+      return;
+    }
+
+    requestedWordsRef.current[key] = true;
+    setLoadingWords((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const info = await fetchDictionaryInfo(word);
+      if (info) {
+        setDictionaryCache((prev) => ({ ...prev, [key]: info }));
+      } else {
+        requestedWordsRef.current[key] = false;
+      }
+    } finally {
+      setLoadingWords((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const handlePlayAudio = async (vocab: StoryVocabulary) => {
+    if (!vocab.audioUrl) {
+      return;
+    }
+
+    try {
+      if (sound) {
+        await sound.unloadAsync();
+      }
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: vocab.audioUrl },
+        { shouldPlay: true }
+      );
+      setSound(newSound);
+    } catch (error) {
+      console.error('Audio playback error', error);
+    }
+  };
+
+  useEffect(() => {
+    const preload = async () => {
+      const uniqueWords = new Map<string, StoryVocabulary>();
+
+      content.vocabulary.forEach((vocab) => {
+        const key = getWordKey(vocab.word);
+        if (key && !uniqueWords.has(key)) {
+          uniqueWords.set(key, vocab);
+        }
+      });
+
+      for (const [key, vocab] of uniqueWords.entries()) {
+        if (!needsLookup(vocab) || requestedWordsRef.current[key]) {
+          continue;
+        }
+        void requestDictionaryInfo(vocab.word);
+      }
+    };
+
+    preload();
+  }, [content.vocabulary]);
+
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
 
   const showToast = () => {
     setShowFinishedToast(true);
@@ -61,6 +212,7 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
       );
       if (vocab) {
         setSelectedWord(vocab);
+        void requestDictionaryInfo(vocab.word);
       }
     } else {
       lastTap.current = now;
@@ -92,6 +244,17 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
   };
 
   const renderVocabItem = (vocab: StoryVocabulary, index: number) => {
+    const key = getWordKey(vocab.word);
+    const isLoading = !!loadingWords[key];
+    const mergedVocab = getMergedVocab(vocab, dictionaryCache);
+    const hasPos = !!mergedVocab.pos;
+    const hasMeaning = !!mergedVocab.meaning;
+    const meaningLine = hasPos || hasMeaning
+      ? `${hasPos ? `(${mergedVocab.pos})` : ''}${hasPos && hasMeaning ? ': ' : ''}${hasMeaning ? mergedVocab.meaning : ''}`
+      : isLoading ? 'Dang tra nghia...' : 'Cham de tra nghia';
+    const showHint = !(hasPos || hasMeaning);
+    const canPlayAudio = !!mergedVocab.audioUrl;
+
     return (
       <View key={index} style={styles.vocabItem}>
         <View style={styles.vocabNumber}>
@@ -99,15 +262,27 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
         </View>
         <View style={styles.vocabInfo}>
           <View style={styles.vocabHeader}>
-            <Text style={styles.vocabWord}>{vocab.word}</Text>
-            <Text style={styles.vocabPos}>({vocab.pos}): {vocab.meaning}</Text>
+            <Text style={styles.vocabWord}>{mergedVocab.word}</Text>
+            {showHint ? (
+              <Text style={styles.vocabHint}>{meaningLine}</Text>
+            ) : (
+              <Text style={styles.vocabPos}>{meaningLine}</Text>
+            )}
           </View>
-          {vocab.phonetic && (
-            <Text style={styles.vocabPhonetic}>{vocab.phonetic}</Text>
+          {mergedVocab.phonetic && (
+            <Text style={styles.vocabPhonetic}>{mergedVocab.phonetic}</Text>
           )}
         </View>
-        <TouchableOpacity style={styles.audioButton}>
-          <Ionicons name="volume-medium-outline" size={20} color={colors.primary} />
+        <TouchableOpacity
+          style={[styles.audioButton, !canPlayAudio && styles.audioButtonDisabled]}
+          onPress={() => handlePlayAudio(mergedVocab)}
+          disabled={!canPlayAudio}
+        >
+          <Ionicons
+            name="volume-medium-outline"
+            size={20}
+            color={canPlayAudio ? colors.primary : '#CBD5F5'}
+          />
         </TouchableOpacity>
       </View>
     );
@@ -204,10 +379,16 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
           <View style={styles.wordDetailCard}>
             <View style={styles.wordDetailHeader}>
               <View>
-                <Text style={styles.detailWord}>{selectedWord?.word}</Text>
-                <Text style={styles.detailPos}>{selectedWord?.pos}</Text>
+                <Text style={styles.detailWord}>{selectedWordDetails?.word}</Text>
+                {selectedWordDetails?.pos && (
+                  <Text style={styles.detailPos}>{selectedWordDetails.pos}</Text>
+                )}
               </View>
-              <TouchableOpacity style={styles.detailAudioBtn}>
+              <TouchableOpacity
+                style={[styles.detailAudioBtn, !selectedWordDetails?.audioUrl && styles.audioButtonDisabled]}
+                onPress={() => selectedWordDetails && handlePlayAudio(selectedWordDetails)}
+                disabled={!selectedWordDetails?.audioUrl}
+              >
                 <Ionicons name="volume-medium" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
@@ -216,12 +397,20 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
             
             <View style={styles.detailBody}>
               <Text style={styles.detailLabel}>Nghĩa:</Text>
-              <Text style={styles.detailMeaning}>{selectedWord?.meaning}</Text>
+              {selectedWordDetails?.meaning ? (
+                <Text style={styles.detailMeaning}>{selectedWordDetails.meaning}</Text>
+              ) : (
+                <Text style={styles.detailMeaningMuted}>
+                  {selectedWordDetails && loadingWords[getWordKey(selectedWordDetails.word)]
+                    ? 'Dang tra nghia...'
+                    : 'Chua co nghia'}
+                </Text>
+              )}
               
-              {selectedWord?.phonetic && (
+              {selectedWordDetails?.phonetic && (
                 <>
                   <Text style={[styles.detailLabel, { marginTop: 12 }]}>Phiên âm:</Text>
-                  <Text style={styles.detailPhonetic}>{selectedWord?.phonetic}</Text>
+                  <Text style={styles.detailPhonetic}>{selectedWordDetails.phonetic}</Text>
                 </>
               )}
             </View>
@@ -449,6 +638,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
+  vocabHint: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+  },
   vocabPhonetic: {
     fontSize: 13,
     color: colors.textSecondary,
@@ -456,6 +650,9 @@ const styles = StyleSheet.create({
   },
   audioButton: {
     padding: 8,
+  },
+  audioButtonDisabled: {
+    opacity: 0.5,
   },
   modalOverlay: {
     flex: 1,
@@ -520,6 +717,11 @@ const styles = StyleSheet.create({
     fontSize: 19,
     color: colors.textPrimary,
     fontWeight: '600',
+  },
+  detailMeaningMuted: {
+    fontSize: 17,
+    color: '#94A3B8',
+    fontStyle: 'italic',
   },
   detailPhonetic: {
     fontSize: 17,

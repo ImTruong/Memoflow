@@ -1,11 +1,5 @@
 import { WordHuntProgress } from '../types/wordHunt';
-import { LearningActivity, LearningMode, User } from '../types/story';
-
-const creator: User = {
-  id: 1,
-  username: 'admin',
-  name: 'Trum Memoflow',
-};
+import { LearningActivity, LearningMode } from '../types/story';
 
 const vocabularyMode: LearningMode = {
   id: 1,
@@ -35,7 +29,6 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       title: 'Animals',
       type: 'WORD_HUNT',
       description: 'Tim 5 tu vung chu de dong vat trong 01:45.',
-      creator,
       learningActivity: wordHuntActivity,
       image: { url: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=640' },
       content: {
@@ -74,7 +67,6 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       title: 'Nature',
       type: 'WORD_HUNT',
       description: 'Tap trung nhin nhanh, tim du 5 tu trong chu de thien nhien.',
-      creator,
       learningActivity: wordHuntActivity,
       image: { url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=640' },
       content: {
@@ -112,7 +104,6 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       title: 'Food',
       type: 'WORD_HUNT',
       description: 'Man dang choi: tim du 5 tu truoc khi het gio.',
-      creator,
       learningActivity: wordHuntActivity,
       image: { url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=640' },
       content: {
@@ -150,7 +141,6 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       title: 'Travel',
       type: 'WORD_HUNT',
       description: 'Mo khoa sau khi hoan thanh Food.',
-      creator,
       learningActivity: wordHuntActivity,
       image: { url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=640' },
       content: {
@@ -188,7 +178,6 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       title: 'Sports',
       type: 'WORD_HUNT',
       description: 'Mo khoa sau khi hoan thanh Travel.',
-      creator,
       learningActivity: wordHuntActivity,
       image: { url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=640' },
       content: {
@@ -226,7 +215,6 @@ export const mockWordHuntProgress: WordHuntProgress[] = [
       title: 'Technology',
       type: 'WORD_HUNT',
       description: 'Mo khoa sau khi hoan thanh Sports.',
-      creator,
       learningActivity: wordHuntActivity,
       image: { url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=640' },
       content: {

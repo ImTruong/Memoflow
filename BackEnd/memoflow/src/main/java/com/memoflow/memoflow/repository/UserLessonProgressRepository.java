@@ -7,10 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UserLessonProgressRepository extends JpaRepository<UserLessonProgress, Long> {
     UserLessonProgress findByUserIdAndLearningLessonId(Long userId, Long lessonId);
 
     Optional<UserLessonProgress> findByUserAndLearningLesson(User user, LearningLesson lesson);
+
+    List<UserLessonProgress> findByUserIdAndLearningLessonIdIn(Long userId, List<Long> lessonIds);
 }

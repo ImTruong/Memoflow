@@ -26,7 +26,6 @@ import { StoryDetailScreen } from './src/screens/StoryDetailScreen';
 import { WordRaceListScreen } from './src/screens/WordRaceListScreen';
 import { WordRaceGameScreen } from './src/screens/WordRaceGameScreen';
 import { UserLessonProgress } from './src/types/story';
-import { mockStoryProgress } from './src/api/mockStoryData';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { ListeningPartsScreen } from './src/screens/ListeningPartsScreen';
@@ -42,6 +41,7 @@ import { WordHuntGameScreen } from './src/screens/WordHuntGameScreen';
 import { mockWordHuntProgress } from './src/api/mockWordHuntData';
 import { WordHuntProgress } from './src/types/wordHunt';
 import { AiAssistantScreen } from './src/screens/AiAssistantScreen';
+import { storyApi } from './src/api/storyApi';
 
 type Screen =
   | 'Register'
@@ -93,7 +93,9 @@ export default function App() {
   const [isGlobalStudy, setIsGlobalStudy] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedStoryProgress, setSelectedStoryProgress] = useState<UserLessonProgress | null>(null);
-  const [storiesProgress, setStoriesProgress] = useState<UserLessonProgress[]>(mockStoryProgress);
+  const [storiesProgress, setStoriesProgress] = useState<UserLessonProgress[]>([]);
+  const [isStoryLoading, setIsStoryLoading] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
   const [selectedWordRaceProgress, setSelectedWordRaceProgress] = useState<UserLessonProgress | null>(null);
   const [wordRaceProgressList, setWordRaceProgressList] = useState<UserLessonProgress[]>(mockWordRaceProgress);
   const [selectedWordHuntProgress, setSelectedWordHuntProgress] = useState<WordHuntProgress | null>(null);
@@ -117,6 +119,43 @@ export default function App() {
   };
   initAuth();
 }, []);
+
+  const loadStoryLessons = async () => {
+    try {
+      setIsStoryLoading(true);
+      setStoryError(null);
+      const response = await storyApi.getStoryLessons(0, 50);
+      setStoriesProgress(response.data.content);
+    } catch (error) {
+      console.error('Failed to load story lessons', error);
+      setStoryError('Khong the tai danh sach truyen.');
+    } finally {
+      setIsStoryLoading(false);
+    }
+  };
+
+  const refreshStoryDetail = async (lessonId: number) => {
+    try {
+      const response = await storyApi.getStoryLessonDetail(lessonId);
+      const detail = response.data;
+
+      setSelectedStoryProgress(prev =>
+        prev && prev.learningLesson.id === lessonId ? detail : prev
+      );
+
+      setStoriesProgress(prev => prev.map(item =>
+        item.learningLesson.id === lessonId ? detail : item
+      ));
+    } catch (error) {
+      console.error('Failed to load story lesson detail', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentScreen === 'StoryList') {
+      void loadStoryLessons();
+    }
+  }, [currentScreen]);
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -409,10 +448,14 @@ export default function App() {
         return (
           <StoryListScreen
             stories={storiesProgress}
+            isLoading={isStoryLoading}
+            error={storyError}
+            onRefresh={loadStoryLessons}
             onBack={() => setCurrentScreen('Home')}
             onNavigateToStory={(progress) => {
               setSelectedStoryProgress(progress);
               setCurrentScreen('StoryDetail');
+              void refreshStoryDetail(progress.learningLesson.id);
             }}
           />
         );
@@ -424,13 +467,22 @@ export default function App() {
               setSelectedStoryProgress(null);
               setCurrentScreen('StoryList');
             }}
-            onComplete={() => {
-              // Update completion status in the master list
+            onComplete={async () => {
+              try {
+                await storyApi.completeStoryLesson(selectedStoryProgress.learningLesson.id);
+              } catch (error) {
+                console.error('Failed to complete story lesson', error);
+              }
+
               setStoriesProgress(prev => prev.map(s =>
-                s.id === selectedStoryProgress.id ? { ...s, isCompleted: true } : s
+                s.learningLesson.id === selectedStoryProgress.learningLesson.id
+                  ? { ...s, isCompleted: true, progressPercent: 100 }
+                  : s
               ));
-              // Update selection context
-              setSelectedStoryProgress(prev => prev ? { ...prev, isCompleted: true } : null);
+              setSelectedStoryProgress(prev => prev
+                ? { ...prev, isCompleted: true, progressPercent: 100 }
+                : null
+              );
             }}
           />
         ) : null;

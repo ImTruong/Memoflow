@@ -3,7 +3,10 @@ package com.memoflow.memoflow.service;
 import com.memoflow.memoflow.dto.request.CreateFlashcardLearningLessonRequest;
 import com.memoflow.memoflow.dto.request.SubmitListeningLessonRequest;
 import com.memoflow.memoflow.dto.request.UpdateFlashcardLearningLessonRequest;
+import com.memoflow.memoflow.dto.request.CreateStoryLearningLessonRequest;
+import com.memoflow.memoflow.dto.request.UpdateStoryLearningLessonRequest;
 import com.memoflow.memoflow.dto.response.*;
+import org.springframework.web.multipart.MultipartFile;
 import com.memoflow.memoflow.security.UserPrincipal;
 import org.springframework.data.domain.Pageable;
 
@@ -12,6 +15,20 @@ public interface LearningLessonService {
     FlashcardLessonResponse createFlashcardLesson(Long learningActivityId, CreateFlashcardLearningLessonRequest request, UserPrincipal userPrincipal);
 
     FlashcardLessonResponse updateFlashcardLesson(Long id, UpdateFlashcardLearningLessonRequest request, UserPrincipal userPrincipal);
+
+        StoryLessonResponse createStoryLesson(Long learningActivityId, CreateStoryLearningLessonRequest request, MultipartFile image,
+            UserPrincipal userPrincipal);
+
+            StoryLessonResponse updateStoryLesson(Long id, UpdateStoryLearningLessonRequest request, MultipartFile image,
+                UserPrincipal userPrincipal);
+
+            void deleteStoryLesson(Long id, UserPrincipal userPrincipal);
+
+        PageResponse<StoryLessonProgressResponse> getStoryLessons(UserPrincipal userPrincipal, Pageable pageable);
+
+        StoryLessonProgressResponse getStoryLessonDetail(Long lessonId, UserPrincipal userPrincipal);
+
+        void completeStoryLesson(Long lessonId, UserPrincipal userPrincipal);
     
     void deleteFlashcardLesson(Long id, UserPrincipal userPrincipal);
 

@@ -36,7 +36,6 @@ export interface LearningLesson {
   description: string;
   image?: Media;
   content: any; // Flexible JSON content
-  creator: User;
   learningActivity?: LearningActivity;
 }
 
@@ -54,8 +53,8 @@ export interface UserLessonProgress {
 // Specific content structure for Truyện Chêm
 export interface StoryVocabulary {
   word: string;
-  pos: string;
-  meaning: string;
+  pos?: string;
+  meaning?: string;
   phonetic?: string;
   audioUrl?: string;
 }
@@ -64,5 +63,4 @@ export interface StoryContent {
   englishTitle: string;
   paragraphs: string[];
   vocabulary: StoryVocabulary[];
-  imageUrl?: string;
 }

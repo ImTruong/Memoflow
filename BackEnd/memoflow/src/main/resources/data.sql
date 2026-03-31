@@ -35,6 +35,13 @@ INSERT INTO media (url, public_id, type) VALUES
 ('https://picsum.photos/800/400?random=5', '', 'IMAGE'),
 ('https://picsum.photos/800/400?random=6', '', 'IMAGE');
 
+INSERT INTO media (url, public_id, type) VALUES
+('https://picsum.photos/800/400?random=10', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=11', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=12', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=13', '', 'IMAGE'),
+('https://picsum.photos/800/400?random=14', '', 'IMAGE');
+
 -- Update user with avatar
 UPDATE users SET avatar_media_id = 1 WHERE id = 1;
 
@@ -157,6 +164,99 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, co
       ]
     }', 23);
 
+
+INSERT INTO learning_lessons (title, type, description, learning_activity_id, user_id, content, image_media_id) VALUES
+                                                                                                                    ('Ngọn đèn trong bão', 'TRUYEN_CHEM', 'Bài học về sự tử tế và kiên trì trong hoàn cảnh khó khăn', 2, 1, '{
+      "englishTitle": "The Lantern in the Storm",
+      "paragraphs": [
+        "Đêm đó gió nổi lên dữ dội, mưa quất vào mái lá, cả làng chìm trong {storm} kéo dài nhiều giờ.",
+        "Ông lão mang chiếc {lantern} ra trước ngõ, đứng bên con {path} quen thuộc để chỉ đường cho người đi lạc; ngọn lửa nhỏ nhưng vẫn cháy {steady}.",
+        "Khi người khách trú ẩn an toàn trong {shelter}, ông lão chỉ mỉm cười, giữ lời {promise} đã hẹn với con trai là luôn {guide} người yếu trong bóng tối đến tận {horizon} bình yên."
+      ],
+      "vocabulary": [
+        { "word": "Storm" },
+        { "word": "Lantern" },
+        { "word": "Path" },
+        { "word": "Steady" },
+        { "word": "Shelter" },
+        { "word": "Promise" },
+        { "word": "Guide" },
+        { "word": "Horizon" }
+      ]
+    }', 24),
+                                                                                                                    ('Chuyến xe cuối cùng', 'TRUYEN_CHEM', 'Một câu chuyện về lòng trắc ẩn trong những khoảnh khắc vội vã', 2, 1, '{
+      "englishTitle": "The Last Train",
+      "paragraphs": [
+        "Buổi tối, Lan cầm tấm {ticket} đứng chờ ở {platform} vắng, tiếng {whistle} từ xa vang lên như gọi mọi người trở về.",
+        "Tàu báo {delay} vì mưa lớn, cô định bỏ cuộc thì gặp người lái xe mang theo {parcel} cần giao gấp.",
+        "Cô đổi {route} để giúp, cuối cùng cả hai đến nơi đúng {arrival}, hiểu rằng một chút {compassion} có thể nối dài hành trình."
+      ],
+      "vocabulary": [
+        { "word": "Ticket" },
+        { "word": "Platform" },
+        { "word": "Whistle" },
+        { "word": "Delay" },
+        { "word": "Parcel" },
+        { "word": "Route" },
+        { "word": "Arrival" },
+        { "word": "Compassion" }
+      ]
+    }', 25),
+                                                                                                                    ('Hạt mầm và khu vườn', 'TRUYEN_CHEM', 'Kiên nhẫn và chăm sóc là chìa khóa của mọi thành quả', 2, 1, '{
+      "englishTitle": "The Seed and the Garden",
+      "paragraphs": [
+        "Cậu bé nhận một {seed} nhỏ, chôn trong {soil} bên hàng rào và học {patience} mỗi ngày.",
+        "Sau nhiều tuần, mầm non {sprout} lên, cậu bé chăm {care} và nhờ {neighbor} chỉ cách tưới hợp lý.",
+        "Mùa thu tới, {harvest} đầy giỏ, hoa {bloom} rực rỡ, cậu hiểu rằng chăm chỉ sẽ nở hoa."
+      ],
+      "vocabulary": [
+        { "word": "Seed" },
+        { "word": "Soil" },
+        { "word": "Patience" },
+        { "word": "Sprout" },
+        { "word": "Care" },
+        { "word": "Neighbor" },
+        { "word": "Harvest" },
+        { "word": "Bloom" }
+      ]
+    }', 26),
+                                                                                                                    ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, 1, '{
+      "englishTitle": "The Wooden Bridge",
+      "paragraphs": [
+        "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
+        "Ông đo từng tấm ván theo {measure} chính xác để giữ {balance}, dù công việc {risky}.",
+        "Khi cầu hoàn thành, dân làng bày tỏ {respect} và học được giá trị của {craft} bền bỉ."
+      ],
+      "vocabulary": [
+        { "word": "River" },
+        { "word": "Carpenter" },
+        { "word": "Bridge" },
+        { "word": "Measure" },
+        { "word": "Balance" },
+        { "word": "Risky" },
+        { "word": "Respect" },
+        { "word": "Craft" }
+      ]
+    }', 27),
+                                                                                                                    ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, 1, '{
+      "englishTitle": "The Old Library",
+      "paragraphs": [
+        "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",
+        "Cô lật từng mục trong {index}, ánh mắt {curious} tìm quyển sách {fragile} bị lãng quên.",
+        "Giữa không gian {whisper} yên tĩnh, cô nghe ký ức gọi về như {memory} cũ.",
+        "Cô quyết tâm {restore} lại thư viện để những câu chuyện tiếp tục soi sáng thế hệ sau."
+      ],
+      "vocabulary": [
+        { "word": "Archive" },
+        { "word": "Dust" },
+        { "word": "Index" },
+        { "word": "Curious" },
+        { "word": "Fragile" },
+        { "word": "Whisper" },
+        { "word": "Memory" },
+        { "word": "Restore" }
+      ]
+    }', 28);
 
 -- Create 2 words for each learning lesson
 INSERT INTO words (name, ipa, example, definition, learning_lesson_id) VALUES 

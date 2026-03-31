@@ -12,7 +12,6 @@ export const mockWordRaceProgress: UserLessonProgress[] = [
       type: "WORD_RACE",
       description: "Người đạt 40 điểm trước sẽ thắng. Chế độ luyện tập cơ bản.",
       image: { url: "https://img.freepik.com/free-vector/pixel-art-style-retro-game-background_23-2149021677.jpg" },
-      creator: { id: 1, username: "admin", name: "Trùm Memoflow" },
       content: {
         targetScore: 40,
         timeLimit: 15,
@@ -34,7 +33,6 @@ export const mockWordRaceProgress: UserLessonProgress[] = [
       type: "WORD_RACE",
       description: "Người đạt 50 điểm trước và không kết thúc bằng 's' (số nhiều) sẽ thắng.",
       image: { url: "https://cdn-icons-png.flaticon.com/512/595/595067.png" },
-      creator: { id: 1, username: "admin", name: "Trùm Memoflow" },
       content: {
         targetScore: 50,
         timeLimit: 12,
@@ -57,7 +55,6 @@ export const mockWordRaceProgress: UserLessonProgress[] = [
       type: "WORD_RACE",
       description: "Người đạt 50 điểm trước và không kết thúc bằng 'e' sẽ thắng.",
       image: { url: "https://emoji-copy.com/wp-content/uploads/2021/01/Collision.png" },
-      creator: { id: 1, username: "admin", name: "Trùm Memoflow" },
       content: {
         targetScore: 50,
         timeLimit: 10,
@@ -80,7 +77,6 @@ export const mockWordRaceProgress: UserLessonProgress[] = [
       type: "WORD_RACE",
       description: "Thời gian điền bị rút ngắn và đạt 50 điểm trước sẽ thắng.",
       image: { url: "https://i.pinimg.com/736x/87/40/8c/87408c697818e9863a8a864700f72dc6.jpg" },
-      creator: { id: 1, username: "admin", name: "Trùm Memoflow" },
       content: {
         targetScore: 50,
         timeLimit: 5,
