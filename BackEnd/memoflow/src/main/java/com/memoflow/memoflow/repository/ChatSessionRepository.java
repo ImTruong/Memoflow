@@ -12,4 +12,10 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     List<ChatSession> findByUserId(Long userId);
 
     List<ChatSession> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<ChatSession> findByUserIdOrderByUpdatedAtDesc(Long userId);
+
+    java.util.Optional<ChatSession> findByIdAndUserId(Long id, Long userId);
+
+    boolean existsByIdAndUserId(Long id, Long userId);
 }

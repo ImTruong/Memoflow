@@ -41,6 +41,7 @@ import { WordHuntListScreen } from './src/screens/WordHuntListScreen';
 import { WordHuntGameScreen } from './src/screens/WordHuntGameScreen';
 import { mockWordHuntProgress } from './src/api/mockWordHuntData';
 import { WordHuntProgress } from './src/types/wordHunt';
+import { AiAssistantScreen } from './src/screens/AiAssistantScreen';
 
 type Screen =
   | 'Register'
@@ -74,7 +75,8 @@ type Screen =
   | 'WordHuntList'
   | 'WordHuntGame'
   | 'Bilingual'
-  | 'BilingualDetail';
+  | 'BilingualDetail'
+  | 'AiChat';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('Login');
@@ -211,6 +213,13 @@ export default function App() {
               setPrevScreen('Home')
               setCurrentScreen('Bilingual')
             }}
+            onNavigateToAiChat={() => setCurrentScreen('AiChat')}
+          />
+        );
+      case 'AiChat':
+        return (
+          <AiAssistantScreen
+            onBack={() => setCurrentScreen('Home')}
           />
         );
       case 'VocabularyLearning':
@@ -527,6 +536,7 @@ export default function App() {
             onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
             onNavigateToStoryList={() => setCurrentScreen('StoryList')}
             onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToAiChat={() => setCurrentScreen('AiChat')}
           />
         );
     }
@@ -570,7 +580,8 @@ export default function App() {
           'StoryDetail',
           'WordRaceGame',
           'WordHuntList',
-          'WordHuntGame'
+          'WordHuntGame',
+          'AiChat'
         ].includes(currentScreen) && (
           <Footer 
             activeTab={getActiveTab(currentScreen)} 

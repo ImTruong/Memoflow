@@ -19,6 +19,7 @@ type HomeScreenProps = {
   onNavigateToWordRaceList: () => void;
   onNavigateToListeningParts: () => void;
   onNavigateToBilingual: () => void;
+  onNavigateToAiChat: () => void;
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ 
@@ -29,6 +30,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToWordRaceList,
   onNavigateToListeningParts,
   onNavigateToBilingual,
+  onNavigateToAiChat,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const { profile } = useUser();
@@ -80,7 +82,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
 
         {/* Floating Action Button (FAB) for Chat bot */}
-        <TouchableOpacity style={styles.fab}>
+        <TouchableOpacity style={styles.fab} onPress={onNavigateToAiChat}>
           <MaterialCommunityIcons name="chat-processing" size={28} color="#FFF" />
         </TouchableOpacity>
       </View>

@@ -12,4 +12,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findByChatSessionId(Long chatSessionId);
 
     List<Message> findByChatSessionIdOrderByCreatedAtAsc(Long chatSessionId);
+
+    java.util.Optional<Message> findTopByChatSessionIdOrderByCreatedAtDesc(Long chatSessionId);
+
+    List<Message> findTop20ByChatSessionIdOrderByCreatedAtDesc(Long chatSessionId);
 }
