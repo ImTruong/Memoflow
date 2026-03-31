@@ -1,26 +1,87 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Modal
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
-import { mockWordRaceLessons } from '../api/mockWordRaceData';
 import { LearningLesson } from '../types/story';
-import { BotDifficulty, WordRaceLessonContent } from '../types/wordRace';
+import { wordRaceApi } from '../api/wordRaceApi';
+import {
+  BotDifficulty,
+  WordRaceLesson,
+  WordRaceLessonContent,
+} from '../types/wordRace';
 
-const CARD_ACCENTS = ['#D53F8C', '#319795', '#D97706', '#374151'];
-const CARD_BACKGROUNDS = ['#FDE2E2', '#E6FFFA', '#FEF3C7', '#F3F4F6'];
-const CARD_ICONS: Array<'play-circle' | 'close-circle-outline' | 'flash' | 'timer-sand'> = [
-  'play-circle',
-  'close-circle-outline',
-  'flash',
-  'timer-sand',
+const FALLBACK_VISUALS = [
+  { accentColor: '#0284C7', iconBackground: '#E0F2FE', iconName: 'play-circle' },
+  { accentColor: '#0F766E', iconBackground: '#CCFBF1', iconName: 'timer-sand' },
+  { accentColor: '#B45309', iconBackground: '#FEF3C7', iconName: 'flash' },
 ];
+
+const toSafeNumber = (value: unknown, fallback: number): number => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const inferVisual = (lesson: WordRaceLesson) => {
+  const content = (lesson.content || {}) as WordRaceLessonContent;
+  const timeLimit = toSafeNumber(content.timeLimit, 12);
+  const targetScore = toSafeNumber(content.targetScore, 50);
+  const forbiddenEndings = Array.isArray(content.forbiddenEndings)
+    ? content.forbiddenEndings
+        .map((ending) => ending.trim().toLowerCase())
+        .filter((ending) => ending.length > 0)
+    : [];
+
+  if (forbiddenEndings.length > 0 && timeLimit <= 7) {
+    return {
+      accentColor: '#DC2626',
+      iconBackground: '#FEE2E2',
+      iconName: 'flash',
+    };
+  }
+
+  if (forbiddenEndings.length > 0) {
+    return {
+      accentColor: '#BE123C',
+      iconBackground: '#FFE4E6',
+      iconName: 'close-circle-outline',
+    };
+  }
+
+  if (timeLimit <= 6) {
+    return {
+      accentColor: '#B45309',
+      iconBackground: '#FEF3C7',
+      iconName: 'flash',
+    };
+  }
+
+  if (timeLimit <= 10) {
+    return {
+      accentColor: '#0F766E',
+      iconBackground: '#CCFBF1',
+      iconName: 'timer-sand',
+    };
+  }
+
+  if (targetScore <= 40) {
+    return {
+      accentColor: '#0284C7',
+      iconBackground: '#E0F2FE',
+      iconName: 'play-circle',
+    };
+  }
+
+  const lessonId = Math.abs(toSafeNumber(lesson.id, 0));
+  return FALLBACK_VISUALS[lessonId % FALLBACK_VISUALS.length];
+};
 
 interface WordRaceListScreenProps {
   onBack: () => void;
@@ -30,6 +91,30 @@ interface WordRaceListScreenProps {
 export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, onNavigateToGame }) => {
   const [selectedLesson, setSelectedLesson] = useState<LearningLesson | null>(null);
   const [showLevelModal, setShowLevelModal] = useState(false);
+  const [lessons, setLessons] = useState<WordRaceLesson[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const loadLessons = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      const response = await wordRaceApi.getWordRaceLessons(0, 50);
+      const sorted = [...response.data.content].sort((a, b) => a.id - b.id);
+
+      setLessons(sorted);
+    } catch (error) {
+      console.error('Failed to load Word Race lessons', error);
+      setErrorMessage('Khong the tai danh sach man choi. Vui long thu lai.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadLessons();
+  }, [loadLessons]);
 
   const handleSelectMode = (lesson: LearningLesson) => {
     setSelectedLesson(lesson);
@@ -63,62 +148,96 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
           </View>
         </View>
 
+        <View style={styles.lessonCountBadge}>
+          <Ionicons name="layers-outline" size={14} color="#4B5563" />
+          <Text style={styles.lessonCountText}>Hien co {lessons.length} man choi</Text>
+        </View>
+
         {/* Mode List */}
         <View style={styles.listContainer}>
-          {mockWordRaceLessons.map((lesson, index) => {
-            const content = lesson.content as WordRaceLessonContent;
-            const accentColor = CARD_ACCENTS[index % CARD_ACCENTS.length];
-            const iconBackground = CARD_BACKGROUNDS[index % CARD_BACKGROUNDS.length];
-            const iconName = CARD_ICONS[index % CARD_ICONS.length];
+          {isLoading ? (
+            <View style={styles.statusCard}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.statusText}>Dang tai danh sach man choi...</Text>
+            </View>
+          ) : null}
 
-            return (
-              <TouchableOpacity
-                key={lesson.id}
-                style={styles.modeCard}
-                onPress={() => handleSelectMode(lesson)}
-                activeOpacity={0.9}
-              >
-                <View style={[styles.idBar, { backgroundColor: accentColor }]} />
-
-                <View style={styles.cardContent}>
-                  <View style={[styles.iconBox, { backgroundColor: iconBackground }]}>
-                    <MaterialCommunityIcons
-                      name={iconName as any}
-                      size={40}
-                      color={accentColor}
-                    />
-                  </View>
-
-                  <View style={styles.infoArea}>
-                    <Text style={styles.modeTitle}>{lesson.title}</Text>
-                    <Text style={styles.modeDesc}>{lesson.description}</Text>
-
-                    <View style={styles.ruleTags}>
-                      <View style={styles.tag}>
-                        <Ionicons name="trophy-outline" size={14} color="#6B7280" />
-                        <Text style={styles.tagText}>{content.targetScore}đ</Text>
-                      </View>
-                      <View style={styles.tag}>
-                        <Ionicons name="time-outline" size={14} color="#6B7280" />
-                        <Text style={styles.tagText}>{content.timeLimit}s/Lượt</Text>
-                      </View>
-                      {content.forbiddenEndings && (
-                        <View style={[styles.tag, { borderColor: '#FEE2E2', backgroundColor: '#FEF2F2' }]}>
-                          <Ionicons name="ban-outline" size={14} color="#EF4444" />
-                          <Text style={[styles.tagText, { color: '#EF4444' }]}>Không kết thúc bằng {content.forbiddenEndings.join(', ')}</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </View>
-
-                {/* Start Button style as in image: but here we make the card itself clickable */}
-                <View style={styles.arrowIcon}>
-                  <Ionicons name="chevron-forward" size={24} color="#D1D5DB" />
-                </View>
+          {!isLoading && errorMessage ? (
+            <View style={styles.statusCard}>
+              <Ionicons name="alert-circle-outline" size={20} color="#EF4444" />
+              <Text style={styles.statusText}>{errorMessage}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => void loadLessons()}>
+                <Text style={styles.retryButtonText}>Thu lai</Text>
               </TouchableOpacity>
-            );
-          })}
+            </View>
+          ) : null}
+
+          {!isLoading && !errorMessage && lessons.length === 0 ? (
+            <View style={styles.statusCard}>
+              <Ionicons name="sparkles-outline" size={20} color="#6B7280" />
+              <Text style={styles.statusText}>Chua co man choi nao duoc mo.</Text>
+            </View>
+          ) : null}
+
+          {!isLoading && !errorMessage
+            ? lessons.map((lesson) => {
+                const content = (lesson.content || {}) as WordRaceLessonContent;
+                const visual = inferVisual(lesson);
+                const forbiddenEndings = Array.isArray(content.forbiddenEndings)
+                  ? content.forbiddenEndings
+                  : [];
+
+                return (
+                  <TouchableOpacity
+                    key={lesson.id}
+                    style={styles.modeCard}
+                    onPress={() => handleSelectMode(lesson)}
+                    activeOpacity={0.9}
+                  >
+                    <View style={[styles.idBar, { backgroundColor: visual.accentColor }]} />
+
+                    <View style={styles.cardContent}>
+                      <View style={[styles.iconBox, { backgroundColor: visual.iconBackground }]}>
+                        <MaterialCommunityIcons name={visual.iconName as any} size={40} color={visual.accentColor} />
+                      </View>
+
+                      <View style={styles.infoArea}>
+                        <Text style={styles.modeTitle}>{lesson.title}</Text>
+                        <Text style={styles.modeDesc}>{lesson.description}</Text>
+
+                        <View style={styles.ruleTags}>
+                          <View style={styles.tag}>
+                            <Ionicons name="trophy-outline" size={14} color="#6B7280" />
+                            <Text style={styles.tagText}>{content.targetScore}đ</Text>
+                          </View>
+                          <View style={styles.tag}>
+                            <Ionicons name="time-outline" size={14} color="#6B7280" />
+                            <Text style={styles.tagText}>{content.timeLimit}s/Luot</Text>
+                          </View>
+                          {forbiddenEndings.length > 0 ? (
+                            <View
+                              style={[
+                                styles.tag,
+                                { borderColor: '#FEE2E2', backgroundColor: '#FEF2F2' },
+                              ]}
+                            >
+                              <Ionicons name="ban-outline" size={14} color="#EF4444" />
+                              <Text style={[styles.tagText, { color: '#EF4444' }]}>
+                                Khong ket thuc bang {forbiddenEndings.join(', ')}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.arrowIcon}>
+                      <Ionicons name="chevron-forward" size={24} color="#D1D5DB" />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            : null}
         </View>
       </ScrollView>
 
@@ -209,6 +328,25 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
+  lessonCountBadge: {
+    marginTop: 12,
+    marginHorizontal: 16,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  lessonCountText: {
+    fontSize: 12,
+    color: '#4B5563',
+    fontWeight: '600',
+  },
   bannerContainer: {
     height: 180,
     marginHorizontal: 16,
@@ -244,6 +382,32 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
     gap: 16,
+  },
+  statusCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 16,
+    alignItems: 'center',
+    gap: 10,
+  },
+  statusText: {
+    textAlign: 'center',
+    color: '#4B5563',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  retryButton: {
+    backgroundColor: '#111827',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   modeCard: {
     backgroundColor: '#FFF',

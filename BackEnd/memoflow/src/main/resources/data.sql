@@ -421,3 +421,9 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, co
 ('Travel', 'WORD_HUNT', 'Mo khoa sau khi hoan thanh Food.', 5, '{"categoryKey":"travel","categoryLabel":"Travel","boardSize":8,"timeLimitSeconds":120,"targetWordCount":6,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 6 tu","unlockRequirementText":"Can vuot qua Food de mo khoa","words":["HOTEL","FLIGHT","PASSPORT","TICKET","LUGGAGE","BEACH"]}'),
 ('Sports', 'WORD_HUNT', 'Mo khoa sau khi hoan thanh Travel.', 5, '{"categoryKey":"sports","categoryLabel":"Sports","boardSize":10,"timeLimitSeconds":120,"targetWordCount":6,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 6 tu","unlockRequirementText":"Can vuot qua Travel de mo khoa","words":["TENNIS","SOCCER","BOXING","RUNNING","SWIM","VOLLEY"]}'),
 ('Technology', 'WORD_HUNT', 'Mo khoa sau khi hoan thanh Sports.', 5, '{"categoryKey":"technology","categoryLabel":"Technology","boardSize":10,"timeLimitSeconds":150,"targetWordCount":7,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 7 tu","unlockRequirementText":"Can vuot qua Sports de mo khoa","words":["SERVER","ROUTER","CODING","BINARY","MOBILE","CLOUD","SCREEN"]}');
+
+INSERT INTO learning_lessons (title, type, description, learning_activity_id, content) VALUES
+('Hoc viec so dang', 'WORD_RACE', 'Nguoi dat 40 diem truoc se thang. Che do luyen tap co ban.', 4, '{"targetScore":40,"timeLimit":15,"forbiddenEndings":[]}'),
+('Noi khong voi so nhieu', 'WORD_RACE', 'Nguoi dat 50 diem truoc va khong ket thuc bang ''s'' se thang.', 4, '{"targetScore":50,"timeLimit":12,"forbiddenEndings":["s"]}'),
+('E ... Em la khong the', 'WORD_RACE', 'Nguoi dat 50 diem truoc va khong ket thuc bang ''e'' se thang.', 4, '{"targetScore":50,"timeLimit":10,"forbiddenEndings":["e"]}'),
+('Chay dua tu than', 'WORD_RACE', 'Thoi gian dien bi rut ngan va dat 50 diem truoc se thang.', 4, '{"targetScore":50,"timeLimit":5,"forbiddenEndings":[]}');

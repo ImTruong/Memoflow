@@ -1,9 +1,11 @@
+import { LearningLesson } from './story';
+
 export type BotDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface WordRaceRule {
   targetScore: number;
   timeLimit: number; // in seconds
-  forbiddenEndings?: string[]; // e.g., ['s', 'e']
+  forbiddenEndings: string[]; // e.g., ['s', 'e']
 }
 
 export interface WordRaceMessage {
@@ -15,6 +17,9 @@ export interface WordRaceMessage {
 }
 
 // Re-defining the LearningLesson content for Word Race
-export interface WordRaceLessonContent extends WordRaceRule {
-  // specific word race fields if any
+export interface WordRaceLessonContent extends WordRaceRule {}
+
+export interface WordRaceLesson extends LearningLesson {
+  type: 'WORD_RACE';
+  content: WordRaceLessonContent;
 }
