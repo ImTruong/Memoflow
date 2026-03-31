@@ -1,10 +1,6 @@
 package com.memoflow.memoflow.service.impl;
 
-import com.memoflow.memoflow.dto.request.CreateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.SubmitListeningLessonRequest;
-import com.memoflow.memoflow.dto.request.UpdateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.UpdateStoryLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.CreateStoryLearningLessonRequest;
+import com.memoflow.memoflow.dto.request.*;
 import com.memoflow.memoflow.dto.response.*;
 import com.memoflow.memoflow.entity.*;
 import com.memoflow.memoflow.exception.ResourceNotFoundException;
@@ -24,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.function.Function;
@@ -45,6 +42,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     private final QuizQuestionRepository quizQuestionRepository;
     private final QuizOptionRepository quizOptionRepository;
     private final UserQuizAnswerRepository userQuizAnswerRepository;
+    public final MediaRepository mediaRepository;
 
     @Override
     public FlashcardLessonResponse createFlashcardLesson(Long learningActivityId,
@@ -672,7 +670,6 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 quizResult.setQuestionText(q.getQuestionText());
                 quizResult.setTranslation(q.getTranslation());
 
-                // tìm đáp án user chọn
                 Integer userAnswerId = userAnswers.stream()
                         .filter(ans -> ans.getQuizQuestion().getId().equals(q.getId()))
                         .map(ans -> ans.getQuizOption() != null ? ans.getQuizOption().getId().intValue() : null)
@@ -697,6 +694,255 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
         response.setGroups(groupResults);
         return response;
+    }
+
+    @Override
+    public ListeningLessonDetailResponse createListeningLesson(CreateListeningLessonRequest request,
+                                                               List<MultipartFile> audios,
+                                                               List<MultipartFile> images) throws IOException {
+        LearningLesson lesson = new LearningLesson();
+        lesson.setTitle(request.getTitle());
+        lesson.setType("LISTENING_PART_" + request.getPart());
+
+        LearningActivity activity = learningActivityRepository.findById(8L)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
+        lesson.setLearningActivity(activity);
+
+        List<QuizGroup> groups = new ArrayList<>();
+        int audioIndex = 0;
+        int imageIndex = 0;
+
+        for (CreateListeningLessonRequest.ListeningGroupRequest gReq : request.getGroups()) {
+            QuizGroup group = new QuizGroup();
+            group.setOrderIndex(gReq.getOrderIndex());
+            group.setType(gReq.getType());
+            group.setTranscript(gReq.getTranscript());
+            group.setTranslation(gReq.getTranslation());
+            group.setLearningLesson(lesson);
+
+            if (Boolean.TRUE.equals(gReq.getHasAudio()) && audios != null && audioIndex < audios.size()) {
+                MultipartFile audioFile = audios.get(audioIndex++);
+                if (audioFile != null && !audioFile.isEmpty()) {
+                    Map<String, String> uploadResult = cloudinaryService.uploadFile(audioFile, "listening/audio");
+                    Media audio = new Media();
+                    audio.setType(MediaType.AUDIO);
+                    audio.setUrl(uploadResult.get("url"));
+                    audio.setPublicId(uploadResult.get("publicId"));
+                    group.setAudio(audio);
+                }
+            }
+
+            if (Boolean.TRUE.equals(gReq.getHasImage()) && images != null && imageIndex < images.size()) {
+                MultipartFile imageFile = images.get(imageIndex++);
+                if (imageFile != null && !imageFile.isEmpty()) {
+                    Map<String, String> uploadResult = cloudinaryService.uploadFile(imageFile, "listening/image");
+                    Media image = new Media();
+                    image.setType(MediaType.IMAGE);
+                    image.setUrl(uploadResult.get("url"));
+                    image.setPublicId(uploadResult.get("publicId"));
+                    group.setImage(image);
+                }
+            }
+
+            List<QuizQuestion> questions = new ArrayList<>();
+            for (CreateListeningLessonRequest.ListeningQuizRequest qReq : gReq.getQuizzes()) {
+                QuizQuestion question = new QuizQuestion();
+                question.setQuestionText(qReq.getQuestionText());
+                question.setTranslation(qReq.getTranslation());
+                question.setType("MULTIPLE_CHOICE");
+                question.setOrderIndex(qReq.getOrderIndex());
+                question.setQuizGroup(group);
+
+                List<QuizOption> options = new ArrayList<>();
+                for (CreateListeningLessonRequest.ListeningOptionRequest oReq : qReq.getOptions()) {
+                    QuizOption option = new QuizOption();
+                    option.setOrderIndex(oReq.getOrderIndex());
+                    option.setOptionText(oReq.getOptionText());
+                    option.setIsCorrect(oReq.getIsCorrect());
+                    option.setQuizQuestion(question);
+                    options.add(option);
+                }
+                question.setQuizOptions(options);
+                questions.add(question);
+            }
+            group.setQuizQuestions(questions);
+            groups.add(group);
+        }
+
+        lesson.setQuizGroups(groups);
+        lesson = learningLessonRepository.save(lesson);
+        return getListeningLessonDetail(lesson.getId());
+    }
+
+    @Override
+    public void deleteListeningLesson(Long id) throws IOException {
+        LearningLesson lesson = learningLessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        userLessonProgressRepository.deleteByLearningLessonId(id);
+        for (QuizGroup group : lesson.getQuizGroups()) {
+            if (group.getAudio() != null) {
+                cloudinaryService.deleteImage(group.getAudio().getPublicId());
+            }
+            if (group.getImage() != null) {
+                cloudinaryService.deleteImage(group.getImage().getPublicId());
+            }
+            for (QuizQuestion q : group.getQuizQuestions()) {
+                userQuizAnswerRepository.deleteByQuizQuestionId(q.getId());
+                for (QuizOption o : q.getQuizOptions()) {
+                    userQuizAnswerRepository.deleteByQuizOptionId(o.getId());
+                }
+            }
+        }
+        learningLessonRepository.delete(lesson);
+    }
+
+    @Override
+    @Transactional
+    public ListeningLessonDetailResponse updateListeningLesson(Long id,
+                                                               UpdateListeningLessonRequest request,
+                                                               List<MultipartFile> audios,
+                                                               List<MultipartFile> images) throws IOException {
+        LearningLesson lesson = learningLessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        Iterator<QuizGroup> gIterator = lesson.getQuizGroups().iterator();
+        while (gIterator.hasNext()) {
+            QuizGroup oldGroup = gIterator.next();
+            boolean stillExists = request.getGroups().stream()
+                    .anyMatch(g -> g.getId() != null && g.getId().equals(oldGroup.getId()));
+            if (!stillExists) {
+                if (oldGroup.getAudio() != null) cloudinaryService.deleteImage(oldGroup.getAudio().getPublicId());
+                if (oldGroup.getImage() != null) cloudinaryService.deleteImage(oldGroup.getImage().getPublicId());
+                for (QuizQuestion q : oldGroup.getQuizQuestions()) {
+                    userQuizAnswerRepository.deleteByQuizQuestionId(q.getId());
+                    for (QuizOption o : q.getQuizOptions()) {
+                        userQuizAnswerRepository.deleteByQuizOptionId(o.getId());
+                    }
+                }
+                gIterator.remove();
+            }
+        }
+        int audioIndex = 0;
+        int imageIndex = 0;
+        for (UpdateListeningLessonRequest.UpdateListeningGroupRequest gReq : request.getGroups()) {
+            QuizGroup group = lesson.getQuizGroups().stream()
+                    .filter(gr -> gr.getId().equals(gReq.getId()))
+                    .findFirst()
+                    .orElse(new QuizGroup());
+
+            group.setId(gReq.getId());
+            group.setOrderIndex(gReq.getOrderIndex());
+            group.setType(gReq.getType());
+            group.setTranscript(gReq.getTranscript());
+            group.setTranslation(gReq.getTranslation());
+            group.setLearningLesson(lesson);
+            if (Boolean.TRUE.equals(gReq.getHasAudio()) && audios != null && audioIndex < audios.size()) {
+                MultipartFile audioFile = audios.get(audioIndex++);
+                if (audioFile != null && !audioFile.isEmpty()) {
+                    if (group.getAudio() != null) {
+                        cloudinaryService.deleteImage(group.getAudio().getPublicId());
+                    }
+                    Map<String, String> uploadResult = cloudinaryService.uploadFile(audioFile, "listening/audio");
+                    Media audio = new Media();
+                    audio.setUrl(uploadResult.get("url"));
+                    audio.setPublicId(uploadResult.get("publicId"));
+                    audio.setType(MediaType.AUDIO);
+                    group.setAudio(audio);
+                }
+            } else if (Boolean.TRUE.equals(gReq.getDeleteAudio())) {
+                if (group.getAudio() != null) {
+                    cloudinaryService.deleteImage(group.getAudio().getPublicId());
+                }
+                group.setAudio(null);
+            }
+
+            if (Boolean.TRUE.equals(gReq.getHasImage()) && images != null && imageIndex < images.size()) {
+                MultipartFile imageFile = images.get(imageIndex++);
+                if (imageFile != null && !imageFile.isEmpty()) {
+                    if (group.getImage() != null) {
+                        cloudinaryService.deleteImage(group.getImage().getPublicId());
+                    }
+                    Map<String, String> uploadResult = cloudinaryService.uploadFile(imageFile, "listening/image");
+                    Media image = new Media();
+                    image.setUrl(uploadResult.get("url"));
+                    image.setPublicId(uploadResult.get("publicId"));
+                    image.setType(MediaType.IMAGE);
+                    group.setImage(image);
+                }
+            } else if (Boolean.TRUE.equals(gReq.getDeleteImage())) {
+                if (group.getImage() != null) {
+                    cloudinaryService.deleteImage(group.getImage().getPublicId());
+                }
+                group.setImage(null);
+            }
+
+            Iterator<QuizQuestion> qIterator = group.getQuizQuestions().iterator();
+            while (qIterator.hasNext()) {
+                QuizQuestion oldQ = qIterator.next();
+                boolean stillExists = gReq.getQuizzes().stream()
+                        .anyMatch(q -> q.getId() != null && q.getId().equals(oldQ.getId()));
+                if (!stillExists) {
+                    userQuizAnswerRepository.deleteByQuizQuestionId(oldQ.getId());
+                    for (QuizOption o : oldQ.getQuizOptions()) {
+                        userQuizAnswerRepository.deleteByQuizOptionId(o.getId());
+                    }
+                    qIterator.remove();
+                }
+            }
+
+            for (UpdateListeningLessonRequest.UpdateListeningQuizRequest qReq : gReq.getQuizzes()) {
+                QuizQuestion question = group.getQuizQuestions().stream()
+                        .filter(q -> q.getId().equals(qReq.getId()))
+                        .findFirst()
+                        .orElse(new QuizQuestion());
+
+                question.setId(qReq.getId());
+                question.setQuestionText(qReq.getQuestionText());
+                question.setTranslation(qReq.getTranslation());
+                question.setType("MULTIPLE_CHOICE");
+                question.setOrderIndex(qReq.getOrderIndex());
+                question.setQuizGroup(group);
+
+                Iterator<QuizOption> oIterator = question.getQuizOptions().iterator();
+                while (oIterator.hasNext()) {
+                    QuizOption oldO = oIterator.next();
+                    boolean stillExists = qReq.getOptions().stream()
+                            .anyMatch(o -> o.getId() != null && o.getId().equals(oldO.getId()));
+                    if (!stillExists) {
+                        userQuizAnswerRepository.deleteByQuizOptionId(oldO.getId());
+                        oIterator.remove();
+                    }
+                }
+
+                for (UpdateListeningLessonRequest.UpdateListeningOptionRequest oReq : qReq.getOptions()) {
+                    QuizOption option = question.getQuizOptions().stream()
+                            .filter(o -> o.getId().equals(oReq.getId()))
+                            .findFirst()
+                            .orElse(new QuizOption());
+
+                    option.setId(oReq.getId());
+                    option.setOrderIndex(oReq.getOrderIndex());
+                    option.setOptionText(oReq.getOptionText());
+                    option.setIsCorrect(oReq.getIsCorrect());
+                    option.setQuizQuestion(question);
+
+                    if (!question.getQuizOptions().contains(option)) {
+                        question.getQuizOptions().add(option);
+                    }
+                }
+
+                if (!group.getQuizQuestions().contains(question)) {
+                    group.getQuizQuestions().add(question);
+                }
+            }
+
+            if (!lesson.getQuizGroups().contains(group)) {
+                lesson.getQuizGroups().add(group);
+            }
+        }
+        lesson.setTitle(request.getTitle());
+        lesson.setType("LISTENING_PART_" + request.getPart());
+        lesson = learningLessonRepository.save(lesson);
+        return getListeningLessonDetail(lesson.getId());
     }
 
     @Override
@@ -767,4 +1013,91 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
         userLessonProgressRepository.save(progress);
     }
+
+    @Override
+    public BilingualResponse createBilingualLesson(CreateBilingualLessonRequest request, MultipartFile file) {
+        LearningLesson lesson = new LearningLesson();
+        lesson.setTitle(request.getTitle());
+        lesson.setDescription(request.getDescription());
+        lesson.setType("BILINGUAL");
+        LearningActivity activity = learningActivityRepository.findById(3L)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
+        lesson.setLearningActivity(activity);
+        Map<String, Object> contentMap = new HashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        contentMap.put("createdAt", LocalDateTime.now().format(formatter));
+        contentMap.put("views", 0);
+        contentMap.put("paragraphs", request.getContent().getParagraphs());
+        lesson.setContent(contentMap);
+        try {
+            if (file != null && !file.isEmpty()) {
+                Map<String, String> uploadResult = cloudinaryService.uploadFile(file, "bilingual");
+                Media media = new Media();
+                media.setUrl(uploadResult.get("url"));
+                media.setPublicId(uploadResult.get("publicId"));
+                media.setType(MediaType.IMAGE);
+                lesson.setImage(media);
+            }
+        } catch (IOException e) {
+            log.error("Failed to upload image from Cloudinary");
+        }
+        lesson = learningLessonRepository.save(lesson);
+        return getBilingualById(lesson.getId());
+    }
+
+    @Override
+    public BilingualResponse updateBilingualLesson(Long id, CreateBilingualLessonRequest request, MultipartFile file) {
+        LearningLesson lesson = learningLessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        lesson.setTitle(request.getTitle());
+        lesson.setDescription(request.getDescription());
+        lesson.setType("BILINGUAL");
+        LearningActivity activity = learningActivityRepository.findById(3L)
+                .orElseThrow(() -> new RuntimeException("Activity not found"));
+        lesson.setLearningActivity(activity);
+        Map<String, Object> contentMap = new HashMap<>();
+        contentMap.put("createdAt", lesson.getContent().get("createdAt"));
+        contentMap.put("views", lesson.getContent().get("views"));
+        contentMap.put("paragraphs", request.getContent().getParagraphs());
+        lesson.setContent(contentMap);
+
+        try {
+            if (file != null && !file.isEmpty()) {
+                if (lesson.getImage() != null && lesson.getImage().getPublicId() != null) {
+                    cloudinaryService.deleteImage(lesson.getImage().getPublicId());
+                }
+                Map<String, String> uploadResult = cloudinaryService.uploadFile(file, "bilingual");
+                Media media = new Media();
+                media.setUrl(uploadResult.get("url"));
+                media.setPublicId(uploadResult.get("publicId"));
+                media.setType(MediaType.IMAGE);
+                lesson.setImage(media);
+            }
+        } catch (IOException e) {
+            log.error("Failed to upload image from Cloudinary");
+        }
+
+        lesson = learningLessonRepository.save(lesson);
+        return getBilingualById(lesson.getId());
+    }
+
+    @Override
+    public void deleteBilingualLesson(Long id) {
+        LearningLesson lesson = learningLessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        userLessonProgressRepository.deleteByLearningLessonId(id);
+        if (lesson.getImage() != null && lesson.getImage().getPublicId() != null) {
+            try {
+                cloudinaryService.deleteImage(lesson.getImage().getPublicId());
+            } catch (IOException e) {
+                log.error("Failed to delete image from Cloudinary: {}", e.getMessage());
+            }
+        }
+        if (lesson.getImage() != null) {
+            mediaRepository.deleteById(lesson.getImage().getId());
+            lesson.setImage(null);
+        }
+        learningLessonRepository.delete(lesson);
+    }
+
 }

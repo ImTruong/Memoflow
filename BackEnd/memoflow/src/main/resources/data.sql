@@ -7,7 +7,9 @@ INSERT INTO roles (name, description) VALUES ('ROLE_ADMIN', 'Administrative user
 -- $2a$10$8.UnVuG9HHgffUDAlk8qnOgufOMfH7fV9s5GPO9E5X.i.o.E.6K/q corresponds to '123456'
 INSERT INTO users (name, email, password, role_id, is_registered) VALUES
 -- pass: 123456
-('Alex Nguyen', 'alex.nguyen@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1);
+('Alex Nguyen', 'alex.nguyen@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1),
+-- admin (pass: 123456)
+('Admin', 'admin@example.com', '$2a$10$epQymU57kOFQdEGl6b3JOu7URKDqg6lrFfh/SeGpxoxzQ6N1qGZ3O', 2, 1);
 
 -- Insert Sample Media
 INSERT INTO media (url, public_id, type) VALUES ('https://i.pravatar.cc/300?img=11', 'avatars/default', 'IMAGE');

@@ -1,10 +1,6 @@
 package com.memoflow.memoflow.controller;
 
-import com.memoflow.memoflow.dto.request.CreateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.SubmitListeningLessonRequest;
-import com.memoflow.memoflow.dto.request.UpdateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.CreateStoryLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.UpdateStoryLearningLessonRequest;
+import com.memoflow.memoflow.dto.request.*;
 import com.memoflow.memoflow.dto.response.*;
 import com.memoflow.memoflow.security.UserPrincipal;
 import com.memoflow.memoflow.service.LearningLessonService;
@@ -18,6 +14,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -168,6 +167,35 @@ public class LearningLessonController {
         return ResponseEntity.ok(ApiResponse.success(response, "Listening result retrieved successfully"));
     }
 
+    @PostMapping(path = "/listening-lessons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ListeningLessonDetailResponse>> createLesson(
+            @RequestPart("lesson") CreateListeningLessonRequest request,
+            @RequestPart(value = "audios", required = false) List<MultipartFile> audios,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+        ListeningLessonDetailResponse response = learningLessonService.createListeningLesson(request, audios, images);
+        return ResponseEntity.ok(ApiResponse.success(response, "Listening lesson created successfully"));
+    }
+
+    @PutMapping(path = "/listening-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ListeningLessonDetailResponse>> updateLesson(
+            @PathVariable Long id,
+            @RequestPart("lesson") UpdateListeningLessonRequest request,
+            @RequestPart(value = "audios", required = false) List<MultipartFile> audios,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+
+        ListeningLessonDetailResponse response = learningLessonService.updateListeningLesson(id, request, audios, images);
+        return ResponseEntity.ok(ApiResponse.success(response, "Listening lesson updated successfully"));
+    }
+
+    @DeleteMapping("/listening-lessons/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteListeningLesson(@PathVariable Long id) throws IOException {
+        learningLessonService.deleteListeningLesson(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Listening lesson deleted successfully"));
+    }
+
     @GetMapping("/bilingual")
     public ResponseEntity<ApiResponse<PageResponse<BilingualResponse>>> searchBilingual(
             @RequestParam String keyword,
@@ -187,10 +215,35 @@ public class LearningLessonController {
     @PostMapping("/bilingual/{id}/seen")
     public ResponseEntity<ApiResponse<Void>> markLessonAsSeen(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal userPrincipal // lấy user từ security context
-    ) {
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
         learningLessonService.markAsSeen(id, userPrincipal);
         return ResponseEntity.ok(ApiResponse.success(null, "Lesson marked as seen"));
+    }
+
+    @PostMapping(path = "/bilingual", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<BilingualResponse>> createBilingualLesson(
+            @RequestPart("lesson") CreateBilingualLessonRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        BilingualResponse response = learningLessonService.createBilingualLesson(request, file);
+        return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lesson created successfully"));
+    }
+
+    @PutMapping(path = "/bilingual/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<BilingualResponse>> updateBilingualLesson(
+            @PathVariable Long id,
+            @RequestPart("lesson") CreateBilingualLessonRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        BilingualResponse response = learningLessonService.updateBilingualLesson(id, request, file);
+        return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lesson created successfully"));
+    }
+
+    @DeleteMapping("/bilingual/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteLesson(@PathVariable Long id) {
+        learningLessonService.deleteBilingualLesson(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Bilingual lesson deleted successfully"));
     }
 
     @GetMapping("/story-lessons")

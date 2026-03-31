@@ -21,4 +21,8 @@ public interface UserQuizAnswerRepository extends JpaRepository<UserQuizAnswer, 
             "WHERE a.user.id = :userId " +
             "AND a.quizQuestion.quizGroup.learningLesson.id = :lessonId")
     List<UserQuizAnswer> findByUserIdAndLessonId(Long userId, Long lessonId);
+
+    void deleteByQuizQuestionId(Long questionId);
+
+    void deleteByQuizOptionId(Long quizOptionId);
 }

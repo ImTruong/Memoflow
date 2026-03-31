@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,7 @@ export const BilingualDetailScreen: React.FC<{ onBack: () => void; lessonId: num
   const [dictionaryEntry, setDictionaryEntry] = useState<any | null>(null);
   const [loadingDict, setLoadingDict] = useState(false);
   const [isViewed, setIsViewed] = useState(false);
+  const isMarkingRef = useRef(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -64,14 +65,17 @@ export const BilingualDetailScreen: React.FC<{ onBack: () => void; lessonId: num
   }, [lessonId]);
 
   const handleMarkAsRead = async () => {
-    if (isViewed) return;
-    try {
-      await bilingualApi.updateViewStatus(lessonId);
-      setIsViewed(true);
-    } catch (err) {
-      console.error("Lỗi cập nhật trạng thái đã xem:", err);
-    }
-  };
+  if (isViewed || isMarkingRef.current) return;
+
+  isMarkingRef.current = true;
+
+  try {
+    await bilingualApi.updateViewStatus(lessonId);
+    setIsViewed(true);
+  } catch (err) {
+    console.error("Lỗi cập nhật trạng thái đã xem:", err);
+  }
+};
 
   const handleScroll = (event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
