@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "742848434445",
+    "project_id": "memoflow-9e5f1",
+    "storage_bucket": "memoflow-9e5f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742848434445:android:6d44ea9ef3cfe56dcb2044",
+        "android_client_info": {
+          "package_name": "com.anonymous.memoflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdsHz9s7XUmyBhi85-YwZ1S1MuzAn8q04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742848434445:android:d7935f0d34717fbfcb2044",
+        "android_client_info": {
+          "package_name": "com.tranminhdang.mynewapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "742848434445-5a1ef949a1o2qd7f6q0cb6aap4l2n7vf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tranminhdang.mynewapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdsHz9s7XUmyBhi85-YwZ1S1MuzAn8q04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

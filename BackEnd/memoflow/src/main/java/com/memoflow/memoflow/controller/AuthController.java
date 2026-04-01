@@ -1,5 +1,6 @@
 package com.memoflow.memoflow.controller;
 
+import com.memoflow.memoflow.dto.request.LoginGoogleRequest;
 import com.memoflow.memoflow.dto.request.LoginRequest;
 import com.memoflow.memoflow.dto.request.RegisterRequest;
 import com.memoflow.memoflow.dto.request.VerifyAccountRequest;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Map;
 
 @RestController
@@ -27,6 +30,12 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Login successfully"));
+    }
+
+    @PostMapping("/login-google")
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(@RequestBody LoginGoogleRequest request) throws GeneralSecurityException, IOException {
+        LoginResponse response = authService.loginWithGoogle(request.getIdToken());
         return ResponseEntity.ok(ApiResponse.success(response, "Login successfully"));
     }
 

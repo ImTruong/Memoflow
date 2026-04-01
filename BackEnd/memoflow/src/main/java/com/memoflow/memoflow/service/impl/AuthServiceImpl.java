@@ -1,5 +1,9 @@
 package com.memoflow.memoflow.service.impl;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.memoflow.memoflow.dto.request.LoginRequest;
 import com.memoflow.memoflow.dto.request.RegisterRequest;
 import com.memoflow.memoflow.dto.request.VerifyAccountRequest;
@@ -22,7 +26,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,6 +55,38 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtUtil.generateToken(authentication);
         return new LoginResponse(token);
     }
+
+    public LoginResponse loginWithGoogle(String idToken) throws GeneralSecurityException, IOException {
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Arrays.asList(
+                        "742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com",
+                        "742848434445-l6gbkf7q2sq4ai27n6s6srmt4le34j1r.apps.googleusercontent.com"
+                ))
+                .build();
+        GoogleIdToken googleIdToken = verifier.verify(idToken);
+        if (googleIdToken == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Thông tin không hợp lệ.");
+        }
+
+        GoogleIdToken.Payload payload = googleIdToken.getPayload();
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+
+        User user = userRepository.findByEmailAndIsRegisteredTrue(email)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(email);
+                    newUser.setName(name);
+                    newUser.setPassword("");
+                    newUser.setRole(roleRepository.findByName("ROLE_USER").orElse(null));
+                    newUser.setRegistered(true);
+                    newUser.setHasFormLogin(false);
+                    return userRepository.save(newUser);
+                });
+        String token = jwtUtil.generateToken(user);
+        return new LoginResponse(token);
+    }
+
 
     @Override
     public void register(RegisterRequest request) {
@@ -98,6 +138,7 @@ public class AuthServiceImpl implements AuthService {
         else{
             user.getVerificationCode().setValue(verificationCodeService.generateCode());
         }
+        user.setHasFormLogin(true);
     }
 
     @Override
@@ -133,6 +174,7 @@ public class AuthServiceImpl implements AuthService {
         String newPassword=user.getVerificationCode().getNewPassword();
         user.setPassword(newPassword);
         user.setVerificationCode(null);
+        user.setHasFormLogin(true);
         userRepository.save(user);
     }
 }

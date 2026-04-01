@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,8 +18,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ForgotPasswordModal } from '../components/ForgotPassword';
 import { authApi } from '../api/authApi';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Svg, { Path } from 'react-native-svg';
+import { GoogleSignin, statusCodes, isErrorWithCode, isSuccessResponse } from '@react-native-google-signin/google-signin';
 
 const { width, height } = Dimensions.get('window');
+GoogleSignin.configure({
+  webClientId: '742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com',
+  iosClientId: '742848434445-l6gbkf7q2sq4ai27n6s6srmt4le34j1r.apps.googleusercontent.com',
+  offlineAccess: true,
+});
 
 type LoginScreenProps = {
   onNavigateToHome: () => void;
@@ -31,6 +38,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onNavigateToRegister,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,7 +55,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       await AsyncStorage.setItem('authToken', response.data.token);
       onNavigateToHome();
     } catch (err: any) {
-      console.log(err);
       const msg =
         err.message === 'Forbidden'
           ? 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.'
@@ -55,6 +62,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       Alert.alert('Đăng nhập thất bại', msg, [{ text: 'OK' }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await GoogleSignin.signOut();
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      if (isSuccessResponse(response)) {
+        const idToken = response.data.idToken;
+        if (!idToken) {
+          const msg = 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.';
+          Alert.alert('Đăng nhập thất bại', msg, [{ text: 'OK' }]);
+          return;
+        }
+        const backendRes = await authApi.loginGoogle({ idToken });
+        const jwtToken = backendRes.data.token;
+        await AsyncStorage.setItem('authToken', jwtToken);
+        onNavigateToHome();
+      }
+    } catch (err: any) {
+      const msg = 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.';
+      Alert.alert('Đăng nhập thất bại', msg, [{ text: 'OK' }]);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -71,7 +105,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           style={{ flex: 1 }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
-
           <KeyboardAwareScrollView
             contentContainerStyle={styles.scroll}
             showsVerticalScrollIndicator={false}
@@ -96,6 +129,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </View>
               <Text style={styles.subtitle}>Học tiếng Anh mỗi ngày!</Text>
             </View>
+
             <View style={styles.formCard}>
               <View style={styles.inputContainer}>
                 <MaterialCommunityIcons name="email-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
@@ -139,7 +173,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <TouchableOpacity
                 style={styles.loginButton}
                 onPress={handleLogin}
-                disabled={isLoading}
+                disabled={isLoading || isGoogleLoading}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#FFF" />
@@ -148,6 +182,36 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                     <Text style={styles.buttonText}>Đăng nhập</Text>
                     <MaterialCommunityIcons name="chevron-right" size={24} color="#FFF" />
                   </View>
+                )}
+              </TouchableOpacity>
+
+              {/* 4. Thêm dải phân cách "Hoặc" */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>Hoặc</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogleLogin}
+                disabled={isLoading || isGoogleLoading}
+                activeOpacity={0.85}
+              >
+                {isGoogleLoading ? (
+                  <ActivityIndicator style={styles.googleIconBox} color="#4285F4" />
+                ) : (
+                  <>
+                    <View style={styles.googleIconBox}>
+                      <Svg width={20} height={20} viewBox="0 0 18 18">
+                        <Path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+                        <Path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+                        <Path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+                        <Path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z" />
+                      </Svg>
+                    </View>
+                    <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
+                  </>
                 )}
               </TouchableOpacity>
 
@@ -223,13 +287,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderRadius: 20,
     paddingHorizontal: 15,
-    marginBottom: 25,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, paddingVertical: 15, fontSize: 16, color: '#1E293B' },
-  forgotBtn: { alignSelf: 'flex-end', marginBottom: 25 },
+  forgotBtn: { alignSelf: 'flex-end', marginBottom: 20 },
   forgotText: { color: '#3B82F6', fontWeight: '600', fontSize: 14 },
 
   loginButton: {
@@ -242,6 +306,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#dadce0',
+    borderRadius: 4,
+    height: 50,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  googleIconBox: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#dadce0',
+    backgroundColor: '#fff',
+  },
+  googleButtonText: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 25,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#94A3B8',
+    fontSize: 14,
   },
   buttonInner: { flexDirection: 'row', alignItems: 'center' },
   buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 18, marginRight: 5 },

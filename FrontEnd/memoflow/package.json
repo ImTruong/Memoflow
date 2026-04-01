@@ -13,9 +13,11 @@
     "@google/generative-ai": "^0.24.1",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-google-signin/google-signin": "^16.1.2",
     "expo": "~54.0.33",
     "expo-av": "~16.0.8",
     "expo-blur": "~15.0.8",
+    "expo-dev-client": "~6.0.20",
     "expo-image-picker": "~17.0.10",
     "expo-linear-gradient": "~15.0.8",
     "expo-status-bar": "~3.0.9",
@@ -25,6 +27,7 @@
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-progress": "^5.0.1",
     "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.0"
   },
   "devDependencies": {

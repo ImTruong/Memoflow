@@ -31,6 +31,9 @@ public class User {
     @Column(nullable = false)
     private boolean isRegistered;
 
+    @Column(name = "has_form_login", nullable = false)
+    private boolean hasFormLogin;
+
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinColumn(name = "avatar_media_id")
     private Media avatar;
