@@ -167,8 +167,8 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, co
     }', 23);
 
 
-INSERT INTO learning_lessons (title, type, description, learning_activity_id, user_id, content, image_media_id) VALUES
-                                                                                                                    ('Ngọn đèn trong bão', 'TRUYEN_CHEM', 'Bài học về sự tử tế và kiên trì trong hoàn cảnh khó khăn', 2, 1, '{
+INSERT INTO learning_lessons (title, type, description, learning_activity_id, content, image_media_id) VALUES
+                                                                                                                    ('Ngọn đèn trong bão', 'TRUYEN_CHEM', 'Bài học về sự tử tế và kiên trì trong hoàn cảnh khó khăn', 2, '{
       "englishTitle": "The Lantern in the Storm",
       "paragraphs": [
         "Đêm đó gió nổi lên dữ dội, mưa quất vào mái lá, cả làng chìm trong {storm} kéo dài nhiều giờ.",
@@ -186,7 +186,7 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, us
         { "word": "Horizon" }
       ]
     }', 24),
-                                                                                                                    ('Chuyến xe cuối cùng', 'TRUYEN_CHEM', 'Một câu chuyện về lòng trắc ẩn trong những khoảnh khắc vội vã', 2, 1, '{
+                                                                                                                    ('Chuyến xe cuối cùng', 'TRUYEN_CHEM', 'Một câu chuyện về lòng trắc ẩn trong những khoảnh khắc vội vã', 2, '{
       "englishTitle": "The Last Train",
       "paragraphs": [
         "Buổi tối, Lan cầm tấm {ticket} đứng chờ ở {platform} vắng, tiếng {whistle} từ xa vang lên như gọi mọi người trở về.",
@@ -204,7 +204,7 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, us
         { "word": "Compassion" }
       ]
     }', 25),
-                                                                                                                    ('Hạt mầm và khu vườn', 'TRUYEN_CHEM', 'Kiên nhẫn và chăm sóc là chìa khóa của mọi thành quả', 2, 1, '{
+                                                                                                                    ('Hạt mầm và khu vườn', 'TRUYEN_CHEM', 'Kiên nhẫn và chăm sóc là chìa khóa của mọi thành quả', 2, '{
       "englishTitle": "The Seed and the Garden",
       "paragraphs": [
         "Cậu bé nhận một {seed} nhỏ, chôn trong {soil} bên hàng rào và học {patience} mỗi ngày.",
@@ -222,7 +222,7 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, us
         { "word": "Bloom" }
       ]
     }', 26),
-                                                                                                                    ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, 1, '{
+                                                                                                                    ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, '{
       "englishTitle": "The Wooden Bridge",
       "paragraphs": [
         "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
@@ -240,7 +240,7 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, us
         { "word": "Craft" }
       ]
     }', 27),
-                                                                                                                    ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, 1, '{
+                                                                                                                    ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, '{
       "englishTitle": "The Old Library",
       "paragraphs": [
         "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",

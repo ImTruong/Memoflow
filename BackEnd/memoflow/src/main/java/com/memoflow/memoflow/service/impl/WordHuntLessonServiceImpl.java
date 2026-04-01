@@ -60,7 +60,6 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
                 .description(request.getDescription())
                 .content(buildContent(request))
                 .learningActivity(activity)
-                .creator(creator)
                 .build();
 
         return mapToLessonResponse(learningLessonRepository.save(lesson));

@@ -52,7 +52,6 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
                 .description(trimToNull(request.getDescription()))
                 .content(buildContent(request))
                 .learningActivity(activity)
-                .creator(creator)
                 .build();
 
         return mapToLessonResponse(learningLessonRepository.save(lesson));
