@@ -64,7 +64,6 @@ public class StoryLessonServiceImpl implements StoryLessonService {
                 .description(request.getDescription())
                 .type(STORY_TYPE)
                 .learningActivity(activity)
-                .creator(creator)
                 .image(buildStoryImage(image))
                 .build();
 
