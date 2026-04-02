@@ -10,9 +10,17 @@ export const authApi = {
     });
   },
 
-  loginGoogle: async (data: { idToken: string }) => {
-    console.log(data.idToken);
+  loginGoogle: async (data: { token: string }) => {
     return apiFetch<ApiResponse<{ token: string }>>('/auth/login-google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  },
+
+  loginFacebook: async (data: { token: string }) => {
+    console.log(data.token);
+    return apiFetch<ApiResponse<{ token: string }>>('/auth/login-facebook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

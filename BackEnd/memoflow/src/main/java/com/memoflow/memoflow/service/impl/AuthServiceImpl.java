@@ -17,6 +17,7 @@ import com.memoflow.memoflow.service.VerificationCodeService;
 import com.memoflow.memoflow.util.JwtUtil;
 import com.memoflow.memoflow.util.SenderUtil;
 import lombok.RequiredArgsConstructor;
+import org.cloudinary.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,11 +27,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
         return new LoginResponse(token);
     }
 
+    @Override
     public LoginResponse loginWithGoogle(String idToken) throws GeneralSecurityException, IOException {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                 .setAudience(Arrays.asList(
@@ -77,10 +82,39 @@ public class AuthServiceImpl implements AuthService {
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setName(name);
-                    newUser.setPassword("");
                     newUser.setRole(roleRepository.findByName("ROLE_USER").orElse(null));
                     newUser.setRegistered(true);
-                    newUser.setHasFormLogin(false);
+                    return userRepository.save(newUser);
+                });
+        String token = jwtUtil.generateToken(user);
+        return new LoginResponse(token);
+    }
+
+    @Override
+    public LoginResponse loginWithFacebook(String accessToken) throws IOException {
+        String url = "https://graph.facebook.com/me?fields=id,name&access_token=" + accessToken;
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+        if (connection.getResponseCode() != 200) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Token Facebook không hợp lệ.");
+        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+        JSONObject json = new JSONObject(response.toString());
+        String fbId = json.optString("id");
+        String name = json.optString("name");
+        User user = userRepository.findByFacebookId(fbId)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setFacebookId(fbId);
+                    newUser.setName(name);
+                    newUser.setRole(roleRepository.findByName("ROLE_USER").orElse(null));
+                    newUser.setRegistered(true);
                     return userRepository.save(newUser);
                 });
         String token = jwtUtil.generateToken(user);
@@ -138,7 +172,6 @@ public class AuthServiceImpl implements AuthService {
         else{
             user.getVerificationCode().setValue(verificationCodeService.generateCode());
         }
-        user.setHasFormLogin(true);
     }
 
     @Override
@@ -174,7 +207,6 @@ public class AuthServiceImpl implements AuthService {
         String newPassword=user.getVerificationCode().getNewPassword();
         user.setPassword(newPassword);
         user.setVerificationCode(null);
-        user.setHasFormLogin(true);
         userRepository.save(user);
     }
 }

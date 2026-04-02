@@ -14,9 +14,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    Optional<User> findByEmailAndIsRegisteredTrueAndHasFormLoginTrue(String email);
-
     Optional<User> findByEmailAndIsRegisteredTrue(String email);
+
+    Optional<User> findByFacebookId(String facebookId);
 
     User findByEmailAndVerificationCodeValueAndVerificationCodeExpiresAtAfter(String email, String code, LocalDateTime now);
 }

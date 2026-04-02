@@ -15,6 +15,8 @@ public interface AuthService {
 
     LoginResponse loginWithGoogle(String idToken) throws GeneralSecurityException, IOException;
 
+    LoginResponse loginWithFacebook(String idToken) throws IOException;
+
     void register(RegisterRequest request);
 
     LoginResponse verifyAccount(VerifyAccountRequest request);

@@ -1,6 +1,6 @@
 package com.memoflow.memoflow.controller;
 
-import com.memoflow.memoflow.dto.request.LoginGoogleRequest;
+import com.memoflow.memoflow.dto.request.OauthLoginRequest;
 import com.memoflow.memoflow.dto.request.LoginRequest;
 import com.memoflow.memoflow.dto.request.RegisterRequest;
 import com.memoflow.memoflow.dto.request.VerifyAccountRequest;
@@ -28,14 +28,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success(response, "Login successfully"));
     }
 
     @PostMapping("/login-google")
-    public ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(@RequestBody LoginGoogleRequest request) throws GeneralSecurityException, IOException {
-        LoginResponse response = authService.loginWithGoogle(request.getIdToken());
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithGoogle(@RequestBody OauthLoginRequest request) throws GeneralSecurityException, IOException {
+        LoginResponse response = authService.loginWithGoogle(request.getToken());
+        return ResponseEntity.ok(ApiResponse.success(response, "Login successfully"));
+    }
+
+    @PostMapping("/login-facebook")
+    public ResponseEntity<ApiResponse<LoginResponse>> loginWithFacebook(@RequestBody OauthLoginRequest request) throws GeneralSecurityException, IOException {
+        LoginResponse response = authService.loginWithFacebook(request.getToken());
         return ResponseEntity.ok(ApiResponse.success(response, "Login successfully"));
     }
 

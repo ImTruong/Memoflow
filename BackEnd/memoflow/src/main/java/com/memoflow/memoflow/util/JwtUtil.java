@@ -45,8 +45,12 @@ public class JwtUtil {
     public String generateToken(User user) {
         SecretKey secretKey = getSigningKey();
         String roleName = user.getRole().getName();
+        String subject = user.getEmail();
+        if (subject == null || subject.isEmpty()) {
+            subject = String.valueOf(user.getId());
+        }
         return Jwts.builder()
-                .setSubject(user.getEmail())
+                .setSubject(subject)
                 .claim("userId", user.getId())
                 .claim("roles", List.of(roleName))
                 .setIssuedAt(new Date())

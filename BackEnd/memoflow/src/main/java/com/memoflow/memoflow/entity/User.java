@@ -22,17 +22,17 @@ public class User {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(nullable = false)
     private boolean isRegistered;
 
-    @Column(name = "has_form_login", nullable = false)
-    private boolean hasFormLogin;
+    @Column(name = "facebook_id")
+    private String facebookId;
 
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinColumn(name = "avatar_media_id")
