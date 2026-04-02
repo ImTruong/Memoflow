@@ -406,15 +406,15 @@ INSERT INTO quiz_options (is_correct, order_index, quiz_question_id, option_text
 (0, 3, 24, 'Critical'),
 (0, 4, 24, 'Humorous');
 
-INSERT INTO user_lesson_progress (is_completed, learning_lesson_id, user_id, created_at) VALUES
-(1, 5, 1, '2026-03-01 10:15:00'),
-(0, 9,  1, '2026-03-05 14:30:00'),
-(1, 6, 1, '2026-03-10 09:45:00'),
-(0, 10, 1, '2026-03-12 16:20:00'),
-(1, 7,  1, '2026-03-15 08:50:00'),
-(0, 11, 1, '2026-03-18 19:05:00'),
-(1, 8,  1, '2026-03-15 08:50:00'),
-(0, 12, 1, '2026-03-18 19:05:00');
+INSERT INTO user_lesson_progress (is_completed, score, learning_lesson_id, user_id, created_at) VALUES
+(1, 0, 5, 1, '2026-03-01 10:15:00'),
+(0, 0, 9,  1, '2026-03-05 14:30:00'),
+(1, 0, 6, 1, '2026-03-10 09:45:00'),
+(0, 0, 10, 1, '2026-03-12 16:20:00'),
+(1, 0, 7,  1, '2026-03-15 08:50:00'),
+(0, 0, 11, 1, '2026-03-18 19:05:00'),
+(1, 0, 8,  1, '2026-03-15 08:50:00'),
+(0, 0, 12, 1, '2026-03-18 19:05:00');
 
 INSERT INTO learning_lessons (title, type, description, learning_activity_id, content) VALUES
 ('Animals', 'WORD_HUNT', 'Tim 5 tu vung chu de dong vat trong 01:45.', 5, '{"categoryKey":"animals","categoryLabel":"Animals","boardSize":6,"timeLimitSeconds":105,"targetWordCount":5,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 5 tu","words":["LION","TIGER","RABBIT","HORSE","SNAKE","MONKEY"]}'),

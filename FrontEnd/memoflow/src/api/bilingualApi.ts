@@ -17,13 +17,20 @@ export type BilingualResponse = {
   media?: {
     url: string;
   };
+  isRead: boolean;
 };
 
 export const bilingualApi = {
 
-  searchBilingual: (keyword: string, page: number = 0, size: number = 1, filter: string) =>
+  searchBilingual: (
+    keyword: string,
+    page: number = 0,
+    size: number = 10,
+    _sort: string = 'newest',
+    readFilter: string = 'all'
+  ) =>
     apiFetch<ApiResponse<PageResponse<BilingualResponse>>>(
-      `/bilingual?keyword=${keyword}&page=${page}&size=${size}&filter=${filter}`
+      `/bilingual?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}&_sort=${_sort}&readFilter=${readFilter}`
     ),
 
   getBilingualDetail: (id: number) =>

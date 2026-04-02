@@ -17,6 +17,7 @@ public class BilingualResponse {
     private String description;
     private Map<String, Object> content;
     private Media media;
+    private Boolean isRead;
 
     @Data
     @AllArgsConstructor
@@ -26,4 +27,3 @@ public class BilingualResponse {
         private String url;
     }
 }
-

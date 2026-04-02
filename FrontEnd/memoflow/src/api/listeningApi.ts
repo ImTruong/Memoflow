@@ -5,7 +5,8 @@ export type ListeningLessonResponse = {
   id: number;
   title: string;
   isCompleted: boolean;
-  progressPercent: number;
+  totalQuestions: number;
+  score: number;
 };
 
 export type ListeningLessonDetailResponse = {
