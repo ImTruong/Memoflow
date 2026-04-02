@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -340,6 +339,23 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         }
         progress.setIsCompleted(isCompleted);
 
+        int score = 0;
+        if (!isCompleted) {
+            score = (int) request.getAnswers().stream()
+                    .filter(ans -> ans.getOptionId() != null)
+                    .count();
+        } else {
+            for (SubmitListeningLessonRequest.Answer ans : request.getAnswers()) {
+                if (ans.getOptionId() != null) {
+                    QuizOption option = quizOptionRepository.findById(ans.getOptionId()).orElseThrow();
+                    if (Boolean.TRUE.equals(option.getIsCorrect())) {
+                        score++;
+                    }
+                }
+            }
+        }
+        progress.setScore(score);
+
         userLessonProgressRepository.save(progress);
         Set<Long> submittedQuizIds = request.getAnswers().stream()
                 .map(SubmitListeningLessonRequest.Answer::getQuizId)
@@ -405,6 +421,10 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
         LearningLesson lesson = learningLessonRepository.findById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        if (!userLessonProgressRepository.existsByUserIdAndLearningLessonIdAndIsCompletedTrue(userPrincipal.getId(), lessonId)) {
+            throw new ResourceNotFoundException("Bài làm không tồn tại hoặc chưa nộp.");
+        }
 
         List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), lessonId);
 
@@ -720,25 +740,53 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     }
 
     @Override
-    public PageResponse<BilingualResponse> searchBilingual(String keyword, Pageable pageable, String filter) {
+    public PageResponse<BilingualResponse> searchBilingual(
+            String keyword,
+            Pageable pageable,
+            String _sort,
+            String readFilter,
+            UserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal.getId();
         Page<LearningLesson> responsesPage;
-        if("newest".equals(filter)){
-            responsesPage = learningLessonRepository.findBilingualNewest(keyword,pageable);
+
+        if ("read".equals(readFilter)) {
+            responsesPage = switch (_sort) {
+                case "oldest" -> learningLessonRepository.findBilingualReadOldest(keyword, userId, pageable);
+                case "popular" -> learningLessonRepository.findBilingualReadPopular(keyword, userId, pageable);
+                default -> learningLessonRepository.findBilingualReadNewest(keyword, userId, pageable);
+            };
+        } else if ("unread".equals(readFilter)) {
+            responsesPage = switch (_sort) {
+                case "oldest" -> learningLessonRepository.findBilingualUnreadOldest(keyword, userId, pageable);
+                case "popular" -> learningLessonRepository.findBilingualUnreadPopular(keyword, userId, pageable);
+                default -> learningLessonRepository.findBilingualUnreadNewest(keyword, userId, pageable);
+            };
+        } else {
+            responsesPage = switch (_sort) {
+                case "oldest" -> learningLessonRepository.findBilingualOldest(keyword, pageable);
+                case "popular" -> learningLessonRepository.findBilingualPopular(keyword, pageable);
+                default -> learningLessonRepository.findBilingualNewest(keyword, pageable);
+            };
         }
-        else if("oldest".equals(filter)){
-            responsesPage = learningLessonRepository.findBilingualOldest(keyword,pageable);
-        }
-        else{
-            responsesPage = learningLessonRepository.findBilingualPopular(keyword,pageable);
-        }
+
+        List<Long> lessonIds = responsesPage.getContent()
+                .stream().map(LearningLesson::getId).collect(Collectors.toList());
+        Set<Long> readIds = lessonIds.isEmpty()
+                ? Collections.emptySet()
+                : new HashSet<>(learningLessonRepository.findReadLessonIds(userId, lessonIds));
+
         List<BilingualResponse> content = responsesPage.getContent().stream()
-                .map(l -> new BilingualResponse(
-                        l.getId(),
-                        l.getTitle(),
-                        l.getDescription(),
-                        l.getContent(),
-                        l.getImage() != null ? new BilingualResponse.Media(l.getImage().getUrl()) : null
-                ))
+                .map(l -> BilingualResponse.builder()
+                        .id(l.getId())
+                        .title(l.getTitle())
+                        .description(l.getDescription())
+                        .content(l.getContent())
+                        .media(l.getImage() != null
+                                ? new BilingualResponse.Media(l.getImage().getUrl())
+                                : null)
+                        .isRead(readIds.contains(l.getId()))
+                        .build())
                 .collect(Collectors.toList());
 
         return PageResponse.<BilingualResponse>builder()
@@ -751,7 +799,6 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 .build();
     }
 
-    @Override
     public BilingualResponse getBilingualById(Long id) {
         LearningLesson lesson = learningLessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
@@ -761,8 +808,30 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 lesson.getTitle(),
                 lesson.getDescription(),
                 lesson.getContent(),
-                lesson.getImage() != null ? new BilingualResponse.Media(lesson.getImage().getUrl()) : null
+                lesson.getImage() != null ? new BilingualResponse.Media(lesson.getImage().getUrl()) : null,
+                null
         );
+    }
+
+    @Override
+    public BilingualResponse getBilingualDetail(Long lessonId, Long userId) {
+
+        LearningLesson l = learningLessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        boolean isRead = userLessonProgressRepository
+                .existsByUserIdAndLearningLessonIdAndIsCompletedTrue(userId, lessonId);
+
+        return BilingualResponse.builder()
+                .id(l.getId())
+                .title(l.getTitle())
+                .description(l.getDescription())
+                .content(l.getContent())
+                .media(l.getImage() != null
+                        ? new BilingualResponse.Media(l.getImage().getUrl())
+                        : null)
+                .isRead(isRead)
+                .build();
     }
 
     @Override

@@ -65,17 +65,17 @@ export const BilingualDetailScreen: React.FC<{ onBack: () => void; lessonId: num
   }, [lessonId]);
 
   const handleMarkAsRead = async () => {
-  if (isViewed || isMarkingRef.current) return;
+    if (isViewed || isMarkingRef.current) return;
 
-  isMarkingRef.current = true;
+    isMarkingRef.current = true;
 
-  try {
-    await bilingualApi.updateViewStatus(lessonId);
-    setIsViewed(true);
-  } catch (err) {
-    console.error("Lỗi cập nhật trạng thái đã xem:", err);
-  }
-};
+    try {
+      await bilingualApi.updateViewStatus(lessonId);
+      setIsViewed(true);
+    } catch (err) {
+      console.error("Lỗi cập nhật trạng thái đã xem:", err);
+    }
+  };
 
   const handleScroll = (event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
@@ -165,6 +165,15 @@ export const BilingualDetailScreen: React.FC<{ onBack: () => void; lessonId: num
           <View style={styles.imageWrapper}>
             <Image source={{ uri: detail.media.url }} style={styles.coverImage} />
             <View style={styles.imageOverlay} />
+
+            <View style={[
+              styles.readBadge,
+              detail.isRead ? styles.readBadgeDone : styles.readBadgeNotDone
+            ]}>
+              <Text style={styles.readBadgeText}>
+                {detail.isRead ? 'Đã đọc' : 'Chưa đọc'}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -234,13 +243,6 @@ export const BilingualDetailScreen: React.FC<{ onBack: () => void; lessonId: num
               </View>
             );
           })}
-
-          {isViewed && (
-            <View style={styles.finishBadge}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.finishText}>Bạn đã hoàn thành bài học này!</Text>
-            </View>
-          )}
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
@@ -442,5 +444,27 @@ const styles = StyleSheet.create({
   headerInfo: {
     paddingVertical: 16,
     marginBottom: 8
+  },
+  readBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+
+  readBadgeDone: {
+    backgroundColor: '#10B981',
+  },
+
+  readBadgeNotDone: {
+    backgroundColor: '#3B82F6',
+  },
+
+  readBadgeText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

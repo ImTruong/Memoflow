@@ -13,4 +13,6 @@ public class ListeningLessonResponse {
     private Long id;
     private String title;
     private Boolean isCompleted;
+    private Long totalQuestions;
+    private Integer score;
 }

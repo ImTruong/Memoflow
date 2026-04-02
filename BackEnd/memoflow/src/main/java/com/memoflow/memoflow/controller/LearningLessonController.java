@@ -4,6 +4,7 @@ import com.memoflow.memoflow.dto.request.*;
 import com.memoflow.memoflow.dto.response.*;
 import com.memoflow.memoflow.security.UserPrincipal;
 import com.memoflow.memoflow.service.LearningLessonService;
+import com.memoflow.memoflow.util.ExcelUtil;
 import org.springframework.data.domain.Pageable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 public class LearningLessonController {
 
     private final LearningLessonService learningLessonService;
+    private final ExcelUtil excelUtil;
 
     @PostMapping(value = "/learning-activities/{learningActivityId}/flashcard-lessons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("@securityService.isActivityExist(#learningActivityId)")
@@ -145,6 +147,18 @@ public class LearningLessonController {
         return ResponseEntity.ok(ApiResponse.success(response, "Listening lesson created successfully"));
     }
 
+    @PostMapping(path = "/listening-lessons/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ListeningLessonDetailResponse>> uploadLesson(
+            @RequestPart("excel") MultipartFile excelFile,
+            @RequestPart(value = "audios", required = false) List<MultipartFile> audios,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+
+        CreateListeningLessonRequest request = excelUtil.parseToCreateListeningLessonRequest(excelFile);
+        ListeningLessonDetailResponse response = learningLessonService.createListeningLesson(request, audios, images);
+        return ResponseEntity.ok(ApiResponse.success(response, "Listening lesson created successfully"));
+    }
+
     @PutMapping(path = "/listening-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ListeningLessonDetailResponse>> updateLesson(
@@ -167,16 +181,23 @@ public class LearningLessonController {
     @GetMapping("/bilingual")
     public ResponseEntity<ApiResponse<PageResponse<BilingualResponse>>> searchBilingual(
             @RequestParam String keyword,
-            @RequestParam String filter,
+            @RequestParam String _sort,
+            @RequestParam String readFilter,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
             Pageable pageable) {
-        PageResponse<BilingualResponse> response = learningLessonService.searchBilingual(keyword, pageable, filter);
+        PageResponse<BilingualResponse> response = learningLessonService.searchBilingual(keyword,
+                pageable,
+                _sort,
+                readFilter,
+                userPrincipal);
         return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lessons retrieved successfully"));
     }
 
     @GetMapping("/bilingual/{id}")
     public ResponseEntity<ApiResponse<BilingualResponse>> searchBilingual(
-            @PathVariable Long id) {
-        BilingualResponse response = learningLessonService.getBilingualById(id);
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        BilingualResponse response = learningLessonService.getBilingualDetail(id, userPrincipal.getId());
         return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lesson detail retrieved successfully"));
     }
 
@@ -193,6 +214,16 @@ public class LearningLessonController {
     public ResponseEntity<ApiResponse<BilingualResponse>> createBilingualLesson(
             @RequestPart("lesson") CreateBilingualLessonRequest request,
             @RequestPart(value = "file", required = false) MultipartFile file) {
+        BilingualResponse response = learningLessonService.createBilingualLesson(request, file);
+        return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lesson created successfully"));
+    }
+
+    @PostMapping(path = "/bilingual/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<BilingualResponse>> uploadeBilingualLesson(
+            @RequestPart("excel") MultipartFile excelFile,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+        CreateBilingualLessonRequest request = excelUtil.parseToCreateBilingualLessonRequest(excelFile);
         BilingualResponse response = learningLessonService.createBilingualLesson(request, file);
         return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lesson created successfully"));
     }

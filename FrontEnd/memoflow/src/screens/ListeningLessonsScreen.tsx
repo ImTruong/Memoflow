@@ -82,7 +82,11 @@ export const ListeningLessonsScreen: React.FC<ListeningLessonsScreenProps> = ({
               styles.statusLabelText,
               item.isCompleted ? styles.textDone : item.isCompleted === false ? styles.textProgress : styles.textTodo
             ]}>
-              {item.isCompleted ? 'Hoàn thành' : item.isCompleted === false ? 'Đang làm' : 'Chưa học'}
+              {item.isCompleted
+                ? `Hoàn thành (${item.score}/${item.totalQuestions})`
+                : item.isCompleted === false
+                  ? `Đang làm (${item.score}/${item.totalQuestions})`
+                  : 'Chưa làm'}
             </Text>
           </View>
         </View>
@@ -137,7 +141,7 @@ export const ListeningLessonsScreen: React.FC<ListeningLessonsScreenProps> = ({
               style={[styles.filterItem, filter === type && styles.filterItemActive]}
             >
               <Text style={[styles.filterText, filter === type && styles.filterTextActive]}>
-                {type === 'all' ? 'Tất cả' : type === 'completed' ? 'Hoàn thành' : type === 'in-progress' ? 'Đang làm' : 'Chưa học'}
+                {type === 'all' ? 'Tất cả' : type === 'completed' ? 'Hoàn thành' : type === 'in-progress' ? 'Đang làm' : 'Chưa làm'}
               </Text>
             </TouchableOpacity>
           ))}
