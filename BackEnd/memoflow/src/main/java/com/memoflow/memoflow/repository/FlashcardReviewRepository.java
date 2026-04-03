@@ -15,52 +15,71 @@ import org.springframework.data.domain.Pageable;
 @Repository
 public interface FlashcardReviewRepository extends JpaRepository<FlashcardReview, Long> {
 
-    List<FlashcardReview> findByUserId(Long userId);
+       List<FlashcardReview> findByUserId(Long userId);
 
-    List<FlashcardReview> findByWordId(Long wordId);
+       List<FlashcardReview> findByWordId(Long wordId);
 
-    Optional<FlashcardReview> findByUserIdAndWordId(Long userId, Long wordId);
+       @org.springframework.data.jpa.repository.Modifying
+       @org.springframework.transaction.annotation.Transactional
+       void deleteByWordId(Long wordId);
 
-    List<FlashcardReview> findByUserIdAndDifficulty(Long userId, String difficulty);
+       Optional<FlashcardReview> findByUserIdAndWordId(Long userId, Long wordId);
 
-    Optional<FlashcardReview> findFirstByUserIdAndWordIdOrderByCreatedAtDesc(Long userId, Long wordId);
+       List<FlashcardReview> findByUserIdAndDifficulty(Long userId, String difficulty);
 
-    @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
-           "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
-           "WHERE w.learning_lesson_id = :flashcardLessonId " +
-           "AND fr.user_id = :userId " +
-           "AND fr.next_review_date >= :now " +
-           "AND fr.id = (SELECT MAX(fr2.id) FROM flashcard_reviews fr2 WHERE fr2.word_id = w.id AND fr2.user_id = :userId)", nativeQuery = true)
-    long countLearnedWordsByFlashcardLesson(@Param("flashcardLessonId") Long flashcardLessonId, @Param("userId") Long userId, @Param("now") LocalDateTime now);
+       Optional<FlashcardReview> findFirstByUserIdAndWordIdOrderByCreatedAtDesc(Long userId, Long wordId);
 
-    @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
-           "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
-           "WHERE w.learning_lesson_id = :flashcardLessonId " +
-           "AND fr.user_id = :userId", nativeQuery = true)
-    long countWordsLearnedAtLeastOnceByFlashcardLesson(@Param("flashcardLessonId") Long flashcardLessonId, @Param("userId") Long userId);
+       @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
+                     "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
+                     "WHERE w.learning_lesson_id = :flashcardLessonId " +
+                     "AND w.is_deleted = false " +
+                     "AND fr.user_id = :userId " +
+                     "AND fr.next_review_date >= :now " +
+                     "AND fr.id = (SELECT MAX(fr2.id) FROM flashcard_reviews fr2 WHERE fr2.word_id = w.id AND fr2.user_id = :userId)", nativeQuery = true)
+       long countLearnedWordsByFlashcardLesson(@Param("flashcardLessonId") Long flashcardLessonId,
+                     @Param("userId") Long userId, @Param("now") LocalDateTime now);
 
-    @Query(value = "SELECT COUNT(DISTINCT word_id) FROM flashcard_reviews " +
-           "WHERE user_id = :userId AND created_at >= :startOfDay", nativeQuery = true)
-    long countDistinctWordsReviewedToday(@Param("userId") Long userId, @Param("startOfDay") LocalDateTime startOfDay);
+       @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
+                     "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
+                     "WHERE w.learning_lesson_id = :flashcardLessonId " +
+                     "AND w.is_deleted = false " +
+                     "AND fr.user_id = :userId", nativeQuery = true)
+       long countWordsLearnedAtLeastOnceByFlashcardLesson(@Param("flashcardLessonId") Long flashcardLessonId,
+                     @Param("userId") Long userId);
 
-    @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
-           "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
-           "WHERE fr.user_id = :userId " +
-           "AND fr.next_review_date <= :endOfDay " +
-           "AND fr.id = (SELECT MAX(fr2.id) FROM flashcard_reviews fr2 WHERE fr2.word_id = w.id AND fr2.user_id = :userId)", nativeQuery = true)
-    long countTotalDueWordsByUserId(@Param("userId") Long userId, @Param("endOfDay") LocalDateTime endOfDay);
+       @Query(value = "SELECT COUNT(DISTINCT word_id) FROM flashcard_reviews " +
+                     "WHERE user_id = :userId AND created_at >= :startOfDay", nativeQuery = true)
+       long countDistinctWordsReviewedToday(@Param("userId") Long userId,
+                     @Param("startOfDay") LocalDateTime startOfDay);
 
-    long countByUserId(Long userId);
+       @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
+                     "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
+                     "WHERE w.is_deleted = false " +
+                     "AND fr.user_id = :userId " +
+                     "AND fr.next_review_date <= :endOfDay " +
+                     "AND fr.id = (SELECT MAX(fr2.id) FROM flashcard_reviews fr2 WHERE fr2.word_id = w.id AND fr2.user_id = :userId)", nativeQuery = true)
+       long countTotalDueWordsByUserId(@Param("userId") Long userId, @Param("endOfDay") LocalDateTime endOfDay);
 
-    @Query("SELECT fr FROM FlashcardReview fr WHERE fr.user.id = :userId AND fr.createdAt BETWEEN :start AND :end ORDER BY fr.createdAt DESC")
-    Page<FlashcardReview> findByUserIdAndCreatedAtBetween(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
+       long countByUserId(Long userId);
 
-    @Query(value = "SELECT CAST(created_at AS DATE) as date, COUNT(*) as count FROM flashcard_reviews WHERE user_id = :userId AND created_at BETWEEN :start AND :end GROUP BY CAST(created_at AS DATE)", nativeQuery = true)
-    List<Object[]> countReviewsByDay(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+       @Query("SELECT fr FROM FlashcardReview fr WHERE fr.user.id = :userId AND fr.createdAt BETWEEN :start AND :end ORDER BY fr.createdAt DESC")
+       Page<FlashcardReview> findByUserIdAndCreatedAtBetween(@Param("userId") Long userId,
+                     @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
 
-    @Query("SELECT fr FROM FlashcardReview fr WHERE fr.user.id = :userId AND LOWER(fr.word.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY fr.createdAt DESC")
-    Page<FlashcardReview> searchByKeyword(@Param("userId") Long userId, @Param("keyword") String keyword, Pageable pageable);
+       @Query(value = "SELECT CAST(created_at AS DATE) as date, COUNT(*) as count FROM flashcard_reviews WHERE user_id = :userId AND created_at BETWEEN :start AND :end GROUP BY CAST(created_at AS DATE)", nativeQuery = true)
+       List<Object[]> countReviewsByDay(@Param("userId") Long userId, @Param("start") LocalDateTime start,
+                     @Param("end") LocalDateTime end);
 
-    @Query(value = "SELECT DISTINCT CAST(created_at AS DATE) FROM flashcard_reviews WHERE user_id = :userId ORDER BY CAST(created_at AS DATE) DESC", nativeQuery = true)
-    List<Object> findReviewDatesByUserId(@Param("userId") Long userId);
+       @Query("SELECT fr FROM FlashcardReview fr WHERE fr.user.id = :userId AND LOWER(fr.word.name) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY fr.createdAt DESC")
+       Page<FlashcardReview> searchByKeyword(@Param("userId") Long userId, @Param("keyword") String keyword,
+                     Pageable pageable);
+
+       @Query(value = "SELECT DISTINCT CAST(created_at AS DATE) FROM flashcard_reviews WHERE user_id = :userId ORDER BY CAST(created_at AS DATE) DESC", nativeQuery = true)
+       List<Object> findReviewDatesByUserId(@Param("userId") Long userId);
+
+       @Query("SELECT fr.user.id, w.name, fr.nextReviewDate " +
+                     "FROM FlashcardReview fr JOIN fr.word w " +
+                     "WHERE fr.nextReviewDate <= :now " +
+                     "ORDER BY fr.nextReviewDate ASC")
+       List<Object[]> findDueFlashcardsForReminder(@Param("now") LocalDateTime now);
 }

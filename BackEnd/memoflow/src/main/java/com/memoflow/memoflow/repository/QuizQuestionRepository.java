@@ -10,8 +10,10 @@ import java.util.List;
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
 
     List<QuizQuestion> findByQuizGroupId(Long quizGroupId);
+    
 
     List<QuizQuestion> findByQuizGroupIdOrderByOrderIndexAsc(Long quizGroupId);
 
     List<QuizQuestion> findByType(String type);
 }
+

@@ -10,8 +10,10 @@ import com.memoflow.memoflow.repository.UserRepository;
 import com.memoflow.memoflow.security.UserPrincipal;
 import com.memoflow.memoflow.service.CloudinaryService;
 import com.memoflow.memoflow.service.UserService;
+import com.memoflow.memoflow.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +28,10 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final CloudinaryService cloudinaryService;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -94,6 +98,9 @@ public class UserServiceImpl implements UserService {
         if (updatedUser.getAvatar() != null) {
             response.setAvatar(updatedUser.getAvatar().getUrl());
         }
+        if (updatedUser.getRole() != null) {
+            response.setRole(updatedUser.getRole().getName());
+        }
         response.setStreakDays(12); // Fake streak
         return response;
     }
@@ -108,6 +115,9 @@ public class UserServiceImpl implements UserService {
         if (user.getAvatar() != null) {
             response.setAvatar(user.getAvatar().getUrl());
         }
+        if (user.getRole() != null) {
+            response.setRole(user.getRole().getName());
+        }
         response.setStreakDays(12); // Fake streak
         return response;
     }
@@ -117,5 +127,27 @@ public class UserServiceImpl implements UserService {
         userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public UserResponse changeRole(Long userId, Long roleId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        
+        var role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role", "id", roleId));
+        
+        user.setRole(role);
+        User updatedUser = userRepository.save(user);
+        return modelMapper.map(updatedUser, UserResponse.class);
+    }
+
+    @Override
+    public void changePassword(Long userId, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

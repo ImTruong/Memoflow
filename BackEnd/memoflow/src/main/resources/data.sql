@@ -1,23 +1,44 @@
 -- Insert Roles
-INSERT INTO roles (name, description) VALUES ('ROLE_USER', 'Standard user role');
-INSERT INTO roles (name, description) VALUES ('ROLE_ADMIN', 'Administrative user role');
+INSERT IGNORE INTO roles (name, description) VALUES ('ROLE_USER', 'Standard user role');
+INSERT IGNORE INTO roles (name, description) VALUES ('ROLE_ADMIN', 'Administrative user role');
 
 -- Insert Sample User (Password is 'password' BCrypt encoded if needed, or plain for demo)
 -- Note: You should use BCrypt for actual passwords.
 -- $2a$10$8.UnVuG9HHgffUDAlk8qnOgufOMfH7fV9s5GPO9E5X.i.o.E.6K/q corresponds to '123456'
-INSERT INTO users (name, email, password, role_id, is_registered) VALUES
+INSERT IGNORE INTO users (name, email, password, role_id, is_registered) VALUES
 -- pass: 123456
 ('Alex Nguyen', 'alex.nguyen@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1),
 -- admin (pass: 123456)
-('Admin', 'admin@example.com', '$2a$10$epQymU57kOFQdEGl6b3JOu7URKDqg6lrFfh/SeGpxoxzQ6N1qGZ3O', 2, 1);
+('Admin', 'admin@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 2, 1),
+('Linh Tran', 'linh.tran@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1);
+
+
+-- Insert Sample Notifications
+INSERT INTO notifications (type, title, message, data, is_read, created_at, user_id) VALUES
+                                                                                         ('STUDY_REMINDER', 'Đã đến giờ học rồi!', 'Cùng ôn tập từ "Priority" để ghi nhớ lâu hơn nhé.', '{}', 0, '2026-04-01 09:58:00', 1),
+                                                                                         ('LEARNING_REMINDER', 'Nhắc nhở học tập', 'Đừng quên ôn lại từ "Destination" hôm nay nhé.', '{}', 0, '2026-04-01 08:20:00', 1),
+                                                                                         ('STREAK_REMINDER', 'Duy trì chuỗi học tập!', 'Chỉ còn vài giờ nữa để giữ vững chuỗi 12 ngày học của bạn. Học ngay nào!', '{}', 0, '2026-03-31 21:10:00', 1),
+                                                                                         ('NEW_LESSON', 'Bộ từ vựng mới!', 'Bộ từ vựng "Giao tiếp công sở" vừa được cập nhật. Khám phá ngay!', '{}', 0, '2026-03-31 10:05:00', 1),
+                                                                                         ('ACHIEVEMENT', 'Hoàn thành mục tiêu', 'Chúc mừng bạn đã hoàn thành mục tiêu 50 từ vựng tuần này.', '{}', 1, '2026-03-30 09:00:00', 1),
+                                                                                         ('ACHIEVEMENT', 'Hoàn thành mục tiêu', 'Chúc mừng bạn đã hoàn thành mục tiêu 50 từ vựng tuần này.', '{}', 1, '2026-03-29 09:00:00', 1);
+
+-- Insert Sample Notifications
+INSERT INTO notifications (type, title, message, data, is_read, created_at, user_id) VALUES
+                                                                                         ('STUDY_REMINDER', 'Đã đến giờ học rồi!', 'Cùng ôn tập từ "Priority" để ghi nhớ lâu hơn nhé.', '{}', 0, '2026-04-01 09:58:00', 1),
+                                                                                         ('LEARNING_REMINDER', 'Nhắc nhở học tập', 'Đừng quên ôn lại từ "Destination" hôm nay nhé.', '{}', 0, '2026-04-01 08:20:00', 1),
+                                                                                         ('STREAK_REMINDER', 'Duy trì chuỗi học tập!', 'Chỉ còn vài giờ nữa để giữ vững chuỗi 12 ngày học của bạn. Học ngay nào!', '{}', 0, '2026-03-31 21:10:00', 1),
+                                                                                         ('NEW_LESSON', 'Bộ từ vựng mới!', 'Bộ từ vựng "Giao tiếp công sở" vừa được cập nhật. Khám phá ngay!', '{}', 0, '2026-03-31 10:05:00', 1),
+                                                                                         ('ACHIEVEMENT', 'Hoàn thành mục tiêu', 'Chúc mừng bạn đã hoàn thành mục tiêu 50 từ vựng tuần này.', '{}', 1, '2026-03-30 09:00:00', 1),
+                                                                                         ('ACHIEVEMENT', 'Hoàn thành mục tiêu', 'Chúc mừng bạn đã hoàn thành mục tiêu 50 từ vựng tuần này.', '{}', 1, '2026-03-29 09:00:00', 1);
+
 
 -- Insert Sample Media
-INSERT INTO media (url, public_id, type) VALUES ('https://i.pravatar.cc/300?img=11', 'avatars/default', 'IMAGE');
-INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/vocab', 'icons/vocab', 'IMAGE');
-INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/grammar', 'icons/grammar', 'IMAGE');
-INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/listening', 'icons/listening', 'IMAGE');
-INSERT INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/activity', 'icons/activity', 'IMAGE');
-INSERT INTO media (url, public_id, type) VALUES
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://i.pravatar.cc/300?img=11', 'avatars/default', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/vocab', 'icons/vocab', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/grammar', 'icons/grammar', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/listening', 'icons/listening', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/activity', 'icons/activity', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782857/01_rq1jig.mp3', '01_rq1jig', 'AUDIO'),
 ('https://res.cloudinary.com/dwluretwy/image/upload/v1774789477/01_lasasw.jpg', '', 'IMAGE'),
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782857/02_g06nwi.mp3', '02_g06nwi', 'AUDIO'),
@@ -38,21 +59,22 @@ INSERT INTO media (url, public_id, type) VALUES
 ('https://picsum.photos/800/400?random=6', '', 'IMAGE');
 
 INSERT INTO media (url, public_id, type) VALUES
-('https://picsum.photos/800/400?random=10', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=11', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=12', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=13', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=14', '', 'IMAGE');
+                                             ('https://picsum.photos/800/400?random=10', '', 'IMAGE'),
+                                             ('https://picsum.photos/800/400?random=11', '', 'IMAGE'),
+                                             ('https://picsum.photos/800/400?random=12', '', 'IMAGE'),
+                                             ('https://picsum.photos/800/400?random=13', '', 'IMAGE'),
+                                             ('https://picsum.photos/800/400?random=14', '', 'IMAGE');
 
 -- Update user with avatar
 UPDATE users SET avatar_media_id = 1 WHERE id = 1;
+UPDATE users SET avatar_media_id = 1 WHERE id = 2;
 
-INSERT INTO learning_modes (name, description, icon_media_id) VALUES 
+INSERT IGNORE INTO learning_modes (name, description, icon_media_id) VALUES
     ('Từ vựng', 'Ghi nhớ theo đường cong lãng quên', 2), 
     ('Ngữ pháp' , 'Lý thuyết và Trắc nghiệm', 3), 
     ('Luyện nghe', 'Đề thi mẫu Toeic', 4);
 
-INSERT INTO learning_activities (title, description, icon_media_id, learning_mode_id) VALUES 
+INSERT IGNORE INTO learning_activities (title, description, icon_media_id, learning_mode_id) VALUES
     ('Flashcard', 'Luyện nhớ nhanh qua thẻ', 5, 1) , 
     ('Truyện chêm' , 'Học từ vựng qua ngữ cảnh', 5, 1) , 
     ('Bài viết song ngữ', 'Đọc hiểu Anh-Việt mỗi ngày', 5, 1),
@@ -64,13 +86,14 @@ INSERT INTO learning_activities (title, description, icon_media_id, learning_mod
 
 
 -- Create sample learning lessons (2 PUBLIC, 2 PRIVATE)
-INSERT INTO learning_lessons (title, type, description, learning_activity_id, user_id, content) VALUES 
+INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id, user_id, content) VALUES
     ('Từ vựng cơ bản', 'FLASHCARD', 'Các từ vựng phổ biến nhất cho người mới bắt đầu', 1, 1, '{"privacyMode": "PUBLIC"}'),
     ('Chủ đề Công nghệ', 'FLASHCARD', 'Từ vựng về IT và phần mềm', 1, 1, '{"privacyMode": "PUBLIC"}'),
     ('Ghi chú cá nhân 1', 'FLASHCARD', 'Học riêng tư phần 1', 1, 1, '{"privacyMode": "PRIVATE"}'),
-    ('Ghi chú cá nhân 2', 'FLASHCARD', 'Học riêng tư phần 2', 1, 1, '{"privacyMode": "PRIVATE"}');
+    ('Ghi chú cá nhân 2', 'FLASHCARD', 'Học riêng tư phần 2', 1, 1, '{"privacyMode": "PRIVATE"}'),
+    ('Từ vựng Giao tiếp', 'FLASHCARD', 'Các từ và cụm từ phổ biến trong giao tiếp hàng ngày', 1, 2, '{"privacyMode": "PUBLIC"}');
 
-INSERT INTO learning_lessons (title, type, description, learning_activity_id) VALUES
+INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id) VALUES
     ('Test 01 - Part 1', 'LISTENING_PART_1', 'Luyện nghe part 1', 8),
     ('Test 01 - Part 2', 'LISTENING_PART_2', 'Luyện nghe part 2', 8),
     ('Test 01 - Part 3', 'LISTENING_PART_3', 'Luyện nghe part 3', 8),
@@ -84,7 +107,7 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id) VA
     ('Test 03 - Part 3', 'LISTENING_PART_3', 'Luyện nghe part 3', 8),
     ('Test 03 - Part 4', 'LISTENING_PART_4', 'Luyện nghe part 4', 8);
 
-INSERT INTO learning_lessons (title, type, description, learning_activity_id, content, image_media_id) VALUES
+INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id, content, image_media_id) VALUES
     ('The Future of AI', 'BILINGUAL', 'Tương lai của AI', 3, '{
       "createdAt": "2026-03-31 10:15:00.000000",
       "views": 15,
@@ -167,101 +190,8 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, co
     }', 23);
 
 
-INSERT INTO learning_lessons (title, type, description, learning_activity_id, content, image_media_id) VALUES
-                                                                                                                    ('Ngọn đèn trong bão', 'TRUYEN_CHEM', 'Bài học về sự tử tế và kiên trì trong hoàn cảnh khó khăn', 2, '{
-      "englishTitle": "The Lantern in the Storm",
-      "paragraphs": [
-        "Đêm đó gió nổi lên dữ dội, mưa quất vào mái lá, cả làng chìm trong {storm} kéo dài nhiều giờ.",
-        "Ông lão mang chiếc {lantern} ra trước ngõ, đứng bên con {path} quen thuộc để chỉ đường cho người đi lạc; ngọn lửa nhỏ nhưng vẫn cháy {steady}.",
-        "Khi người khách trú ẩn an toàn trong {shelter}, ông lão chỉ mỉm cười, giữ lời {promise} đã hẹn với con trai là luôn {guide} người yếu trong bóng tối đến tận {horizon} bình yên."
-      ],
-      "vocabulary": [
-        { "word": "Storm" },
-        { "word": "Lantern" },
-        { "word": "Path" },
-        { "word": "Steady" },
-        { "word": "Shelter" },
-        { "word": "Promise" },
-        { "word": "Guide" },
-        { "word": "Horizon" }
-      ]
-    }', 24),
-                                                                                                                    ('Chuyến xe cuối cùng', 'TRUYEN_CHEM', 'Một câu chuyện về lòng trắc ẩn trong những khoảnh khắc vội vã', 2, '{
-      "englishTitle": "The Last Train",
-      "paragraphs": [
-        "Buổi tối, Lan cầm tấm {ticket} đứng chờ ở {platform} vắng, tiếng {whistle} từ xa vang lên như gọi mọi người trở về.",
-        "Tàu báo {delay} vì mưa lớn, cô định bỏ cuộc thì gặp người lái xe mang theo {parcel} cần giao gấp.",
-        "Cô đổi {route} để giúp, cuối cùng cả hai đến nơi đúng {arrival}, hiểu rằng một chút {compassion} có thể nối dài hành trình."
-      ],
-      "vocabulary": [
-        { "word": "Ticket" },
-        { "word": "Platform" },
-        { "word": "Whistle" },
-        { "word": "Delay" },
-        { "word": "Parcel" },
-        { "word": "Route" },
-        { "word": "Arrival" },
-        { "word": "Compassion" }
-      ]
-    }', 25),
-                                                                                                                    ('Hạt mầm và khu vườn', 'TRUYEN_CHEM', 'Kiên nhẫn và chăm sóc là chìa khóa của mọi thành quả', 2, '{
-      "englishTitle": "The Seed and the Garden",
-      "paragraphs": [
-        "Cậu bé nhận một {seed} nhỏ, chôn trong {soil} bên hàng rào và học {patience} mỗi ngày.",
-        "Sau nhiều tuần, mầm non {sprout} lên, cậu bé chăm {care} và nhờ {neighbor} chỉ cách tưới hợp lý.",
-        "Mùa thu tới, {harvest} đầy giỏ, hoa {bloom} rực rỡ, cậu hiểu rằng chăm chỉ sẽ nở hoa."
-      ],
-      "vocabulary": [
-        { "word": "Seed" },
-        { "word": "Soil" },
-        { "word": "Patience" },
-        { "word": "Sprout" },
-        { "word": "Care" },
-        { "word": "Neighbor" },
-        { "word": "Harvest" },
-        { "word": "Bloom" }
-      ]
-    }', 26),
-                                                                                                                    ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, '{
-      "englishTitle": "The Wooden Bridge",
-      "paragraphs": [
-        "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
-        "Ông đo từng tấm ván theo {measure} chính xác để giữ {balance}, dù công việc {risky}.",
-        "Khi cầu hoàn thành, dân làng bày tỏ {respect} và học được giá trị của {craft} bền bỉ."
-      ],
-      "vocabulary": [
-        { "word": "River" },
-        { "word": "Carpenter" },
-        { "word": "Bridge" },
-        { "word": "Measure" },
-        { "word": "Balance" },
-        { "word": "Risky" },
-        { "word": "Respect" },
-        { "word": "Craft" }
-      ]
-    }', 27),
-                                                                                                                    ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, '{
-      "englishTitle": "The Old Library",
-      "paragraphs": [
-        "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",
-        "Cô lật từng mục trong {index}, ánh mắt {curious} tìm quyển sách {fragile} bị lãng quên.",
-        "Giữa không gian {whisper} yên tĩnh, cô nghe ký ức gọi về như {memory} cũ.",
-        "Cô quyết tâm {restore} lại thư viện để những câu chuyện tiếp tục soi sáng thế hệ sau."
-      ],
-      "vocabulary": [
-        { "word": "Archive" },
-        { "word": "Dust" },
-        { "word": "Index" },
-        { "word": "Curious" },
-        { "word": "Fragile" },
-        { "word": "Whisper" },
-        { "word": "Memory" },
-        { "word": "Restore" }
-      ]
-    }', 28);
-
 -- Create 2 words for each learning lesson
-INSERT INTO words (name, ipa, example, definition, learning_lesson_id) VALUES 
+INSERT IGNORE INTO words (name, ipa, example, definition, learning_lesson_id) VALUES
     ('Hello', '/həˈloʊ/', 'Hello! How are you today?', 'Một lời chào thân mật', 1),
     ('Book', '/bʊk/', 'I am reading an interesting book.', 'Một tập hợp các trang giấy ghi chép', 1),
     ('Computer', '/kəmˈpjuːtər/', 'My computer is very fast.', 'Một thiết bị điện tử xử lý dữ liệu', 2),
@@ -269,9 +199,10 @@ INSERT INTO words (name, ipa, example, definition, learning_lesson_id) VALUES
     ('Private', '/ˈpraɪvət/', 'This is a private conversation.', 'Riêng tư, không công khai', 3),
     ('Secret', '/ˈsiːkrət/', 'Can you keep a secret?', 'Điều bí mật', 3),
     ('Study', '/ˈstʌdi/', 'I study English every night.', 'Học tập nghiên cứu', 4),
-    ('Learn', '/lɜːrn/', 'It is never too late to learn.', 'Học được một kỹ năng mới', 4);
+    ('Learn', '/lɜːrn/', 'It is never too late to learn.', 'Học được một kỹ năng mới', 4),
+    ('Communication', '/kəˌmjuːnɪˈkeɪʃən/', 'Good communication is essential in the workplace.', 'Trao đổi thông tin hoặc ý tưởng', 5);
 
-INSERT INTO quiz_groups (order_index, audio_media_id, image_media_id, learning_lesson_id, type, transcript, translation) VALUES
+INSERT IGNORE INTO quiz_groups (order_index, audio_media_id, image_media_id, learning_lesson_id, type, transcript, translation) VALUES
 (1, 6, 7, 5, 'LISTENING_PART_1', '(A) A woman is painting a house.\n(B) A woman is watering a plant.\n(C) A woman is fixing a door.\n(D) A woman is sweeping a walkway.', '(A) Một người phụ nữ đang sơn nhà.\n(B) Một người phụ nữ đang tưới cây.\n(C) Một người phụ nữ đang sửa cửa.\n(D) Một người phụ nữ đang quét lối đi.'),
 (2, 8, 9, 5, 'LISTENING_PART_1', '(A) They’re folding some papers.\n(B) They’re putting a picture in a frame.\n(C) They’re studying a drawing.\n(D) They’re closing a window.', '(A) Họ đang gấp vài tờ giấy.\n(B) Họ đang đặt một bức tranh vào khung.\n(C) Họ đang nghiên cứu một bản vẽ.\n(D) Họ đang đóng cửa sổ.'),
 (3, 10, 11, 5, 'LISTENING_PART_1', '(A) The man is turning on a light.\n(B) The man is giving the woman a book.\n(C) The woman is posting signs on a wall.\n(D) The woman is typing on a keyboard.', '(A) Người đàn ông đang bật đèn.\n(B) Người đàn ông đang đưa cho người phụ nữ một cuốn sách.\n(C) Người phụ nữ đang dán biển báo lên tường.\n(D) Người phụ nữ đang gõ bàn phím.'),
@@ -285,7 +216,7 @@ INSERT INTO quiz_groups (order_index, audio_media_id, image_media_id, learning_l
 (2, 16, NULL, 8, 'LISTENING_PART_4', 'M-Cn: Hi, Joanne. I didn’t know you rode a bike to work. When did you start doing that?\nW-Am: Last week. The town just added a new bike lane on Felton Road, so now I can ride here.\nM-Cn: That’s great. I heard the town government is planning to add bike lanes on some other roads too.\nW-Am: It’s really convenient. My commute to work used to be an hour by bus, and now it’s only 25 minutes.\nM-Cn: Wow. You know, I’m a member of a local bike-riding club that takes tours on the weekends. You should join. It’s a great group.', 'M-Cn: Chào Joanne. Tôi không biết bạn đi xe đạp đến chỗ làm. Bạn bắt đầu từ khi nào vậy?\nW-Am: Tuần trước. Thị trấn vừa thêm một làn đường xe đạp trên đường Felton, nên giờ tôi có thể đi xe đến đây.\nM-Cn: Thật tuyệt. Tôi nghe nói chính quyền thị trấn đang có kế hoạch thêm làn đường xe đạp trên vài con đường khác nữa.\nW-Am: Rất tiện lợi. Trước đây tôi mất một giờ đi xe buýt để đến chỗ làm, còn bây giờ chỉ mất 25 phút.\nM-Cn: Wow. Bạn biết không, tôi là thành viên của một câu lạc bộ đi xe đạp địa phương, họ tổ chức các chuyến đi vào cuối tuần. Bạn nên tham gia. Đó là một nhóm rất tuyệt.'),
 (3, 17, NULL, 8, 'LISTENING_PART_4', 'M-Au: Hello, Ms. Wilson? This is Oliver Lewis calling from Kardack Engineering. I reviewed your application for the mechanical engineer position and would like to interview you.\nW-Am: Oh, I’m happy to hear that.\nM-Au: Good. I’ll transfer you to my administrative assistant. He’ll make the arrangements for the interview.\nW-Am: Great.\nM-Cn: Hello, Ms. Wilson. This is Mr. Lewis’ assistant, Martin. I’m wondering if Wednesday at nine a.m. works for you.\nW-Am: Yes, that’s perfect. Now, I’ve never been to your office complex before. Where can I find directions?\nM-Cn: I’ll e-mail those to you.', 'M-Au: Xin chào cô Wilson? Đây là Oliver Lewis gọi từ Kardack Engineering. Tôi đã xem xét đơn ứng tuyển của cô cho vị trí kỹ sư cơ khí và muốn phỏng vấn cô.\nW-Am: Ôi, tôi rất vui khi nghe điều đó.\nM-Au: Tốt. Tôi sẽ chuyển máy cho trợ lý hành chính của tôi. Anh ấy sẽ sắp xếp buổi phỏng vấn.\nW-Am: Tuyệt vời.\nM-Cn: Xin chào cô Wilson. Tôi là Martin, trợ lý của ông Lewis. Tôi muốn hỏi liệu thứ Tư lúc 9 giờ sáng có phù hợp với cô không.\nW-Am: Vâng, rất hoàn hảo. Tôi chưa từng đến khu văn phòng của các anh trước đây. Tôi có thể tìm chỉ dẫn ở đâu?\nM-Cn: Tôi sẽ gửi email cho cô.');
 
-INSERT INTO quiz_questions (order_index, quiz_group_id, question_text, type, translation) VALUES
+INSERT IGNORE INTO quiz_questions (order_index, quiz_group_id, question_text, type, translation) VALUES
 (1, 1, '', '', NULL),
 (1, 2, '', '', NULL),
 (1, 3, '', '', NULL),
@@ -311,7 +242,7 @@ INSERT INTO quiz_questions (order_index, quiz_group_id, question_text, type, tra
 (2, 12, 'What is mentioned about the new policy?', '', 'Chính sách mới được đề cập như thế nào?\n(A) Nó sẽ bắt đầu từ tháng sau.\n(B) Nó là tùy chọn.\n(C) Nó sẽ thay thế chính sách cũ.\n(D) Nó yêu cầu đào tạo.'),
 (3, 12, 'What is the speaker’s tone?', '', 'Giọng điệu của người nói là gì?\n(A) Khích lệ.\n(B) Trung lập.\n(C) Phê phán.\n(D) Hài hước.');
 
-INSERT INTO quiz_options (is_correct, order_index, quiz_question_id, option_text) VALUES
+INSERT IGNORE INTO quiz_options (is_correct, order_index, quiz_question_id, option_text) VALUES
 (0, 1, 1, ''),
 (1, 2, 1, ''),
 (0, 3, 1, ''),
@@ -406,7 +337,7 @@ INSERT INTO quiz_options (is_correct, order_index, quiz_question_id, option_text
 (0, 3, 24, 'Critical'),
 (0, 4, 24, 'Humorous');
 
-INSERT INTO user_lesson_progress (is_completed, learning_lesson_id, user_id, created_at) VALUES
+INSERT IGNORE INTO user_lesson_progress (is_completed, learning_lesson_id, user_id, created_at) VALUES
 (1, 5, 1, '2026-03-01 10:15:00'),
 (0, 9,  1, '2026-03-05 14:30:00'),
 (1, 6, 1, '2026-03-10 09:45:00'),
@@ -415,6 +346,19 @@ INSERT INTO user_lesson_progress (is_completed, learning_lesson_id, user_id, cre
 (0, 11, 1, '2026-03-18 19:05:00'),
 (1, 8,  1, '2026-03-15 08:50:00'),
 (0, 12, 1, '2026-03-18 19:05:00');
+
+INSERT IGNORE INTO notifications (type, title, message, data, is_read, created_at, user_id) VALUES
+('STUDY_REMINDER', 'Đã đến giờ học rồi!', 'Cùng ôn tập từ "Priority" để ghi nhớ lâu hơn nhé.', NULL, 0, DATE_SUB(NOW(), INTERVAL 2 MINUTE), 1),
+('STUDY_REMINDER', 'Nhắc nhở học tập', 'Đừng quên ôn lại từ "Destination" hôm nay nhé.', NULL, 0, DATE_SUB(NOW(), INTERVAL 1 HOUR), 1),
+('STREAK_REMINDER', 'Duy trì chuỗi học tập!', 'Chỉ còn vài giờ nữa để giữ vững chuỗi 12 ngày học của bạn. Học ngay nào!', NULL, 0, DATE_SUB(NOW(), INTERVAL 3 HOUR), 1),
+('NEW_VOCABULARY', 'Bộ từ vựng mới!', 'Bộ từ vựng "Giao tiếp công sở" vừa được cập nhật. Khám phá ngay!', NULL, 0, DATE_SUB(NOW(), INTERVAL 1 DAY), 1),
+('ACHIEVEMENT', 'Hoàn thành mục tiêu', 'Chúc mừng bạn đã hoàn thành mục tiêu 50 từ vựng tuần này.', NULL, 1, DATE_SUB(NOW(), INTERVAL 2 DAY), 1),
+('ACHIEVEMENT', 'Hoàn thành mục tiêu', 'Chúc mừng bạn đã hoàn thành mục tiêu 50 từ vựng tuần này.', NULL, 1, DATE_SUB(NOW(), INTERVAL 2 DAY), 1),
+('STUDY_REMINDER', 'Nhắc nhở học tập', 'Từ vựng "Communication" đang chờ bạn. Hãy ôn lại để tạo ấn tượng sâu.', NULL, 0, DATE_SUB(NOW(), INTERVAL 30 MINUTE), 2),
+('NEW_VOCABULARY', 'Bộ từ vựng mới!', 'Bộ từ vựng "Từ vựng Giao tiếp" của Linh Tran đã được chia sẻ công khai.', NULL, 0, DATE_SUB(NOW(), INTERVAL 4 HOUR), 2),
+('GENERAL', 'Thông báo', 'Chào mừng bạn đến với Memoflow!', NULL, 1, DATE_SUB(NOW(), INTERVAL 3 DAY), 2);
+
+
 
 INSERT INTO learning_lessons (title, type, description, learning_activity_id, content) VALUES
 ('Animals', 'WORD_HUNT', 'Tim 5 tu vung chu de dong vat trong 01:45.', 5, '{"categoryKey":"animals","categoryLabel":"Animals","boardSize":6,"timeLimitSeconds":105,"targetWordCount":5,"maxHintsPerDay":3,"objectiveText":"Muc tieu: 5 tu","words":["LION","TIGER","RABBIT","HORSE","SNAKE","MONKEY"]}'),

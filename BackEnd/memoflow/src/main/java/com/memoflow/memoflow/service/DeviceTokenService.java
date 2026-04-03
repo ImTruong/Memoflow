@@ -16,4 +16,6 @@ public interface DeviceTokenService {
     void deleteByToken(String token);
 
     void deleteById(Long id);
+
+    void registerSocketDevice(String sessionId, Long userId, String platform);
 }

@@ -17,4 +17,5 @@ public class UserResponse {
     private LocalDate dateOfBirth;
     private String avatar;
     private Integer streakDays;
+    private String role;
 }

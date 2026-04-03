@@ -3,6 +3,9 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions } from
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
 import { NotificationOverlay } from '../components/NotificationOverlay';
+import { useNotifications } from '../hooks/useNotifications';
+import { Header } from '../components/Header';
+import { useUser } from '../hooks/useUser';
 
 const { width } = Dimensions.get('window');
 
@@ -18,36 +21,22 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
   onNavigateToListeningStats
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount } = useNotifications();
+  const { profile } = useUser();
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Thống kê</Text>
-          <Text style={styles.headerSubtitle}>Tổng quan học tập</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.streakBadge}>
-            <FontAwesome5 name="fire" size={16} color={colors.warning} />
-            <Text style={styles.streakText}>12 Ngày</Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={[styles.notifBtn, showNotifications && styles.activeNotifBtn]}
-            onPress={() => setShowNotifications(!showNotifications)}
-          >
-            <Ionicons 
-              name="notifications" 
-              size={24} 
-              color={showNotifications ? colors.primary : colors.textPrimary} 
-            />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Header 
+        userName={profile?.name || "Người dùng"}
+        streakDays={profile?.streakDays || 0}
+        avatarUrl={profile?.avatar}
+        notificationCount={unreadCount}
+        showNotifications={showNotifications}
+        onToggleNotifications={() => setShowNotifications(!showNotifications)}
+        titleMode={true}
+        title="Thống kê"
+        subtitle="Tổng quan học tập"
+      />
 
       <View style={styles.contentWrapper}>
         <ScrollView 
@@ -196,75 +185,6 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
     position: 'relative',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFF',
-    zIndex: 100,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackgrounds.orangeLight,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  streakText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.warning,
-    marginLeft: 6,
-  },
-  notifBtn: {
-    position: 'relative',
-    padding: 4,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  activeNotifBtn: {
-    backgroundColor: colors.cardBackgrounds.purpleLight,
-  },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
-    backgroundColor: colors.danger,
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFF',
-  },
-  badgeText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
   scrollContent: {
     paddingHorizontal: 20,

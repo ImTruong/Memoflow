@@ -39,6 +39,9 @@ public class Notification {
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
 
+    @Column(name = "scheduled_time")
+    private LocalDateTime scheduledTime;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

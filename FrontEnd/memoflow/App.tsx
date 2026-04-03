@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, StatusBar } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, View, StatusBar, Alert } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { NotificationScreen } from './src/screens/NotificationScreen';
 import { VocabularyLearningScreen } from './src/screens/VocabularyLearningScreen';
@@ -42,6 +43,8 @@ import { AiAssistantScreen } from './src/screens/AiAssistantScreen';
 import { storyApi } from './src/api/storyApi';
 import { prefetchVietnameseMeanings, wordHuntApi } from './src/api/wordHuntApi';
 import { BotDifficulty } from './src/types/wordRace';
+import { requestNotificationPermissions } from './src/services/pushNotification';
+import { AppliedExerciseScreen } from './src/screens/AppliedExerciseScreen';
 
 type Screen =
   | 'Register'
@@ -76,7 +79,8 @@ type Screen =
   | 'WordHuntGame'
   | 'Bilingual'
   | 'BilingualDetail'
-  | 'AiChat';
+  | 'AiChat'
+  | 'AppliedExercise';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('Login');
@@ -102,7 +106,10 @@ export default function App() {
   const [wordHuntProgressList, setWordHuntProgressList] = useState<WordHuntProgress[]>([]);
   const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
   const [isResumeListening, setResumeListening] = useState<boolean>(true);
+  const [isOwner, setIsOwner] = useState(true);
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
+  const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
+  const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
 
   useEffect(() => {
   const initAuth = async () => {
@@ -119,6 +126,44 @@ export default function App() {
   };
   initAuth();
 }, []);
+
+  // Setup notification listeners
+  useEffect(() => {
+    // Request permissions on app start
+    requestNotificationPermissions().then((granted) => {
+      console.log('Notification permission granted:', granted);
+    }).catch(console.error);
+
+    // Listener for notifications received while app is in foreground
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('🔔 Notification received:', notification);
+      Alert.alert(
+        notification.request.content.title || 'Thông báo',
+        notification.request.content.body || '',
+        [{ text: 'OK' }]
+      );
+    });
+
+    // Listener for when user taps on notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('👆 Notification tapped:', response);
+      // You can navigate to specific screen based on notification data
+      const data = response.notification.request.content.data;
+      if (data?.screen) {
+        setCurrentScreen(data.screen as Screen);
+      }
+    });
+
+    // Cleanup listeners on unmount
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
+  }, []);
 
   const loadStoryLessons = async () => {
     try {
@@ -289,11 +334,18 @@ export default function App() {
               setCurrentScreen('Bilingual')
             }}
             onNavigateToAiChat={() => setCurrentScreen('AiChat')}
+            onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
           />
         );
       case 'AiChat':
         return (
           <AiAssistantScreen
+            onBack={() => setCurrentScreen('Home')}
+          />
+        );
+      case 'AppliedExercise':
+        return (
+          <AppliedExerciseScreen 
             onBack={() => setCurrentScreen('Home')}
           />
         );
@@ -316,6 +368,7 @@ export default function App() {
               setPrevScreen('VocabularyLearning');
               setCurrentScreen('Bilingual');
             }}
+            onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
           />
         );
       case 'FlashcardSet':
@@ -325,11 +378,13 @@ export default function App() {
             onNavigateToCreate={() => {
               setEditMode(false);
               setSelectedLessonId(null);
+              setIsOwner(true);
               setCurrentScreen('CreateFlashcardSet');
             }}
-            onNavigateToEdit={(id) => {
+            onNavigateToEdit={(id, isOwnerValue) => {
               setEditMode(true);
               setSelectedLessonId(id);
+              setIsOwner(isOwnerValue ?? true);
               setCurrentScreen('CreateFlashcardSet');
             }}
             onNavigateToStudy={(setName, id, dueOnly, isGlobal = false) => {
@@ -356,6 +411,7 @@ export default function App() {
             }}
             lessonId={selectedLessonId || undefined}
             editMode={editMode}
+            isOwner={isOwner}
             onSetCreated={(id) => setSelectedLessonId(id)}
             refreshTrigger={refreshTrigger}
             onAddWord={(word) => {
@@ -612,6 +668,7 @@ export default function App() {
             onNavigateToStoryList={() => setCurrentScreen('StoryList')}
             onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
             onNavigateToAiChat={() => setCurrentScreen('AiChat')}
+            onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
           />
         );
     }
@@ -656,7 +713,8 @@ export default function App() {
           'WordRaceGame',
           'WordHuntList',
           'WordHuntGame',
-          'AiChat'
+          'AiChat',
+          'AppliedExercise'
         ].includes(currentScreen) && (
           <Footer 
             activeTab={getActiveTab(currentScreen)} 

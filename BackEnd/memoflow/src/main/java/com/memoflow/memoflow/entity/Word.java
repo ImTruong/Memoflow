@@ -35,6 +35,9 @@ public class Word {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String definition;
 
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean deleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "learning_lesson_id", nullable = false)
     private LearningLesson learningLesson;

@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
@@ -160,7 +159,82 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
     @Override
     public void deleteFlashcardLesson(Long id, UserPrincipal userPrincipal) {
-        learningLessonRepository.deleteById(id);
+        LearningLesson lesson = findLessonById(id);
+        List<Word> words = wordRepository.findByFlashcardLessonId(id);
+
+        boolean hasStudiedWords = deleteAllWordsInLesson(words);
+
+        if (hasStudiedWords) {
+            softDeleteLesson(lesson);
+        } else {
+            hardDeleteLesson(id);
+        }
+    }
+
+    /**
+     * Delete all words in a lesson and return whether any were soft deleted
+     * 
+     * @return true if at least one word was soft deleted (had reviews), false
+     *         otherwise
+     */
+    private boolean deleteAllWordsInLesson(List<Word> words) {
+        boolean hasStudiedWord = false;
+
+        for (Word word : words) {
+            if (hasBeenReviewed(word.getId())) {
+                softDeleteWord(word);
+                hasStudiedWord = true;
+            } else {
+                hardDeleteWord(word.getId());
+            }
+        }
+
+        return hasStudiedWord;
+    }
+
+    /**
+     * Check if a word has been reviewed by any user
+     */
+    private boolean hasBeenReviewed(Long wordId) {
+        return !flashcardReviewRepository.findByWordId(wordId).isEmpty();
+    }
+
+    /**
+     * Soft delete: mark word as deleted
+     */
+    private void softDeleteWord(Word word) {
+        word.setDeleted(true);
+        wordRepository.save(word);
+    }
+
+    /**
+     * Hard delete: permanently remove word from database
+     */
+    private void hardDeleteWord(Long wordId) {
+        wordRepository.deleteById(wordId);
+    }
+
+    /**
+     * Soft delete: mark lesson as deleted (preserves learning history)
+     */
+    private void softDeleteLesson(LearningLesson lesson) {
+        lesson.setDeleted(true);
+        learningLessonRepository.save(lesson);
+    }
+
+    /**
+     * Hard delete: permanently remove lesson from database
+     */
+    private void hardDeleteLesson(Long lessonId) {
+        learningLessonRepository.deleteById(lessonId);
+    }
+
+    /**
+     * Find lesson by ID or throw exception
+     */
+    private LearningLesson findLessonById(Long id) {
+        return learningLessonRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Flashcard lesson not found with id: " + id));
     }
 
     @Override
@@ -189,20 +263,21 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                     if (lesson.getImage() != null) {
                         summary.setImageUrl(lesson.getImage().getUrl());
                     }
+                    summary.setCreatorId(lesson.getCreator().getId());
                     summary.setCreatorName(lesson.getCreator().getName());
                     summary.setLearningActivityId(lesson.getLearningActivity().getId());
                     summary.setContent(lesson.getContent());
 
-
                     long totalWords = wordRepository.countByFlashcardLessonId(lesson.getId());
-                    long learnedWords = flashcardReviewRepository.countLearnedWordsByFlashcardLesson(lesson.getId(), userId,
+                    long learnedWords = flashcardReviewRepository.countLearnedWordsByFlashcardLesson(lesson.getId(),
+                            userId,
                             now);
-                    long totalDueWord = flashcardReviewRepository.countWordsLearnedAtLeastOnceByFlashcardLesson(lesson.getId(), userId);
+                    long totalDueWord = flashcardReviewRepository
+                            .countWordsLearnedAtLeastOnceByFlashcardLesson(lesson.getId(), userId);
 
                     summary.setTotalWords(totalWords);
                     summary.setLearnedWords(learnedWords);
                     summary.setTotalDueWord(totalDueWord);
-
 
                     return summary;
                 })
@@ -230,6 +305,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
             lessonResponse.setImageUrl(lesson.getImage().getUrl());
         }
         lessonResponse.setLearningActivityId(lesson.getLearningActivity().getId());
+        lessonResponse.setCreatorId(lesson.getCreator().getId());
         lessonResponse.setCreatorName(lesson.getCreator().getName());
 
         Page<com.memoflow.memoflow.entity.Word> wordPage = wordRepository.findByFlashcardLessonId(id, pageable);
@@ -268,9 +344,9 @@ public class LearningLessonServiceImpl implements LearningLessonService {
             Long part,
             String status,
             Pageable pageable) {
-        String type="LISTENING_PART_"+part;
-        Page<ListeningLessonResponse> responsesPage=learningLessonRepository.findListeningLessons(
-                userPrincipal.getId(),type,status,pageable);
+        String type = "LISTENING_PART_" + part;
+        Page<ListeningLessonResponse> responsesPage = learningLessonRepository.findListeningLessons(
+                userPrincipal.getId(), type, status, pageable);
         return PageResponse.<ListeningLessonResponse>builder()
                 .content(responsesPage.getContent())
                 .pageNumber(responsesPage.getNumber())
@@ -293,40 +369,47 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 .groups(
                         lesson.getQuizGroups().stream()
                                 .sorted(Comparator.comparing(QuizGroup::getOrderIndex))
-                                .map(group ->
-                                        ListeningLessonDetailResponse.GroupResponse.builder()
-                                                .groupId(group.getId())
-                                                .audio(group.getAudio() != null ? new ListeningLessonDetailResponse.MediaResponse(group.getAudio().getUrl()) : null)
-                                                .images(group.getImage() != null ? new ListeningLessonDetailResponse.MediaResponse(group.getImage().getUrl()) : null)
-                                                .quizzes(
-                                                        group.getQuizQuestions().stream()
-                                                                .sorted(Comparator.comparing(QuizQuestion::getOrderIndex))
-                                                                .map(q ->
-                                                                        ListeningLessonDetailResponse.QuizResponse.builder()
-                                                                                .quizId(q.getId())
-                                                                                .questionText(q.getQuestionText() != null ? q.getQuestionText() : "")
-                                                                                .options(
-                                                                                        q.getQuizOptions().stream()
-                                                                                                .sorted(Comparator.comparing(QuizOption::getOrderIndex))
-                                                                                                .map(opt ->
-                                                                                                        ListeningLessonDetailResponse.OptionResponse.builder()
-                                                                                                                .optionId(opt.getId())
-                                                                                                                .optionText(opt.getOptionText() != null ? opt.getOptionText() : "")
-                                                                                                                .build()
-                                                                                                ).collect(Collectors.toList())
-                                                                                )
-                                                                                .build()
-                                                                ).collect(Collectors.toList())
-                                                )
-                                                .build()
-                                ).collect(Collectors.toList())
-                )
+                                .map(group -> ListeningLessonDetailResponse.GroupResponse.builder()
+                                        .groupId(group.getId())
+                                        .audio(group.getAudio() != null
+                                                ? new ListeningLessonDetailResponse.MediaResponse(
+                                                        group.getAudio().getUrl())
+                                                : null)
+                                        .images(group.getImage() != null
+                                                ? new ListeningLessonDetailResponse.MediaResponse(
+                                                        group.getImage().getUrl())
+                                                : null)
+                                        .quizzes(
+                                                group.getQuizQuestions().stream()
+                                                        .sorted(Comparator.comparing(QuizQuestion::getOrderIndex))
+                                                        .map(q -> ListeningLessonDetailResponse.QuizResponse.builder()
+                                                                .quizId(q.getId())
+                                                                .questionText(q.getQuestionText() != null
+                                                                        ? q.getQuestionText()
+                                                                        : "")
+                                                                .options(
+                                                                        q.getQuizOptions().stream()
+                                                                                .sorted(Comparator.comparing(
+                                                                                        QuizOption::getOrderIndex))
+                                                                                .map(opt -> ListeningLessonDetailResponse.OptionResponse
+                                                                                        .builder()
+                                                                                        .optionId(opt.getId())
+                                                                                        .optionText(opt
+                                                                                                .getOptionText() != null
+                                                                                                        ? opt.getOptionText()
+                                                                                                        : "")
+                                                                                        .build())
+                                                                                .collect(Collectors.toList()))
+                                                                .build())
+                                                        .collect(Collectors.toList()))
+                                        .build())
+                                .collect(Collectors.toList()))
                 .build();
     }
 
     @Override
     public void submitListeningLesson(UserPrincipal userPrincipal, Long lessonId,
-                                      SubmitListeningLessonRequest request, boolean isCompleted) {
+            SubmitListeningLessonRequest request, boolean isCompleted) {
         LearningLesson lesson = learningLessonRepository.findById(lessonId).orElseThrow();
         User user = userRepository.findById(userPrincipal.getId()).orElseThrow();
 
@@ -379,10 +462,10 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         }
     }
 
-
     @Override
     public ListeningLessonSubmissionResponse getListeningSubmission(UserPrincipal userPrincipal, Long lessonId) {
-        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), lessonId);
+        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(),
+                lessonId);
 
         List<ListeningLessonSubmissionResponse.Answer> answers = userAnswers.stream()
                 .map(ans -> {
@@ -406,7 +489,8 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         LearningLesson lesson = learningLessonRepository.findById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), lessonId);
+        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(),
+                lessonId);
 
         int totalQuestion = lesson.getQuizGroups().stream()
                 .mapToInt(group -> group.getQuizQuestions().size())
@@ -450,13 +534,12 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                         .findFirst().orElse(null);
                 quizResult.setUserAnswer(userAnswerId);
 
-                List<ListeningResultResponse.OptionResult> optionResults = q.getQuizOptions().stream().map(opt ->
-                        new ListeningResultResponse.OptionResult(
+                List<ListeningResultResponse.OptionResult> optionResults = q.getQuizOptions().stream()
+                        .map(opt -> new ListeningResultResponse.OptionResult(
                                 opt.getId().intValue(),
                                 opt.getOptionText(),
-                                opt.getIsCorrect()
-                        )
-                ).collect(Collectors.toList());
+                                opt.getIsCorrect()))
+                        .collect(Collectors.toList());
 
                 quizResult.setOptions(optionResults);
                 return quizResult;
@@ -722,14 +805,12 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     @Override
     public PageResponse<BilingualResponse> searchBilingual(String keyword, Pageable pageable, String filter) {
         Page<LearningLesson> responsesPage;
-        if("newest".equals(filter)){
-            responsesPage = learningLessonRepository.findBilingualNewest(keyword,pageable);
-        }
-        else if("oldest".equals(filter)){
-            responsesPage = learningLessonRepository.findBilingualOldest(keyword,pageable);
-        }
-        else{
-            responsesPage = learningLessonRepository.findBilingualPopular(keyword,pageable);
+        if ("newest".equals(filter)) {
+            responsesPage = learningLessonRepository.findBilingualNewest(keyword, pageable);
+        } else if ("oldest".equals(filter)) {
+            responsesPage = learningLessonRepository.findBilingualOldest(keyword, pageable);
+        } else {
+            responsesPage = learningLessonRepository.findBilingualPopular(keyword, pageable);
         }
         List<BilingualResponse> content = responsesPage.getContent().stream()
                 .map(l -> new BilingualResponse(
@@ -737,8 +818,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                         l.getTitle(),
                         l.getDescription(),
                         l.getContent(),
-                        l.getImage() != null ? new BilingualResponse.Media(l.getImage().getUrl()) : null
-                ))
+                        l.getImage() != null ? new BilingualResponse.Media(l.getImage().getUrl()) : null))
                 .collect(Collectors.toList());
 
         return PageResponse.<BilingualResponse>builder()
@@ -761,8 +841,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 lesson.getTitle(),
                 lesson.getDescription(),
                 lesson.getContent(),
-                lesson.getImage() != null ? new BilingualResponse.Media(lesson.getImage().getUrl()) : null
-        );
+                lesson.getImage() != null ? new BilingualResponse.Media(lesson.getImage().getUrl()) : null);
     }
 
     @Override
@@ -874,4 +953,35 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         learningLessonRepository.delete(lesson);
     }
 
+    @Override
+    public PageResponse<FlashcardLessonSummaryResponse> getAllFlashcardLessons(Pageable pageable) {
+        Page<LearningLesson> lessonPage = learningLessonRepository.findByType("FLASHCARD", pageable);
+        // Using -1 for userId as Admin is just viewing summaries, not tracking their own progress here
+        return mapToFlashcardLessonSummaryPageResponse(lessonPage, -1L);
+    }
+
+    @Override
+    public void deleteFlashcardLessonAdmin(Long id) {
+        LearningLesson lesson = findLessonById(id);
+        List<Word> words = wordRepository.findByFlashcardLessonId(id);
+        
+        // Administrative delete: we don't care about review history as much, we just delete everything
+        // But to be safe and consistent with existing logic:
+        for (Word word : words) {
+            flashcardReviewRepository.deleteByWordId(word.getId());
+            wordRepository.deleteById(word.getId());
+        }
+        
+        userLessonProgressRepository.deleteByLearningLessonId(id);
+        
+        if (lesson.getImage() != null && lesson.getImage().getPublicId() != null) {
+            try {
+                cloudinaryService.deleteImage(lesson.getImage().getPublicId());
+            } catch (IOException e) {
+                log.error("Failed to delete image: {}", e.getMessage());
+            }
+        }
+        
+        learningLessonRepository.delete(lesson);
+    }
 }

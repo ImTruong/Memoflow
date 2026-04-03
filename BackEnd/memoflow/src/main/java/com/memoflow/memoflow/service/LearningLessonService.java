@@ -56,4 +56,8 @@ public interface LearningLessonService {
 
     void deleteBilingualLesson(Long id);
 
+    PageResponse<FlashcardLessonSummaryResponse> getAllFlashcardLessons(Pageable pageable);
+
+    void deleteFlashcardLessonAdmin(Long id);
+
 }

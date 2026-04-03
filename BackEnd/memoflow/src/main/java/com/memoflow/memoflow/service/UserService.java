@@ -27,4 +27,8 @@ public interface UserService {
     UserResponse getUserProfile(UserPrincipal userPrincipal);
 
     void deleteById(Long id);
+
+    UserResponse changeRole(Long userId, Long roleId);
+
+    void changePassword(Long userId, String newPassword);
 }

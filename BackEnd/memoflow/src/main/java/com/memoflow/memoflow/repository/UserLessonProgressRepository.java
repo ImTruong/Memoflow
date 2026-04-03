@@ -6,8 +6,9 @@ import com.memoflow.memoflow.entity.UserLessonProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserLessonProgressRepository extends JpaRepository<UserLessonProgress, Long> {
@@ -17,5 +18,12 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     List<UserLessonProgress> findByUserIdAndLearningLessonIdIn(Long userId, List<Long> lessonIds);
 
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
     void deleteByLearningLessonId(Long lessonId);
+
+    boolean existsByUserIdAndUpdatedAtAfter(Long userId, LocalDateTime after);
+
+    boolean existsByUserIdAndCreatedAtAfter(Long userId, LocalDateTime after);
+
 }
