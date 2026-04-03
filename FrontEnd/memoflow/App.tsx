@@ -82,6 +82,8 @@ type Screen =
   | 'AiChat'
   | 'AppliedExercise';
 
+type FeatureEntryScreen = 'Home' | 'VocabularyLearning';
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('Login');
   const [editMode, setEditMode] = useState(false);
@@ -110,6 +112,7 @@ export default function App() {
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
   const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
   const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
+  const [featureEntryScreen, setFeatureEntryScreen] = useState<FeatureEntryScreen>('VocabularyLearning');
 
   useEffect(() => {
   const initAuth = async () => {
@@ -326,8 +329,14 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
-            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
-            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToStoryList={() => {
+              setFeatureEntryScreen('Home');
+              setCurrentScreen('StoryList');
+            }}
+            onNavigateToWordRaceList={() => {
+              setFeatureEntryScreen('Home');
+              setCurrentScreen('WordRaceList');
+            }}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
             onNavigateToBilingual={() => {
               setPrevScreen('Home')
@@ -361,8 +370,14 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
-            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
-            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToStoryList={() => {
+              setFeatureEntryScreen('VocabularyLearning');
+              setCurrentScreen('StoryList');
+            }}
+            onNavigateToWordRaceList={() => {
+              setFeatureEntryScreen('VocabularyLearning');
+              setCurrentScreen('WordRaceList');
+            }}
             onNavigateToWordHuntList={() => setCurrentScreen('WordHuntList')}
             onNavigateToBilingual={() => {
               setPrevScreen('VocabularyLearning');
@@ -543,7 +558,7 @@ export default function App() {
             isLoading={isStoryLoading}
             error={storyError}
             onRefresh={loadStoryLessons}
-            onBack={() => setCurrentScreen('Home')}
+            onBack={() => setCurrentScreen(featureEntryScreen)}
             onNavigateToStory={(progress) => {
               setSelectedStoryProgress(progress);
               setCurrentScreen('StoryDetail');
@@ -581,7 +596,7 @@ export default function App() {
       case 'WordRaceList':
         return (
           <WordRaceListScreen
-            onBack={() => setCurrentScreen('VocabularyLearning')}
+            onBack={() => setCurrentScreen(featureEntryScreen)}
             onNavigateToGame={(lesson, difficulty) => {
               setSelectedWordRaceLesson(lesson);
               setSelectedWordRaceDifficulty(difficulty);
@@ -665,8 +680,14 @@ export default function App() {
             }}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
             onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
-            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
-            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToStoryList={() => {
+              setFeatureEntryScreen('Home');
+              setCurrentScreen('StoryList');
+            }}
+            onNavigateToWordRaceList={() => {
+              setFeatureEntryScreen('Home');
+              setCurrentScreen('WordRaceList');
+            }}
             onNavigateToAiChat={() => setCurrentScreen('AiChat')}
             onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
           />

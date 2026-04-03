@@ -26,4 +26,5 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     boolean existsByUserIdAndCreatedAtAfter(Long userId, LocalDateTime after);
 
+    boolean existsByUserIdAndLearningLessonIdAndIsCompletedTrue(Long userId, Long lessonId);
 }

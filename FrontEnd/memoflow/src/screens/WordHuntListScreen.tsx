@@ -54,7 +54,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>WORD HUNT</Text>
+        <Text style={styles.headerTitle}>Tinh mắt tìm từ</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -63,7 +63,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
         <TextInput
           value={searchValue}
           onChangeText={setSearchValue}
-          placeholder="Search themes..."
+          placeholder="Tìm chủ đề..."
           placeholderTextColor="#94A3B8"
           style={styles.searchInput}
         />
@@ -134,7 +134,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
               >
                 {showActiveBadge && (
                   <View style={styles.activeBadge}>
-                    <Text style={styles.activeBadgeText}>DANG CHOI</Text>
+                    <Text style={styles.activeBadgeText}>ĐANG CHƠI</Text>
                   </View>
                 )}
 
@@ -159,20 +159,20 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
                 {isCompleted && (
                   <View style={styles.completedRow}>
                     <Ionicons name="checkmark-circle-outline" size={12} color="#16A34A" />
-                    <Text style={styles.completedText}>Da vuot qua</Text>
+                    <Text style={styles.completedText}>Đã vượt qua</Text>
                   </View>
                 )}
 
                 {!isCompleted && unlocked && (
                   <>
-                    <Text style={styles.pendingText}>Chua hoan thanh</Text>
+                    <Text style={styles.pendingText}>Chưa hoàn thành</Text>
                     <Text style={styles.objectiveText}>{content.objectiveText}</Text>
                   </>
                 )}
 
                 {!unlocked && (
                   <Text style={styles.lockReasonText} numberOfLines={2}>
-                    {content.unlockRequirementText || 'Can hoan thanh chu de truoc de mo khoa'}
+                    {content.unlockRequirementText || 'Cần hoàn thành chủ đề trước để mở khóa'}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -188,13 +188,13 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
               <Ionicons name="lock-closed-outline" size={24} color="#F97316" />
             </View>
 
-            <Text style={styles.modalTitle}>Chu de dang khoa</Text>
+            <Text style={styles.modalTitle}>Chủ đề đang khóa</Text>
             <Text style={styles.modalBody}>
-              Ban can hoan thanh chu de truoc do de co the trai nghiem noi dung nay. Hay tiep tuc co gang nhe!
+              Bạn cần hoàn thành chủ đề trước đó để có thể trải nghiệm nội dung này. Hãy tiếp tục cố gắng nhé!
             </Text>
 
             <TouchableOpacity style={styles.modalButton} onPress={() => setLockedLesson(null)}>
-              <Text style={styles.modalButtonText}>Da hieu</Text>
+              <Text style={styles.modalButtonText}>Đã hiểu</Text>
             </TouchableOpacity>
           </View>
         </View>

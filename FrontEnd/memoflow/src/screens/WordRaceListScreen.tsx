@@ -106,7 +106,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
       setLessons(sorted);
     } catch (error) {
       console.error('Failed to load Word Race lessons', error);
-      setErrorMessage('Khong the tai danh sach man choi. Vui long thu lai.');
+      setErrorMessage('Không thể tải danh sách màn chơi. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +135,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={28} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nối từ</Text>
+        <Text style={styles.headerTitle}>Đua từ với Bot</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -143,14 +143,14 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
         {/* Banner */}
         <View style={styles.bannerContainer}>
           <View style={styles.bannerOverlay}>
-            <Text style={styles.bannerText}>NOI TU</Text>
-            <Text style={styles.bannerSubText}>Chon che do va cap do de bat dau</Text>
+            <Text style={styles.bannerText}>ĐUA TỪ VỚI BOT</Text>
+            <Text style={styles.bannerSubText}>Chọn chế độ và cấp độ để bắt đầu</Text>
           </View>
         </View>
 
         <View style={styles.lessonCountBadge}>
           <Ionicons name="layers-outline" size={14} color="#4B5563" />
-          <Text style={styles.lessonCountText}>Hien co {lessons.length} man choi</Text>
+          <Text style={styles.lessonCountText}>Hiện có {lessons.length} màn chơi</Text>
         </View>
 
         {/* Mode List */}
@@ -158,7 +158,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
           {isLoading ? (
             <View style={styles.statusCard}>
               <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={styles.statusText}>Dang tai danh sach man choi...</Text>
+              <Text style={styles.statusText}>Đang tải danh sách màn chơi...</Text>
             </View>
           ) : null}
 
@@ -167,7 +167,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
               <Ionicons name="alert-circle-outline" size={20} color="#EF4444" />
               <Text style={styles.statusText}>{errorMessage}</Text>
               <TouchableOpacity style={styles.retryButton} onPress={() => void loadLessons()}>
-                <Text style={styles.retryButtonText}>Thu lai</Text>
+                <Text style={styles.retryButtonText}>Thử lại</Text>
               </TouchableOpacity>
             </View>
           ) : null}
@@ -175,7 +175,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
           {!isLoading && !errorMessage && lessons.length === 0 ? (
             <View style={styles.statusCard}>
               <Ionicons name="sparkles-outline" size={20} color="#6B7280" />
-              <Text style={styles.statusText}>Chua co man choi nao duoc mo.</Text>
+              <Text style={styles.statusText}>Chưa có màn chơi nào được mở.</Text>
             </View>
           ) : null}
 
@@ -212,7 +212,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
                           </View>
                           <View style={styles.tag}>
                             <Ionicons name="time-outline" size={14} color="#6B7280" />
-                            <Text style={styles.tagText}>{content.timeLimit}s/Luot</Text>
+                            <Text style={styles.tagText}>{content.timeLimit}s/lượt</Text>
                           </View>
                           {forbiddenEndings.length > 0 ? (
                             <View
@@ -223,7 +223,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
                             >
                               <Ionicons name="ban-outline" size={14} color="#EF4444" />
                               <Text style={[styles.tagText, { color: '#EF4444' }]}>
-                                Khong ket thuc bang {forbiddenEndings.join(', ')}
+                                Không kết thúc bằng {forbiddenEndings.join(', ')}
                               </Text>
                             </View>
                           ) : null}

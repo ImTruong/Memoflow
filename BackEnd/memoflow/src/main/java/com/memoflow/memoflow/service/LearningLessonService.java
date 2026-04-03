@@ -44,9 +44,13 @@ public interface LearningLessonService {
 
     void deleteListeningLesson(Long id) throws IOException;
 
-    PageResponse<BilingualResponse> searchBilingual(String keyword, Pageable pageable,String filter);
+    PageResponse<BilingualResponse> searchBilingual(String keyword,
+                                                    Pageable pageable,
+                                                    String _sort,
+                                                    String readFilter,
+                                                    UserPrincipal userPrincipal);
 
-    BilingualResponse getBilingualById(Long id);
+    BilingualResponse getBilingualDetail(Long lessonId, Long userId);
 
     void markAsSeen(Long lessonId, UserPrincipal userPrincipal);
 

@@ -59,13 +59,11 @@ const fetchDictionaryEntry = async (word: string): Promise<DictionaryInfo | null
   const phonetic = entry.phonetic || entry.phonetics?.find((p: any) => p.text)?.text || '';
   const audioUrl = entry.phonetics?.find((p: any) => p.audio)?.audio || '';
   const pos = entry.meanings?.[0]?.partOfSpeech || '';
-  const meaning = entry.meanings?.[0]?.definitions?.[0]?.definition || '';
 
   const info: DictionaryInfo = {};
   if (phonetic) info.phonetic = phonetic;
   if (audioUrl) info.audioUrl = audioUrl;
   if (pos) info.pos = pos;
-  if (meaning) info.meaning = meaning;
 
   return Object.keys(info).length ? info : null;
 };
@@ -86,8 +84,6 @@ const fetchDictionaryInfo = async (word: string): Promise<DictionaryInfo | null>
 
   if (vietnameseMeaning) {
     merged.meaning = vietnameseMeaning;
-  } else if (dictionaryInfo?.meaning) {
-    merged.meaning = dictionaryInfo.meaning;
   }
 
   return Object.keys(merged).length ? merged : null;
@@ -251,7 +247,7 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
     const hasMeaning = !!mergedVocab.meaning;
     const meaningLine = hasPos || hasMeaning
       ? `${hasPos ? `(${mergedVocab.pos})` : ''}${hasPos && hasMeaning ? ': ' : ''}${hasMeaning ? mergedVocab.meaning : ''}`
-      : isLoading ? 'Dang tra nghia...' : 'Cham de tra nghia';
+      : isLoading ? 'Đang tra nghĩa...' : 'Chạm để tra nghĩa';
     const showHint = !(hasPos || hasMeaning);
     const canPlayAudio = !!mergedVocab.audioUrl;
 
@@ -402,8 +398,8 @@ export const StoryDetailScreen: React.FC<StoryDetailScreenProps> = ({ progress, 
               ) : (
                 <Text style={styles.detailMeaningMuted}>
                   {selectedWordDetails && loadingWords[getWordKey(selectedWordDetails.word)]
-                    ? 'Dang tra nghia...'
-                    : 'Chua co nghia'}
+                    ? 'Đang tra nghĩa...'
+                    : 'Chưa có nghĩa'}
                 </Text>
               )}
               

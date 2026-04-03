@@ -233,7 +233,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
       }
 
       const fetchedMeaning = await fetchVietnameseMeaning(upperWord);
-      const resolvedMeaning = fetchedMeaning || 'Tu vung tieng Anh';
+      const resolvedMeaning = fetchedMeaning || 'Từ vựng tiếng Anh';
       wordMeaningMapRef.current[upperWord] = resolvedMeaning;
       return resolvedMeaning;
     },
@@ -322,7 +322,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
       });
 
       if (!matched) {
-        showTransientError('Tu duoc chon khong chinh xac');
+        showTransientError('Từ được chọn không chính xác');
         return;
       }
 
@@ -340,7 +340,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         setActiveHintWord(null);
       }
 
-      const initialMeaning = getKnownMeaning(matched) || 'Dang tai nghia...';
+      const initialMeaning = getKnownMeaning(matched) || 'Đang tải nghĩa...';
 
       setFoundPopup({
         word: matched,
@@ -531,7 +531,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
 
     let isCancelled = false;
     const immediateMeaning = getKnownMeaning(activeHintWord);
-    setHintMeaning(immediateMeaning || 'Dang tai nghia...');
+    setHintMeaning(immediateMeaning || 'Đang tải nghĩa...');
 
     const loadHintMeaning = async () => {
       const meaning = await loadMeaningForWord(activeHintWord);
@@ -553,7 +553,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
 
   const requestHint = () => {
     if (hintRemaining <= 0 || isGameEnded) {
-      showTransientError('Ban da het luot goi y hom nay');
+      showTransientError('Bạn đã hết lượt gợi ý hôm nay');
       return;
     }
 
@@ -607,8 +607,8 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Word Hunt</Text>
-          <Text style={styles.headerSubtitle}>CATEGORY: {progress.learningLesson.title.toUpperCase()}</Text>
+          <Text style={styles.headerTitle}>Tinh mắt tìm từ</Text>
+          <Text style={styles.headerSubtitle}>CHỦ ĐỀ: {progress.learningLesson.title.toUpperCase()}</Text>
         </View>
         <View style={styles.backButton} />
       </View>
@@ -617,19 +617,19 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
         <View style={styles.timeCard}>
           <View style={styles.timeLabelWrap}>
             <Ionicons name="timer-outline" size={14} color={ORANGE} />
-            <Text style={styles.timeLabel}>Time</Text>
+            <Text style={styles.timeLabel}>Thời gian</Text>
           </View>
           <Text style={styles.timeValue}>{formatTime(timeLeft)}</Text>
         </View>
 
         <TouchableOpacity style={styles.hintButton} onPress={requestHint}>
           <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color="#FFFFFF" />
-          <Text style={styles.hintButtonText}>HINT</Text>
+          <Text style={styles.hintButtonText}>GỢI Ý</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.dragWordBanner}>
-        <Text style={styles.dragWordLabel}>DANG KEO</Text>
+        <Text style={styles.dragWordLabel}>ĐANG KÉO</Text>
         <Text style={styles.dragWordValue}>{selectedWordPreview || '...'}</Text>
       </View>
 
@@ -639,8 +639,8 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
             <Ionicons name="bulb-outline" size={14} color="#CA8A04" />
           </View>
           <View>
-            <Text style={styles.activeHintTitle}>ACTIVE HINT</Text>
-            <Text style={styles.activeHintText}>Goi y: {currentHintMeaning || 'Dang tai nghia...'}</Text>
+            <Text style={styles.activeHintTitle}>GỢI Ý ĐANG BẬT</Text>
+            <Text style={styles.activeHintText}>Gợi ý: {currentHintMeaning || 'Đang tải nghĩa...'}</Text>
           </View>
         </View>
       )}
@@ -714,7 +714,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
       </View>
 
       <View style={styles.wordProgressCard}>
-        <Text style={styles.wordProgressTitle}>WORDSTOFIND({foundCount}/{targetWordCount})</Text>
+        <Text style={styles.wordProgressTitle}>TỪ CẦN TÌM ({foundCount}/{targetWordCount})</Text>
         <View style={styles.progressBarRow}>
           {progressBars.map((filled, index) => (
             <View key={`progress-${index}`} style={[styles.progressPiece, filled && styles.progressPieceFilled]} />
@@ -728,18 +728,18 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
             <View style={styles.modalTopIconOrange}>
               <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={ORANGE} />
             </View>
-            <Text style={styles.modalTitle}>Use a Hint?</Text>
+            <Text style={styles.modalTitle}>Dùng gợi ý?</Text>
             <Text style={styles.modalDescription}>
-              Ban co chac chan muon su dung goi y khong? Luu y: moi ngay chi duoc su dung toi da 3 lan ({hintRemaining}/3).
+              Bạn có chắc chắn muốn sử dụng gợi ý không? Lưu ý: mỗi ngày chỉ được dùng tối đa {content.maxHintsPerDay} lần ({hintRemaining}/{content.maxHintsPerDay}).
             </Text>
 
             <TouchableOpacity style={styles.confirmPrimaryBtn} onPress={confirmHint}>
               <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
-              <Text style={styles.confirmPrimaryText}>Yes, Use Hint</Text>
+              <Text style={styles.confirmPrimaryText}>Có, dùng gợi ý</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.confirmGhostBtn} onPress={() => setShowHintConfirm(false)}>
-              <Text style={styles.confirmGhostText}>Cancel</Text>
+              <Text style={styles.confirmGhostText}>Hủy</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -751,12 +751,12 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
             <View style={styles.modalTopIconGreen}>
               <Ionicons name="checkmark" size={28} color="#22C55E" />
             </View>
-            <Text style={styles.wordFoundLabel}>CORRECT!</Text>
+            <Text style={styles.wordFoundLabel}>CHÍNH XÁC!</Text>
             <Text style={styles.wordFoundWord}>{foundPopup?.word}</Text>
             <Text style={styles.wordFoundMeaning}>{foundPopup?.meaning}</Text>
 
             <TouchableOpacity style={styles.confirmPrimaryBtn} onPress={closeFoundPopup}>
-              <Text style={styles.confirmPrimaryText}>CONTINUE</Text>
+              <Text style={styles.confirmPrimaryText}>TIẾP TỤC</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -768,11 +768,11 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
             <View style={styles.modalTopIconBlue}>
               <Ionicons name="pause-outline" size={24} color="#3B82F6" />
             </View>
-            <Text style={styles.modalTitle}>Ban co chac muon roi di?</Text>
-            <Text style={styles.modalDescription}>Tien trinh tran dau hien tai se khong duoc luu.</Text>
+            <Text style={styles.modalTitle}>Bạn có chắc muốn rời đi?</Text>
+            <Text style={styles.modalDescription}>Tiến trình trận đấu hiện tại sẽ không được lưu.</Text>
 
             <TouchableOpacity style={styles.confirmPrimaryBtn} onPress={() => setShowExitConfirm(false)}>
-              <Text style={styles.confirmPrimaryText}>TIEP TUC CHOI</Text>
+              <Text style={styles.confirmPrimaryText}>TIẾP TỤC CHƠI</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -794,7 +794,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
                 onBack();
               }}
             >
-              <Text style={styles.confirmGhostText}>ROI GAME</Text>
+              <Text style={styles.confirmGhostText}>RỜI GAME</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -806,8 +806,8 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
             <View style={styles.modalTopIconOrange}>
               <Ionicons name="timer-outline" size={24} color={ORANGE} />
             </View>
-            <Text style={styles.modalTitle}>Het gio roi!</Text>
-            <Text style={styles.modalDescription}>Ban da tim duoc {foundCount}/{targetWordCount} tu. Thu lai de pha dao diem so nhe.</Text>
+            <Text style={styles.modalTitle}>Hết giờ rồi!</Text>
+            <Text style={styles.modalDescription}>Bạn đã tìm được {foundCount}/{targetWordCount} từ. Thử lại để phá đảo điểm số nhé.</Text>
 
             <TouchableOpacity
               style={styles.confirmPrimaryBtn}
@@ -816,7 +816,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
                 handleRestart();
               }}
             >
-              <Text style={styles.confirmPrimaryText}>CHOI LAI</Text>
+              <Text style={styles.confirmPrimaryText}>CHƠI LẠI</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -827,7 +827,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
                 onBack();
               }}
             >
-              <Text style={styles.confirmGhostText}>VE DANH SACH</Text>
+              <Text style={styles.confirmGhostText}>VỀ DANH SÁCH</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -839,9 +839,9 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
             <View style={styles.modalTopIconGreen}>
               <Ionicons name="trophy-outline" size={24} color="#16A34A" />
             </View>
-            <Text style={styles.modalTitle}>Ban da chien thang!</Text>
+            <Text style={styles.modalTitle}>Bạn đã chiến thắng!</Text>
             <Text style={styles.modalDescription}>
-              Chuc mung! Ban da tim du {targetWordCount}/{targetWordCount} tu va mo khoa man tiep theo.
+              Chúc mừng! Bạn đã tìm đủ {targetWordCount}/{targetWordCount} từ và mở khóa màn tiếp theo.
             </Text>
 
             <TouchableOpacity
@@ -851,7 +851,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
                 onBack();
               }}
             >
-              <Text style={styles.confirmPrimaryText}>TIEP TUC</Text>
+              <Text style={styles.confirmPrimaryText}>TIẾP TỤC</Text>
             </TouchableOpacity>
           </View>
         </View>
