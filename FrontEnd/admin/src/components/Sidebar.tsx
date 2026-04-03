@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Zap,
   BookOpenCheck,
-  Headphones,
   Gamepad2
 } from 'lucide-react';
 
@@ -24,9 +23,9 @@ const Sidebar: React.FC = () => {
 
   const vocabItems = [
     { title: 'Flashcards', icon: <Zap size={18} />, path: '/vocab/flashcards' },
-    { title: 'Truyện chêm', icon: <BookOpenCheck size={18} />, path: '/vocab/bilingual' },
-    { title: 'Luyện nghe', icon: <Headphones size={18} />, path: '/vocab/listening' },
-    { title: 'Trò chơi', icon: <Gamepad2 size={18} />, path: '/vocab/games' },
+    { title: 'Truyện chêm', icon: <BookOpenCheck size={18} />, path: '/vocab/story-lessons' },
+    { title: 'Đua từ với Bot', icon: <Gamepad2 size={18} />, path: '/vocab/word-race' },
+    { title: 'Tinh mắt tìm từ', icon: <Gamepad2 size={18} />, path: '/vocab/word-hunt' },
   ];
 
   const handleLogout = () => {

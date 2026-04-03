@@ -5,6 +5,9 @@ import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import FlashcardManagement from './pages/FlashcardManagement';
 import Login from './pages/Login';
+import StoryLessonManagement from './pages/StoryLessonManagement';
+import WordRaceManagement from './pages/WordRaceManagement';
+import WordHuntManagement from './pages/WordHuntManagement';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
@@ -29,6 +32,11 @@ const App: React.FC = () => {
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/users" element={<UserManagement />} />
                       <Route path="/vocab/flashcards" element={<FlashcardManagement />} />
+                      <Route path="/vocab/story-lessons" element={<StoryLessonManagement />} />
+                      <Route path="/vocab/word-race" element={<WordRaceManagement />} />
+                      <Route path="/vocab/word-hunt" element={<WordHuntManagement />} />
+                      <Route path="/vocab/bilingual" element={<Navigate to="/vocab/story-lessons" replace />} />
+                      <Route path="/vocab/games" element={<Navigate to="/vocab/word-race" replace />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </main>
