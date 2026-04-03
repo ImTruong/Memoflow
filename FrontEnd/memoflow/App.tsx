@@ -317,35 +317,7 @@ export default function App() {
             lessonId={selectedLessonId || 0}
           />
         );
-      case 'Home':
-        return (
-          <HomeScreen 
-            onNavigateToNotifications={() => setCurrentScreen('Notifications')}
-            onNavigateToLearning={() => setCurrentScreen('VocabularyLearning')}
-            onNavigateToGlobalStudy={() => {
-              setActiveSetName('Ôn tập tổng quan');
-              setSelectedLessonId(null);
-              setOnlyDue(true);
-              setIsGlobalStudy(true);
-              setCurrentScreen('FlashcardStudy');
-            }}
-            onNavigateToStoryList={() => {
-              setFeatureEntryScreen('Home');
-              setCurrentScreen('StoryList');
-            }}
-            onNavigateToWordRaceList={() => {
-              setFeatureEntryScreen('Home');
-              setCurrentScreen('WordRaceList');
-            }}
-            onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
-            onNavigateToBilingual={() => {
-              setPrevScreen('Home')
-              setCurrentScreen('Bilingual')
-            }}
-            onNavigateToAiChat={() => setCurrentScreen('AiChat')}
-            onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
-          />
-        );
+
       case 'AiChat':
         return (
           <AiAssistantScreen
@@ -668,7 +640,7 @@ export default function App() {
         ) : null;
       default:
         return (
-          <HomeScreen 
+          <HomeScreen
             onNavigateToNotifications={() => setCurrentScreen('Notifications')}
             onNavigateToLearning={() => setCurrentScreen('VocabularyLearning')}
             onNavigateToGlobalStudy={() => {
@@ -679,7 +651,10 @@ export default function App() {
               setCurrentScreen('FlashcardStudy');
             }}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
-            onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
+            onNavigateToBilingual={() => {
+              setPrevScreen('Home')
+              setCurrentScreen('Bilingual')
+            }}
             onNavigateToStoryList={() => {
               setFeatureEntryScreen('Home');
               setCurrentScreen('StoryList');

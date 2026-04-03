@@ -115,12 +115,22 @@ export const AppliedExerciseScreen: React.FC<AppliedExerciseScreenProps> = ({ on
         const parsed = JSON.parse(jsonStr);
         if (parsed.exercises && Array.isArray(parsed.exercises)) {
           setExercises(parsed.exercises);
+        } else if (parsed.response && typeof parsed.response === 'string') {
+          // If the AI returned an object with a response field instead of exercises
+          console.error('AI returned a message instead of exercises:', parsed.response);
+          Alert.alert('AI Thông báo', parsed.response);
+          onBack();
         } else {
           throw new Error('Invalid AI response format');
         }
       } catch (e) {
         console.error('Failed to parse AI JSON:', jsonStr);
-        Alert.alert('Lỗi', 'AI không thể tạo bộ đề phù hợp. Vui lòng thử lại sau.');
+        // If it's not JSON but our friendly fallback message
+        if (jsonStr.includes('Minh dang ban')) {
+          Alert.alert('AI Thông báo', 'Hệ thống AI đang bận. Vui lòng thử lại sau ít phút.');
+        } else {
+          Alert.alert('Lỗi', 'AI không thể tạo bộ đề phù hợp. Vui lòng thử lại sau.');
+        }
         onBack();
       }
     } catch (error) {

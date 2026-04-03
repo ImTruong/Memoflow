@@ -835,19 +835,19 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         Page<LearningLesson> responsesPage;
 
         if ("read".equals(readFilter)) {
-            responsesPage = switch (filter) {
+            responsesPage = switch (_sort) {
                 case "oldest" -> learningLessonRepository.findBilingualReadOldest(keyword, userId, pageable);
                 case "popular" -> learningLessonRepository.findBilingualReadPopular(keyword, userId, pageable);
                 default -> learningLessonRepository.findBilingualReadNewest(keyword, userId, pageable);
             };
         } else if ("unread".equals(readFilter)) {
-            responsesPage = switch (filter) {
+            responsesPage = switch (_sort) {
                 case "oldest" -> learningLessonRepository.findBilingualUnreadOldest(keyword, userId, pageable);
                 case "popular" -> learningLessonRepository.findBilingualUnreadPopular(keyword, userId, pageable);
                 default -> learningLessonRepository.findBilingualUnreadNewest(keyword, userId, pageable);
             };
         } else {
-            responsesPage = switch (filter) {
+            responsesPage = switch (_sort) {
                 case "oldest" -> learningLessonRepository.findBilingualOldest(keyword, pageable);
                 case "popular" -> learningLessonRepository.findBilingualPopular(keyword, pageable);
                 default -> learningLessonRepository.findBilingualNewest(keyword, pageable);
