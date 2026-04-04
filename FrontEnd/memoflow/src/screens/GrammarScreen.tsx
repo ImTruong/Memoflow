@@ -11,26 +11,33 @@ export const GrammarScreen: React.FC<{ navigation: any }> = ({ navigation }) => 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [topicRes, practiceRes] = await Promise.all([
-          grammarApi.getTopics(),
-          grammarApi.getPracticeOverview(),
-        ]);
-        setTopics(topicRes.data || []);
-        setPractices(practiceRes.data || []);
-      } catch (err: any) {
-        setError(err?.message || 'Không thể tải dữ liệu ngữ pháp.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [topicRes, practiceRes] = await Promise.all([
+        grammarApi.getTopics(),
+        grammarApi.getPracticeOverview(),
+      ]);
+      setTopics(topicRes.data || []);
+      setPractices(practiceRes.data || []);
+    } catch (err: any) {
+      setError(err?.message || 'Không thể tải dữ liệu ngữ pháp.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    load();
+  useEffect(() => {
+    void load();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('focus', () => {
+      void load();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const renderTheoryItem = ({ item }: { item: GrammarTopicResponse }) => (
     <TouchableOpacity 
