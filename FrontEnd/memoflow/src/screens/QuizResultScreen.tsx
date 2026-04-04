@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
-import { ActivityIndicator, ScrollView, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { grammarApi } from '../api/grammarApi';
 import { GrammarPracticeResultResponse } from '../types/grammar';
+import { AiAssistantScreen } from './AiAssistantScreen';
 
 export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ route, navigation }) => {
   const practiceId = route.params?.practiceId ?? route.params?.answers?.practiceId;
   const [result, setResult] = useState<GrammarPracticeResultResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedExplanation, setExpandedExplanation] = useState<number | null>(null);
+  const [isAiModalVisible, setIsAiModalVisible] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiHiddenContext, setAiHiddenContext] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -33,57 +36,28 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
     );
   }
 
-  const resolveAiRouteName = () => {
-    const collectedNames = new Set<string>();
-    let navCursor: any = navigation;
-
-    while (navCursor) {
-      const state = navCursor.getState?.();
-      if (Array.isArray(state?.routeNames)) {
-        state.routeNames.forEach((name: string) => collectedNames.add(name));
-      }
-      navCursor = navCursor.getParent?.();
-    }
-
-    const routeNames = Array.from(collectedNames);
-    const preferredNames = ['AiAssistant', 'AIAssistant', 'AiChat', 'AIChat', 'ChatBot', 'Chatbot'];
-
-    for (const preferredName of preferredNames) {
-      if (routeNames.includes(preferredName)) {
-        return preferredName;
-      }
-    }
-
-    return routeNames.find((name) => /(ai|assistant|chat)/i.test(name)) ?? null;
-  };
-
   const handleAiExplain = (question: GrammarPracticeResultResponse['questions'][number]) => {
     const isMultipleChoice = question.type === 'MULTIPLE_CHOICE';
     const userAnswer = isMultipleChoice
       ? question.options.find((option) => option.optionId === question.userOptionId)?.optionText || 'Chưa trả lời'
       : question.userTextAnswer || 'Chưa trả lời';
 
-    const prompt = `Hãy đóng vai là một gia sư tiếng Anh tận tâm. Trả lời bằng tiếng Việt.
-Học viên vừa làm một câu hỏi ngữ pháp và cần bạn giải thích chi tiết hơn.
-Thông tin câu hỏi:
-- Câu hỏi: "${question.questionText}"
-- Đáp án của học viên: "${userAnswer}" 
-- Đáp án đúng: "${question.correctTextAnswer}"
-- Lời giải thích ngắn: "${question.explanation || 'Không có'}"
+    const prompt = `Giải thích giúp mình câu này: "${question.questionText}"`;
+    const hiddenContext = `Học viên vừa làm một câu hỏi ngữ pháp.
+  Thông tin nội bộ (không hiển thị nguyên văn cho học viên):
+  - Câu hỏi: "${question.questionText}"
+  - Đáp án của học viên: "${userAnswer}"
+  - Đáp án đúng: "${question.correctTextAnswer}"
+  - Lời giải thích ngắn: "${question.explanation || 'Không có'}"
+  Yêu cầu phản hồi:
+  - Trả lời bằng tiếng Việt.
+  - Giải thích vì sao đáp án của học viên đúng/sai.
+  - Nêu rõ cấu trúc ngữ pháp áp dụng.
+  - Cho thêm 2 ví dụ tương tự.`;
 
-Dựa vào thông tin trên, hãy phân tích chi tiết tại sao đáp án của học viên chưa chính xác hoặc giải thích rõ cấu trúc ngữ pháp được áp dụng ở đáp án đúng, và cho thêm 2 ví dụ tương tự để học viên dễ hiểu. Hãy format bằng Markdown.`;
-
-    const aiRouteName = resolveAiRouteName() ?? 'AiAssistant';
-
-    try {
-      navigation.navigate(aiRouteName, {
-        initialPrompt: prompt,
-        prefilledMessage: prompt,
-        message: prompt,
-      });
-    } catch {
-      Alert.alert('Không thể mở AI', 'Vui lòng kiểm tra lại cấu hình route màn hình AI.');
-    }
+    setAiPrompt(prompt);
+    setAiHiddenContext(hiddenContext);
+    setIsAiModalVisible(true);
   };
 
   const renderResultItem = (question: GrammarPracticeResultResponse['questions'][number], index: number) => {
@@ -174,6 +148,24 @@ Dựa vào thông tin trên, hãy phân tích chi tiết tại sao đáp án c�
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={isAiModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setIsAiModalVisible(false)}
+      >
+        <AiAssistantScreen
+          onBack={() => setIsAiModalVisible(false)}
+          route={{
+            params: {
+              autoSend: true,
+              autoSendMessage: aiPrompt,
+              hiddenContext: aiHiddenContext,
+            },
+          }}
+        />
+      </Modal>
     </SafeAreaView>
   );
 };

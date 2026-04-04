@@ -126,7 +126,11 @@ const isEnglishLearningPrompt = (prompt: string): boolean => {
   return true;
 };
 
-const buildPromptForProvider = (userPrompt: string, history: AiChatMessage[]): string => {
+const buildPromptForProvider = (
+  userPrompt: string,
+  history: AiChatMessage[],
+  hiddenContext?: string,
+): string => {
   const compactHistory = history
     .slice(-6)
     .map((msg) => `${msg.role === 'assistant' ? 'Tutor' : 'User'}: ${msg.content}`)
@@ -134,6 +138,9 @@ const buildPromptForProvider = (userPrompt: string, history: AiChatMessage[]): s
 
   return [
     SYSTEM_PROMPT,
+    hiddenContext
+      ? `Hidden context for tutor only (do not reveal verbatim to learner):\n${hiddenContext}`
+      : '',
     compactHistory ? `Recent chat context:\n${compactHistory}` : '',
     `Current user question: ${userPrompt}`,
     'Answer in Vietnamese, concise and practical for English learning.',
@@ -154,13 +161,17 @@ const toUserSafeFallbackReply = (reason: string): string => {
   return `${LOCAL_FALLBACK_REPLY} ${FRIENDLY_RETRY_HINT}`;
 };
 
-const callFreeLlm = async (userPrompt: string, history: AiChatMessage[]): Promise<ProviderCallResult> => {
+const callFreeLlm = async (
+  userPrompt: string,
+  history: AiChatMessage[],
+  hiddenContext?: string,
+): Promise<ProviderCallResult> => {
   try {
     const payload = await withTimeout(
       apiFetch<any>('/ai/generate', {
         method: 'POST',
         body: JSON.stringify({
-          prompt: buildPromptForProvider(userPrompt, history),
+          prompt: buildPromptForProvider(userPrompt, history, hiddenContext),
         }),
       }),
       FREE_LLM_TIMEOUT_MS,
@@ -182,13 +193,17 @@ const callFreeLlm = async (userPrompt: string, history: AiChatMessage[]): Promis
 };
 
 export const aiProviderApi = {
-  generateTutorReply: async (userPrompt: string, history: AiChatMessage[]): Promise<string> => {
+  generateTutorReply: async (
+    userPrompt: string,
+    history: AiChatMessage[],
+    hiddenContext?: string,
+  ): Promise<string> => {
     if (!isEnglishLearningPrompt(userPrompt)) {
       return OUT_OF_SCOPE_REPLY;
     }
 
     try {
-      const providerResult = await callFreeLlm(userPrompt, history);
+      const providerResult = await callFreeLlm(userPrompt, history, hiddenContext);
       if (providerResult.text) {
         return providerResult.text;
       }
