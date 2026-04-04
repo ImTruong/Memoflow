@@ -17,20 +17,31 @@ export const PracticeDetailScreen: React.FC<{ route: any, navigation: any }> = (
     const [practiceResult, setPracticeResult] = useState<GrammarPracticeResultResponse | null>(null);
     const [selectedTask, setSelectedTask] = useState<GrammarPracticeTaskResponse | null>(null);
 
-    useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            try {
-                const res = await grammarApi.getPracticeDetail(taskId);
-                setDetail(res.data);
-                setSelectedTask(res.data.tasks.find(task => task.id === taskId) || res.data.tasks[0] || null);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const load = async () => {
+        setLoading(true);
+        try {
+            const res = await grammarApi.getPracticeDetail(taskId);
+            setDetail(res.data);
+            setSelectedTask(res.data.tasks.find(task => task.id === taskId) || res.data.tasks[0] || null);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        if (taskId) load();
+    useEffect(() => {
+        if (taskId) {
+            void load();
+        }
     }, [taskId]);
+
+    useEffect(() => {
+        const unsubscribe = navigation?.addListener?.('focus', () => {
+            if (taskId) {
+                void load();
+            }
+        });
+        return unsubscribe;
+    }, [navigation, taskId]);
 
     const activeTask = useMemo(
         () => detail?.tasks.find((task) => task.type === 'ACTIVE') || selectedTask,
