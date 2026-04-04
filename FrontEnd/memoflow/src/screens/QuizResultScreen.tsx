@@ -31,7 +31,7 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
 
   if (loading || !result) {
     return (
-      <SafeAreaView style={[styles.container, styles.center]}>
+      <SafeAreaView style={[styles.container, styles.center]} edges={['left', 'right', 'bottom']}>
         <ActivityIndicator size="large" color="#2563EB" />
       </SafeAreaView>
     );
@@ -118,7 +118,7 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Kết quả ôn tập</Text>
       </View>
