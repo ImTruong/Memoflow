@@ -21,7 +21,9 @@ import { AiChatMessage, AiChatSession } from '../types/aiChat';
 import { colors } from '../theme/colors';
 
 type AiAssistantScreenProps = {
-  onBack: () => void;
+  onBack?: () => void;
+  route?: any;
+  navigation?: any;
 };
 
 type InlinePart = {
@@ -128,7 +130,7 @@ const parseMarkdownBlocks = (content: string): MarkdownBlock[] => {
     });
 };
 
-export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) => {
+export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, route, navigation }) => {
   const insets = useSafeAreaInsets();
   const [sessions, setSessions] = useState<AiChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -189,13 +191,27 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
         await createAndOpenSession();
       }
 
+      const initialPrompt =
+        route?.params?.initialPrompt ?? route?.params?.prefilledMessage ?? route?.params?.message;
+      if (initialPrompt && typeof initialPrompt === 'string') {
+        setInputValue(initialPrompt);
+        // Clear param so it doesn't re-trigger on subsequent navs if handled properly by navigation, 
+        // though navigation params remain unless reset. Setting inputValue once during bootstrap is adequate.
+      }
+
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Khong the khoi tao AI Assistant');
     } finally {
       setLoadingInitial(false);
     }
-  }, [createAndOpenSession, loadMessages]);
+  }, [
+    createAndOpenSession,
+    loadMessages,
+    route?.params?.initialPrompt,
+    route?.params?.prefilledMessage,
+    route?.params?.message,
+  ]);
 
   useEffect(() => {
     void bootstrap();
@@ -409,7 +425,11 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
                 setShowHistory(false);
                 return;
               }
-              onBack();
+              if (onBack) {
+                onBack();
+              } else if (navigation && navigation.goBack) {
+                navigation.goBack();
+              }
             }}
           >
             <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />

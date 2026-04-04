@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -13,7 +11,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data1:/var/lib/mysql
     networks:
       - memoflow-network
     healthcheck:
@@ -40,7 +38,7 @@ services:
       - memoflow-network
 
 volumes:
-  mysql_data:
+  mysql_data1:
 
 networks:
   memoflow-network:
