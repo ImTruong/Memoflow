@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { grammarApi } from '../api/grammarApi';
 import { GrammarPracticeResultResponse } from '../types/grammar';
 import { AiAssistantScreen } from './AiAssistantScreen';
@@ -153,18 +154,21 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
         visible={isAiModalVisible}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={() => setIsAiModalVisible(false)}
       >
-        <AiAssistantScreen
-          onBack={() => setIsAiModalVisible(false)}
-          route={{
-            params: {
-              autoSend: true,
-              autoSendMessage: aiPrompt,
-              hiddenContext: aiHiddenContext,
-            },
-          }}
-        />
+        <SafeAreaView style={styles.modalSafeArea} edges={['top', 'bottom']}>
+          <AiAssistantScreen
+            onBack={() => setIsAiModalVisible(false)}
+            route={{
+              params: {
+                autoSend: true,
+                autoSendMessage: aiPrompt,
+                hiddenContext: aiHiddenContext,
+              },
+            }}
+          />
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -172,6 +176,7 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
+  modalSafeArea: { flex: 1, backgroundColor: '#F3F4F6' },
   center: { justifyContent: 'center', alignItems: 'center' },
   header: { padding: 20, alignItems: 'center', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#0F172A' },
