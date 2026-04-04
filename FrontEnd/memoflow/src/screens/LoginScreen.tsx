@@ -43,15 +43,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
     setIsLoading(true);
     try {
-      const response = await authApi.login({ email, password });
+      await AsyncStorage.removeItem('authToken');
+      const response = await authApi.login({ email: email.trim().toLowerCase(), password });
       await AsyncStorage.setItem('authToken', response.data.token);
       onNavigateToHome();
     } catch (err: any) {
       console.log(err);
-      const msg =
-        err.message === 'Forbidden'
-          ? 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.'
-          : 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.';
+      const errorMessage = String(err?.message || '');
+      let msg = 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.';
+      if (/401|403|forbidden|unauthorized|bad credentials/i.test(errorMessage)) {
+        msg = 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.';
+      } else if (/network request failed|failed to fetch|load failed/i.test(errorMessage)) {
+        msg = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại backend hoặc mạng.';
+      } else if (__DEV__ && errorMessage) {
+        msg = errorMessage;
+      }
       Alert.alert('Đăng nhập thất bại', msg, [{ text: 'OK' }]);
     } finally {
       setIsLoading(false);

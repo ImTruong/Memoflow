@@ -722,7 +722,6 @@ const styles = StyleSheet.create({
   detailPhonetic: {
     fontSize: 17,
     color: colors.textPrimary,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   closeBtn: {
     backgroundColor: '#F3F4F6',

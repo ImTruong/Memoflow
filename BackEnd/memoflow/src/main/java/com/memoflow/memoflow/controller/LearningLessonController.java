@@ -244,4 +244,82 @@ public class LearningLessonController {
         learningLessonService.deleteBilingualLesson(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Bilingual lesson deleted successfully"));
     }
+        @GetMapping("/grammar/topics")
+        public ResponseEntity<ApiResponse<List<GrammarTopicResponse>>> getGrammarTopics(
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            List<GrammarTopicResponse> response = learningLessonService.getGrammarTopics(userPrincipal);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar topics retrieved successfully"));
+        }
+    
+        @GetMapping("/grammar/topics/{topicId}")
+        public ResponseEntity<ApiResponse<GrammarTopicDetailResponse>> getGrammarTopicDetail(
+                @PathVariable Long topicId,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            GrammarTopicDetailResponse response = learningLessonService.getGrammarTopicDetail(topicId, userPrincipal);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar topic detail retrieved successfully"));
+        }
+    
+        @GetMapping("/grammar/lessons/{lessonId}")
+        public ResponseEntity<ApiResponse<GrammarLessonDetailResponse>> getGrammarLessonDetail(
+                @PathVariable Long lessonId,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            GrammarLessonDetailResponse response = learningLessonService.getGrammarLessonDetail(lessonId, userPrincipal);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar lesson detail retrieved successfully"));
+        }
+    
+        @GetMapping("/grammar/practices")
+        public ResponseEntity<ApiResponse<List<GrammarPracticeOverviewResponse>>> getGrammarPracticeOverview(
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            List<GrammarPracticeOverviewResponse> response = learningLessonService.getGrammarPracticeOverview(userPrincipal);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar practice overview retrieved successfully"));
+        }
+    
+        @GetMapping("/grammar/practices/{practiceId}")
+        public ResponseEntity<ApiResponse<GrammarPracticeDetailResponse>> getGrammarPracticeDetail(
+                @PathVariable Long practiceId,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            GrammarPracticeDetailResponse response = learningLessonService.getGrammarPracticeDetail(practiceId, userPrincipal);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar practice detail retrieved successfully"));
+        }
+    
+        @GetMapping("/grammar/practices/{practiceId}/quiz")
+        public ResponseEntity<ApiResponse<GrammarPracticeQuizResponse>> getGrammarPracticeQuiz(
+                @PathVariable Long practiceId) {
+            GrammarPracticeQuizResponse response = learningLessonService.getGrammarPracticeQuiz(practiceId);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar practice quiz retrieved successfully"));
+        }
+    
+        @PostMapping("/grammar/practices/{practiceId}/submit")
+        public ResponseEntity<ApiResponse<Void>> submitGrammarPractice(
+                @PathVariable Long practiceId,
+                @RequestBody SubmitGrammarPracticeRequest request,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            learningLessonService.submitGrammarPractice(userPrincipal, practiceId, request, true);
+            return ResponseEntity.ok(ApiResponse.success(null, "Submit successfully"));
+        }
+    
+        @PostMapping("/grammar/practices/{practiceId}/draft")
+        public ResponseEntity<ApiResponse<Void>> draftGrammarPractice(
+                @PathVariable Long practiceId,
+                @RequestBody SubmitGrammarPracticeRequest request,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            learningLessonService.submitGrammarPractice(userPrincipal, practiceId, request, false);
+            return ResponseEntity.ok(ApiResponse.success(null, "Draft saved successfully"));
+        }
+    
+        @GetMapping("/grammar/practices/{practiceId}/submission")
+        public ResponseEntity<ApiResponse<GrammarPracticeSubmissionResponse>> getGrammarPracticeSubmission(
+                @PathVariable Long practiceId,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            GrammarPracticeSubmissionResponse response = learningLessonService.getGrammarPracticeSubmission(userPrincipal, practiceId);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar submission retrieved successfully"));
+        }
+    
+        @GetMapping("/grammar/practices/{practiceId}/result")
+        public ResponseEntity<ApiResponse<GrammarPracticeResultResponse>> getGrammarPracticeResult(
+                @PathVariable Long practiceId,
+                @AuthenticationPrincipal UserPrincipal userPrincipal) {
+            GrammarPracticeResultResponse response = learningLessonService.getGrammarPracticeResult(userPrincipal, practiceId);
+            return ResponseEntity.ok(ApiResponse.success(response, "Grammar result retrieved successfully"));
+        }
 }

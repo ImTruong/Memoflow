@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,8 +41,13 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     private final UserLessonProgressRepository userLessonProgressRepository;
     private final QuizQuestionRepository quizQuestionRepository;
     private final QuizOptionRepository quizOptionRepository;
+    private final QuizAnswerRepository quizAnswerRepository;
     private final UserQuizAnswerRepository userQuizAnswerRepository;
     public final MediaRepository mediaRepository;
+
+    private static final String GRAMMAR_TOPIC_TYPE = "GRAMMAR_TOPIC";
+    private static final String GRAMMAR_LESSON_TYPE = "GRAMMAR_LESSON";
+    private static final String GRAMMAR_PRACTICE_TYPE = "GRAMMAR_PRACTICE";
 
     @Override
     public FlashcardLessonResponse createFlashcardLesson(Long learningActivityId,
@@ -916,6 +922,658 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                         : null)
                 .isRead(isRead)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GrammarTopicResponse> getGrammarTopics(UserPrincipal userPrincipal) {
+        List<LearningLesson> topics = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_TOPIC_TYPE);
+        List<LearningLesson> grammarLessons = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_LESSON_TYPE);
+
+        Map<Long, UserLessonProgress> progressMap = loadProgressMap(
+                userPrincipal.getId(),
+                grammarLessons.stream().map(LearningLesson::getId).toList());
+
+        return topics.stream().map(topic -> {
+            List<LearningLesson> topicLessons = grammarLessons.stream()
+                    .filter(lesson -> topic.getId().equals(readLongContent(lesson.getContent(), "topicId")))
+                    .sorted(grammarOrderComparator())
+                    .toList();
+
+            int totalLessons = topicLessons.size();
+            int completedLessons = (int) topicLessons.stream()
+                    .filter(lesson -> {
+                        UserLessonProgress progress = progressMap.get(lesson.getId());
+                        return progress != null && Boolean.TRUE.equals(progress.getIsCompleted());
+                    })
+                    .count();
+            int progressPercent = totalLessons == 0 ? 0 : (completedLessons * 100) / totalLessons;
+
+            return GrammarTopicResponse.builder()
+                    .id(topic.getId())
+                    .title(topic.getTitle())
+                    .description(topic.getDescription())
+                    .progressLabel(completedLessons + "/" + totalLessons + " Đã học")
+                    .progressPercent(progressPercent)
+                    .build();
+        }).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GrammarTopicDetailResponse getGrammarTopicDetail(Long topicId, UserPrincipal userPrincipal) {
+        LearningLesson topic = getLearningLessonByType(topicId, GRAMMAR_TOPIC_TYPE);
+        List<LearningLesson> grammarLessons = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_LESSON_TYPE).stream()
+                .filter(lesson -> topic.getId().equals(readLongContent(lesson.getContent(), "topicId")))
+                .sorted(grammarOrderComparator())
+                .toList();
+
+        Map<Long, UserLessonProgress> progressMap = loadProgressMap(
+                userPrincipal.getId(),
+                grammarLessons.stream().map(LearningLesson::getId).toList());
+
+        List<GrammarTopicDetailResponse.SubLessonResponse> subLessons = grammarLessons.stream()
+                .map(lesson -> {
+                    UserLessonProgress progress = progressMap.get(lesson.getId());
+                    String status;
+                    if (progress == null) {
+                        status = "Chưa học";
+                    } else if (Boolean.TRUE.equals(progress.getIsCompleted())) {
+                        status = "Đã xong";
+                    } else {
+                        status = "Đang học";
+                    }
+                    return GrammarTopicDetailResponse.SubLessonResponse.builder()
+                            .id(lesson.getId())
+                            .title(lesson.getTitle())
+                            .subTitle(readStringContent(lesson.getContent(), "engTitle"))
+                            .status(status)
+                            .build();
+                })
+                .toList();
+
+        int totalLessons = grammarLessons.size();
+        int completedLessons = (int) grammarLessons.stream()
+                .filter(lesson -> {
+                    UserLessonProgress progress = progressMap.get(lesson.getId());
+                    return progress != null && Boolean.TRUE.equals(progress.getIsCompleted());
+                })
+                .count();
+
+        return GrammarTopicDetailResponse.builder()
+                .topicId(topic.getId())
+                .title(topic.getTitle())
+                .description(topic.getDescription())
+                .progressLabel(completedLessons + "/" + totalLessons + " Đã học")
+                .progressPercent(totalLessons == 0 ? 0 : (completedLessons * 100) / totalLessons)
+                .subLessons(subLessons)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GrammarLessonDetailResponse getGrammarLessonDetail(Long lessonId, UserPrincipal userPrincipal) {
+        LearningLesson lesson = getLearningLessonByType(lessonId, GRAMMAR_LESSON_TYPE);
+
+        List<LearningLesson> allPractices = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_PRACTICE_TYPE);
+        Map<Long, Long> grammarLessonIdByPracticeId = resolveGrammarLessonIdByPractice(allPractices);
+
+        List<LearningLesson> practices = allPractices.stream()
+                .filter(practice -> lessonId.equals(grammarLessonIdByPracticeId.get(practice.getId())))
+                .sorted(grammarOrderComparator())
+                .toList();
+
+        Map<Long, UserLessonProgress> practiceProgressMap = loadProgressMap(
+                userPrincipal.getId(),
+                practices.stream().map(LearningLesson::getId).toList());
+
+        List<GrammarPracticeTaskResponse> practiceTasks = buildPracticeTaskResponses(practices, practiceProgressMap);
+
+        Long suggestedPracticeId = practiceTasks.stream()
+                .filter(task -> "ACTIVE".equals(task.getType()))
+                .map(GrammarPracticeTaskResponse::getId)
+                .findFirst()
+                .orElse(practiceTasks.stream().map(GrammarPracticeTaskResponse::getId).findFirst().orElse(null));
+
+        return GrammarLessonDetailResponse.builder()
+                .id(lesson.getId())
+                .title(lesson.getTitle())
+                .engTitle(readStringContent(lesson.getContent(), "engTitle"))
+                .description(lesson.getDescription())
+                .sections(readSections(lesson.getContent()))
+                .suggestedPracticeId(suggestedPracticeId)
+                .practiceTasks(practiceTasks)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GrammarPracticeOverviewResponse> getGrammarPracticeOverview(UserPrincipal userPrincipal) {
+        List<LearningLesson> grammarLessons = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_LESSON_TYPE);
+        List<LearningLesson> allPractices = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_PRACTICE_TYPE);
+
+        Map<Long, Long> grammarLessonIdByPracticeId = resolveGrammarLessonIdByPractice(allPractices);
+        Map<Long, List<LearningLesson>> practicesByLessonId = new HashMap<>();
+        for (LearningLesson practice : allPractices) {
+            Long grammarLessonId = grammarLessonIdByPracticeId.get(practice.getId());
+            if (grammarLessonId != null) {
+                practicesByLessonId.computeIfAbsent(grammarLessonId, ignored -> new ArrayList<>()).add(practice);
+            }
+        }
+
+        Map<Long, UserLessonProgress> practiceProgressMap = loadProgressMap(
+                userPrincipal.getId(),
+                allPractices.stream().map(LearningLesson::getId).toList());
+
+        return grammarLessons.stream()
+                .filter(lesson -> practicesByLessonId.containsKey(lesson.getId()))
+                .sorted(grammarOrderComparator())
+                .map(lesson -> {
+                    List<LearningLesson> practices = practicesByLessonId.get(lesson.getId()).stream()
+                            .sorted(grammarOrderComparator())
+                            .toList();
+                    List<GrammarPracticeTaskResponse> tasks = buildPracticeTaskResponses(practices, practiceProgressMap);
+
+                    int completed = (int) tasks.stream().filter(task -> "COMPLETED".equals(task.getType())).count();
+                    int overallProgress = tasks.isEmpty() ? 0 : (completed * 100) / tasks.size();
+
+                    return GrammarPracticeOverviewResponse.builder()
+                            .id(lesson.getId())
+                            .title("Bài tập " + lesson.getTitle())
+                            .description(lesson.getDescription())
+                            .overallProgress(overallProgress)
+                            .tasks(tasks)
+                            .build();
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GrammarPracticeDetailResponse getGrammarPracticeDetail(Long practiceId, UserPrincipal userPrincipal) {
+        LearningLesson selectedPractice = getLearningLessonByType(practiceId, GRAMMAR_PRACTICE_TYPE);
+        List<LearningLesson> allPractices = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_PRACTICE_TYPE);
+        Map<Long, Long> grammarLessonIdByPracticeId = resolveGrammarLessonIdByPractice(allPractices);
+
+        Long grammarLessonId = grammarLessonIdByPracticeId.get(practiceId);
+        LearningLesson grammarLesson = grammarLessonId == null
+                ? null
+                : learningLessonRepository.findById(grammarLessonId).orElse(null);
+
+        List<LearningLesson> siblingPractices = allPractices.stream()
+                .filter(practice -> Objects.equals(grammarLessonIdByPracticeId.get(practice.getId()), grammarLessonId))
+                .sorted(grammarOrderComparator())
+                .toList();
+        if (siblingPractices.isEmpty()) {
+            siblingPractices = List.of(selectedPractice);
+        }
+
+        Map<Long, UserLessonProgress> practiceProgressMap = loadProgressMap(
+                userPrincipal.getId(),
+                siblingPractices.stream().map(LearningLesson::getId).toList());
+
+        List<GrammarPracticeTaskResponse> tasks = buildPracticeTaskResponses(siblingPractices, practiceProgressMap);
+        GrammarPracticeTaskResponse currentTask = tasks.stream()
+                .filter(task -> Objects.equals(task.getId(), practiceId))
+                .findFirst()
+                .orElseGet(() -> buildPracticeTaskResponses(List.of(selectedPractice), practiceProgressMap).stream()
+                        .findFirst()
+                        .orElse(null));
+
+        int completed = (int) tasks.stream().filter(task -> "COMPLETED".equals(task.getType())).count();
+        int overallProgress = tasks.isEmpty() ? 0 : (completed * 100) / tasks.size();
+
+        return GrammarPracticeDetailResponse.builder()
+                .practiceId(practiceId)
+                .title(selectedPractice.getTitle())
+                .lessonTitle(grammarLesson != null ? grammarLesson.getTitle() : "Ôn luyện ngữ pháp")
+                .overallProgress(overallProgress)
+                .totalQuestions(currentTask != null ? currentTask.getTotalQuestions() : 0)
+                .difficulty(currentTask != null ? currentTask.getDifficulty() : null)
+                .durationMinutes(currentTask != null ? currentTask.getDurationMinutes() : null)
+                .tasks(tasks)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GrammarPracticeQuizResponse getGrammarPracticeQuiz(Long practiceId) {
+        LearningLesson practice = getLearningLessonByType(practiceId, GRAMMAR_PRACTICE_TYPE);
+        List<QuizQuestion> questions = quizQuestionRepository.findByLearningLessonIdOrderByGroupAndQuestion(practiceId);
+
+        List<GrammarPracticeQuizResponse.QuestionResponse> questionResponses = questions.stream()
+                .map(question -> GrammarPracticeQuizResponse.QuestionResponse.builder()
+                        .quizId(question.getId())
+                        .questionText(question.getQuestionText())
+                        .type(question.getType())
+                        .explanation(question.getTranslation())
+                        .options(question.getQuizOptions() == null ? Collections.emptyList() : question.getQuizOptions().stream()
+                                .sorted(Comparator.comparing(QuizOption::getOrderIndex))
+                                .map(option -> GrammarPracticeQuizResponse.OptionResponse.builder()
+                                        .optionId(option.getId())
+                                        .optionText(option.getOptionText())
+                                        .orderIndex(option.getOrderIndex())
+                                        .build())
+                                .toList())
+                        .build())
+                .toList();
+
+        return GrammarPracticeQuizResponse.builder()
+                .practiceId(practiceId)
+                .title(practice.getTitle())
+                .totalQuestions(questionResponses.size())
+                .questions(questionResponses)
+                .build();
+    }
+
+    @Override
+    public void submitGrammarPractice(UserPrincipal userPrincipal, Long practiceId, SubmitGrammarPracticeRequest request,
+                                      boolean isCompleted) {
+        User user = userRepository.findById(userPrincipal.getId())
+            .or(() -> userRepository.findByEmail(userPrincipal.getUsername()))
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id/email", userPrincipal.getId() + "/" + userPrincipal.getUsername()));
+        getLearningLessonByType(practiceId, GRAMMAR_PRACTICE_TYPE);
+
+        List<QuizQuestion> questions = quizQuestionRepository.findByLearningLessonIdOrderByGroupAndQuestion(practiceId);
+        Map<Long, QuizQuestion> questionById = questions.stream()
+                .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
+
+        Map<Long, SubmitGrammarPracticeRequest.Answer> submittedByQuestion = new LinkedHashMap<>();
+        if (request != null && request.getAnswers() != null) {
+            for (SubmitGrammarPracticeRequest.Answer answer : request.getAnswers()) {
+                if (answer != null && answer.getQuizId() != null && questionById.containsKey(answer.getQuizId())) {
+                    submittedByQuestion.put(answer.getQuizId(), answer);
+                }
+            }
+        }
+
+        List<UserQuizAnswer> existingAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(user.getId(), practiceId);
+        Map<Long, UserQuizAnswer> existingByQuestion = existingAnswers.stream()
+                .collect(Collectors.toMap(answer -> answer.getQuizQuestion().getId(), Function.identity(), (a, b) -> a));
+
+        for (UserQuizAnswer existing : existingAnswers) {
+            SubmitGrammarPracticeRequest.Answer submitted = submittedByQuestion.get(existing.getQuizQuestion().getId());
+            if (submitted == null || isBlankGrammarSubmission(submitted, existing.getQuizQuestion())) {
+                userQuizAnswerRepository.delete(existing);
+                existingByQuestion.remove(existing.getQuizQuestion().getId());
+            }
+        }
+
+        for (Map.Entry<Long, SubmitGrammarPracticeRequest.Answer> entry : submittedByQuestion.entrySet()) {
+            QuizQuestion question = questionById.get(entry.getKey());
+            SubmitGrammarPracticeRequest.Answer submitted = entry.getValue();
+
+            if (question == null || isBlankGrammarSubmission(submitted, question)) {
+                continue;
+            }
+
+            UserQuizAnswer answer = existingByQuestion.get(question.getId());
+            if (answer == null) {
+                answer = UserQuizAnswer.builder()
+                        .user(user)
+                        .quizQuestion(question)
+                        .build();
+            }
+
+            if (isFillInBlankType(question.getType())) {
+                answer.setQuizOption(null);
+                answer.setTextAnswer(safeTrim(submitted.getTextAnswer()));
+            } else {
+                QuizOption selectedOption = quizOptionRepository.findById(submitted.getOptionId())
+                        .orElseThrow(() -> new RuntimeException("Option not found"));
+                if (!selectedOption.getQuizQuestion().getId().equals(question.getId())) {
+                    throw new RuntimeException("Option does not belong to question " + question.getId());
+                }
+                answer.setQuizOption(selectedOption);
+                answer.setTextAnswer(null);
+            }
+
+            userQuizAnswerRepository.save(answer);
+        }
+
+        List<UserQuizAnswer> finalAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(user.getId(), practiceId);
+        int totalQuestions = questions.size();
+        int answeredCount = (int) finalAnswers.stream()
+                .filter(ans -> ans.getQuizOption() != null || !isBlank(ans.getTextAnswer()))
+                .count();
+        int score = calculateGrammarScore(questions, finalAnswers);
+
+        UserLessonProgress progress = userLessonProgressRepository.findByUserIdAndLearningLessonId(user.getId(), practiceId);
+        if (progress == null) {
+            LearningLesson practice = learningLessonRepository.findById(practiceId)
+                    .orElseThrow(() -> new RuntimeException("Practice not found"));
+            progress = UserLessonProgress.builder()
+                    .user(user)
+                    .learningLesson(practice)
+                    .build();
+        }
+
+        progress.setIsCompleted(isCompleted);
+        if (isCompleted) {
+            progress.setProgressPercent(100.0);
+            progress.setScore(score);
+            progress.setCompletedAt(LocalDateTime.now());
+        } else {
+            progress.setProgressPercent(totalQuestions == 0 ? 0.0 : (answeredCount * 100.0) / totalQuestions);
+            progress.setScore(null);
+            progress.setCompletedAt(null);
+        }
+
+        userLessonProgressRepository.save(progress);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GrammarPracticeSubmissionResponse getGrammarPracticeSubmission(UserPrincipal userPrincipal, Long practiceId) {
+        getLearningLessonByType(practiceId, GRAMMAR_PRACTICE_TYPE);
+        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), practiceId);
+
+        List<GrammarPracticeSubmissionResponse.AnswerResponse> answers = userAnswers.stream()
+                .sorted(Comparator.comparing(answer -> answer.getQuizQuestion().getId()))
+                .map(answer -> GrammarPracticeSubmissionResponse.AnswerResponse.builder()
+                        .quizId(answer.getQuizQuestion().getId())
+                        .optionId(answer.getQuizOption() != null ? answer.getQuizOption().getId() : null)
+                        .textAnswer(answer.getTextAnswer())
+                        .build())
+                .toList();
+
+        return GrammarPracticeSubmissionResponse.builder()
+                .practiceId(practiceId)
+                .answers(answers)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public GrammarPracticeResultResponse getGrammarPracticeResult(UserPrincipal userPrincipal, Long practiceId) {
+        LearningLesson practice = getLearningLessonByType(practiceId, GRAMMAR_PRACTICE_TYPE);
+        List<QuizQuestion> questions = quizQuestionRepository.findByLearningLessonIdOrderByGroupAndQuestion(practiceId);
+        List<UserQuizAnswer> userAnswers = userQuizAnswerRepository.findByUserIdAndLessonId(userPrincipal.getId(), practiceId);
+
+        Map<Long, UserQuizAnswer> userAnswerByQuestion = userAnswers.stream()
+                .collect(Collectors.toMap(answer -> answer.getQuizQuestion().getId(), Function.identity(), (a, b) -> a));
+
+        Map<Long, String> correctTextByQuestion = quizAnswerRepository
+                .findByQuizQuestionIdIn(questions.stream().map(QuizQuestion::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(answer -> answer.getQuizQuestion().getId(), QuizAnswer::getAnswerText, (a, b) -> a));
+
+        int score = 0;
+        List<GrammarPracticeResultResponse.QuestionResult> questionResults = new ArrayList<>();
+
+        for (QuizQuestion question : questions) {
+            UserQuizAnswer userAnswer = userAnswerByQuestion.get(question.getId());
+            boolean isFillQuestion = isFillInBlankType(question.getType());
+            boolean correct;
+
+            Long userOptionId = userAnswer != null && userAnswer.getQuizOption() != null
+                    ? userAnswer.getQuizOption().getId()
+                    : null;
+            String userTextAnswer = userAnswer != null ? userAnswer.getTextAnswer() : null;
+
+            Long correctOptionId = null;
+            String correctTextAnswer = null;
+
+            List<GrammarPracticeResultResponse.OptionResult> optionResults = question.getQuizOptions() == null
+                    ? Collections.emptyList()
+                    : question.getQuizOptions().stream()
+                    .sorted(Comparator.comparing(QuizOption::getOrderIndex))
+                    .map(option -> {
+                        if (Boolean.TRUE.equals(option.getIsCorrect())) {
+                            // holder value, used below
+                        }
+                        return GrammarPracticeResultResponse.OptionResult.builder()
+                                .optionId(option.getId())
+                                .optionText(option.getOptionText())
+                                .isCorrect(Boolean.TRUE.equals(option.getIsCorrect()))
+                                .build();
+                    })
+                    .toList();
+
+            if (isFillQuestion) {
+                correctTextAnswer = correctTextByQuestion.get(question.getId());
+                correct = !isBlank(userTextAnswer)
+                        && normalizeAnswer(userTextAnswer).equals(normalizeAnswer(correctTextAnswer));
+            } else {
+                Optional<QuizOption> correctOption = question.getQuizOptions() == null
+                        ? Optional.empty()
+                        : question.getQuizOptions().stream().filter(opt -> Boolean.TRUE.equals(opt.getIsCorrect())).findFirst();
+                if (correctOption.isPresent()) {
+                    correctOptionId = correctOption.get().getId();
+                    correctTextAnswer = correctOption.get().getOptionText();
+                }
+                correct = userOptionId != null && Objects.equals(userOptionId, correctOptionId);
+            }
+
+            if (correct) {
+                score++;
+            }
+
+            questionResults.add(GrammarPracticeResultResponse.QuestionResult.builder()
+                    .quizId(question.getId())
+                    .questionText(question.getQuestionText())
+                    .type(question.getType())
+                    .explanation(question.getTranslation())
+                    .userOptionId(userOptionId)
+                    .userTextAnswer(userTextAnswer)
+                    .correctOptionId(correctOptionId)
+                    .correctTextAnswer(correctTextAnswer)
+                    .correct(correct)
+                    .options(optionResults)
+                    .build());
+        }
+
+        return GrammarPracticeResultResponse.builder()
+                .practiceId(practiceId)
+                .title(practice.getTitle())
+                .totalQuestions(questions.size())
+                .score(score)
+                .questions(questionResults)
+                .build();
+    }
+
+    private LearningLesson getLearningLessonByType(Long id, String type) {
+        LearningLesson lesson = learningLessonRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("LearningLesson", "id", id));
+        if (!type.equals(lesson.getType())) {
+            throw new ResourceNotFoundException("LearningLesson", "id", id);
+        }
+        return lesson;
+    }
+
+    private Map<Long, UserLessonProgress> loadProgressMap(Long userId, List<Long> lessonIds) {
+        if (lessonIds == null || lessonIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return userLessonProgressRepository.findByUserIdAndLearningLessonIdIn(userId, lessonIds).stream()
+                .collect(Collectors.toMap(progress -> progress.getLearningLesson().getId(), Function.identity(), (a, b) -> a));
+    }
+
+    private Comparator<LearningLesson> grammarOrderComparator() {
+        return Comparator
+                .comparing((LearningLesson lesson) -> Optional.ofNullable(readIntegerContent(lesson.getContent(), "order"))
+                        .orElse(Integer.MAX_VALUE))
+                .thenComparing(LearningLesson::getId);
+    }
+
+    private Map<Long, Long> resolveGrammarLessonIdByPractice(List<LearningLesson> practices) {
+        List<LearningLesson> grammarLessons = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_LESSON_TYPE);
+        Map<String, Long> lessonIdByTitle = grammarLessons.stream()
+                .collect(Collectors.toMap(LearningLesson::getTitle, LearningLesson::getId, (a, b) -> a));
+
+        Map<Long, Long> result = new HashMap<>();
+        for (LearningLesson practice : practices) {
+            Long grammarLessonId = readLongContent(practice.getContent(), "grammarLessonId");
+            if (grammarLessonId == null) {
+                String lessonTitle = readStringContent(practice.getContent(), "grammarLessonTitle");
+                grammarLessonId = lessonIdByTitle.get(lessonTitle);
+            }
+            result.put(practice.getId(), grammarLessonId);
+        }
+        return result;
+    }
+
+    private List<GrammarPracticeTaskResponse> buildPracticeTaskResponses(
+            List<LearningLesson> practices,
+            Map<Long, UserLessonProgress> progressByPracticeId) {
+        if (practices == null || practices.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<LearningLesson> orderedPractices = practices.stream()
+                .sorted(grammarOrderComparator())
+                .toList();
+
+        Long activePracticeId = orderedPractices.stream()
+                .filter(practice -> {
+                    UserLessonProgress progress = progressByPracticeId.get(practice.getId());
+                    return progress == null || !Boolean.TRUE.equals(progress.getIsCompleted());
+                })
+                .map(LearningLesson::getId)
+                .findFirst()
+                .orElse(null);
+
+        return orderedPractices.stream().map(practice -> {
+            UserLessonProgress progress = progressByPracticeId.get(practice.getId());
+            boolean isCompleted = progress != null && Boolean.TRUE.equals(progress.getIsCompleted());
+
+            int totalQuestions = quizQuestionRepository.findByLearningLessonIdOrderByGroupAndQuestion(practice.getId()).size();
+            String type = isCompleted ? "COMPLETED"
+                    : Objects.equals(activePracticeId, practice.getId()) ? "ACTIVE" : "LOCKED";
+
+            String scoreText = null;
+            if (isCompleted && progress.getScore() != null) {
+                scoreText = progress.getScore() + "/" + totalQuestions + " điểm";
+            }
+
+            return GrammarPracticeTaskResponse.builder()
+                    .id(practice.getId())
+                    .title(practice.getTitle())
+                    .status(isCompleted ? "Đã làm" : "Chưa làm")
+                    .type(type)
+                    .score(scoreText)
+                    .count(totalQuestions + " câu")
+                    .totalQuestions(totalQuestions)
+                    .difficulty(readStringContent(practice.getContent(), "difficulty"))
+                    .durationMinutes(readIntegerContent(practice.getContent(), "durationMinutes"))
+                    .build();
+        }).toList();
+    }
+
+    private int calculateGrammarScore(List<QuizQuestion> questions, List<UserQuizAnswer> userAnswers) {
+        Map<Long, UserQuizAnswer> userAnswerByQuestion = userAnswers.stream()
+                .collect(Collectors.toMap(answer -> answer.getQuizQuestion().getId(), Function.identity(), (a, b) -> a));
+        Map<Long, String> correctTextByQuestion = quizAnswerRepository
+                .findByQuizQuestionIdIn(questions.stream().map(QuizQuestion::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(answer -> answer.getQuizQuestion().getId(), QuizAnswer::getAnswerText, (a, b) -> a));
+
+        int score = 0;
+        for (QuizQuestion question : questions) {
+            UserQuizAnswer answer = userAnswerByQuestion.get(question.getId());
+            boolean correct;
+            if (isFillInBlankType(question.getType())) {
+                String correctText = correctTextByQuestion.get(question.getId());
+                correct = answer != null
+                        && !isBlank(answer.getTextAnswer())
+                        && normalizeAnswer(answer.getTextAnswer()).equals(normalizeAnswer(correctText));
+            } else {
+                correct = answer != null
+                        && answer.getQuizOption() != null
+                        && Boolean.TRUE.equals(answer.getQuizOption().getIsCorrect());
+            }
+            if (correct) {
+                score++;
+            }
+        }
+        return score;
+    }
+
+    private boolean isBlankGrammarSubmission(SubmitGrammarPracticeRequest.Answer answer, QuizQuestion question) {
+        if (answer == null) {
+            return true;
+        }
+        if (isFillInBlankType(question.getType())) {
+            return isBlank(answer.getTextAnswer());
+        }
+        return answer.getOptionId() == null;
+    }
+
+    private boolean isFillInBlankType(String type) {
+        if (type == null) {
+            return false;
+        }
+        String normalized = type.trim().toUpperCase(Locale.ROOT);
+        return normalized.contains("FILL") || normalized.contains("ĐIỀN") || normalized.contains("DIEN");
+    }
+
+    private String normalizeAnswer(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    private String safeTrim(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> readSections(Map<String, Object> content) {
+        if (content == null) {
+            return Collections.emptyList();
+        }
+        Object sections = content.get("sections");
+        if (!(sections instanceof List<?> rawList)) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object item : rawList) {
+            if (item instanceof Map<?, ?> rawMap) {
+                Map<String, Object> mapped = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                    mapped.put(String.valueOf(entry.getKey()), entry.getValue());
+                }
+                result.add(mapped);
+            }
+        }
+        return result;
+    }
+
+    private Long readLongContent(Map<String, Object> content, String key) {
+        if (content == null || key == null) {
+            return null;
+        }
+        Object value = content.get(key);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Long.parseLong(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Integer readIntegerContent(Map<String, Object> content, String key) {
+        Long value = readLongContent(content, key);
+        return value == null ? null : value.intValue();
+    }
+
+    private String readStringContent(Map<String, Object> content, String key) {
+        if (content == null || key == null) {
+            return null;
+        }
+        Object value = content.get(key);
+        return value == null ? null : String.valueOf(value);
     }
 
     @Override

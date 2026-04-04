@@ -24,6 +24,10 @@ public interface LearningLessonRepository extends JpaRepository<LearningLesson, 
 
         Page<LearningLesson> findByType(String type, Pageable pageable);
 
+        List<LearningLesson> findByTypeOrderByIdAsc(String type);
+
+        List<LearningLesson> findByTypeAndLearningActivityIdOrderByIdAsc(String type, Long learningActivityId);
+
         @Query("SELECT l FROM LearningLesson l WHERE l.creator.id = :userId AND l.deleted = false")
         Page<LearningLesson> findByCreatorId(@Param("userId") Long userId, Pageable pageable);
 

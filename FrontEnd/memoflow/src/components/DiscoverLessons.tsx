@@ -6,9 +6,14 @@ import { colors, typography } from '../theme/colors';
 type DiscoverLessonsProps = {
   onNavigateToLearning?: () => void;
   onNavigateToListeningParts?: () => void;
+  onNavigateToGrammar?: () => void;
 };
 
-export const DiscoverLessons: React.FC<DiscoverLessonsProps> = ({ onNavigateToLearning, onNavigateToListeningParts }) => {
+export const DiscoverLessons: React.FC<DiscoverLessonsProps> = ({
+  onNavigateToLearning,
+  onNavigateToGrammar,
+  onNavigateToListeningParts
+}) => {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Khám phá bài học</Text>
@@ -40,7 +45,10 @@ export const DiscoverLessons: React.FC<DiscoverLessonsProps> = ({ onNavigateToLe
       {/* Sub Topics Row */}
       <View style={styles.subTopicsRow}>
         {/* Grammar Topic */}
-        <TouchableOpacity style={[styles.subCard, styles.subCardGrammar]}>
+        <TouchableOpacity
+          style={[styles.subCard, styles.subCardGrammar]}
+          onPress={onNavigateToGrammar}
+        >
           <View style={[styles.subIconContainer, styles.subIconGrammar]}>
             <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 16 }}>AB</Text>
             <MaterialCommunityIcons name="check" size={12} color="#FFF" style={{ position: 'absolute', bottom: 4, right: 6 }} />

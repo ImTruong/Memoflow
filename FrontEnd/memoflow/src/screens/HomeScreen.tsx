@@ -17,6 +17,7 @@ type HomeScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToLearning: () => void;
   onNavigateToGlobalStudy: () => void;
+  onNavigateToGrammar: () => void;
   onNavigateToStoryList: () => void;
   onNavigateToWordRaceList: () => void;
   onNavigateToListeningParts: () => void;
@@ -29,6 +30,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToNotifications, 
   onNavigateToLearning, 
   onNavigateToGlobalStudy,
+  onNavigateToGrammar,
   onNavigateToStoryList,
   onNavigateToWordRaceList,
   onNavigateToListeningParts,
@@ -71,6 +73,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           )}
           <DiscoverLessons
             onNavigateToLearning={onNavigateToLearning}
+            onNavigateToGrammar={onNavigateToGrammar}
             onNavigateToListeningParts={onNavigateToListeningParts}
           />
           <AdvancedLearning
