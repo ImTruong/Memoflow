@@ -149,14 +149,10 @@ public class LearningLessonController {
 
     @PostMapping(path = "/listening-lessons/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ListeningLessonDetailResponse>> uploadLesson(
-            @RequestPart("excel") MultipartFile excelFile,
-            @RequestPart(value = "audios", required = false) List<MultipartFile> audios,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-
-        CreateListeningLessonRequest request = excelUtil.parseToCreateListeningLessonRequest(excelFile);
-        ListeningLessonDetailResponse response = learningLessonService.createListeningLesson(request, audios, images);
-        return ResponseEntity.ok(ApiResponse.success(response, "Listening lesson created successfully"));
+    public ResponseEntity<ApiResponse<?>> uploadLesson(
+            @RequestPart("excel") MultipartFile excelFile) throws IOException {
+        List<CreateListeningLessonRequest.ListeningGroupRequest> response = excelUtil.parseToListeningGroup(excelFile);
+        return ResponseEntity.ok(ApiResponse.success(response, "Listening lesson excel uploaded successfully"));
     }
 
     @PutMapping(path = "/listening-lessons/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -220,12 +216,10 @@ public class LearningLessonController {
 
     @PostMapping(path = "/bilingual/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<BilingualResponse>> uploadeBilingualLesson(
-            @RequestPart("excel") MultipartFile excelFile,
-            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
-        CreateBilingualLessonRequest request = excelUtil.parseToCreateBilingualLessonRequest(excelFile);
-        BilingualResponse response = learningLessonService.createBilingualLesson(request, file);
-        return ResponseEntity.ok(ApiResponse.success(response, "Bilingual lesson created successfully"));
+    public ResponseEntity<ApiResponse<?>> uploadBilingualLesson(
+            @RequestPart("excel") MultipartFile excelFile) throws IOException {
+        List<CreateBilingualLessonRequest.Paragraph> response = excelUtil.parseToBilingualParagraphs(excelFile);
+        return ResponseEntity.ok(ApiResponse.success(response, "Bilingual excel uploaded successfully"));
     }
 
     @PutMapping(path = "/bilingual/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

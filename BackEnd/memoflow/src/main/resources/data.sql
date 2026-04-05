@@ -40,23 +40,23 @@ INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://placeholder.com
 INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://placeholder.com/icons/activity', 'icons/activity', 'IMAGE');
 INSERT IGNORE INTO media (url, public_id, type) VALUES
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782857/01_rq1jig.mp3', '01_rq1jig', 'AUDIO'),
-('https://res.cloudinary.com/dwluretwy/image/upload/v1774789477/01_lasasw.jpg', '', 'IMAGE'),
+('https://res.cloudinary.com/dwluretwy/image/upload/v1774789477/01_lasasw.jpg', 'public_id', 'IMAGE'),
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782857/02_g06nwi.mp3', '02_g06nwi', 'AUDIO'),
-('https://res.cloudinary.com/dwluretwy/image/upload/v1774789472/02_zuth4k.jpg', '', 'IMAGE'),
+('https://res.cloudinary.com/dwluretwy/image/upload/v1774789472/02_zuth4k.jpg', 'public_id', 'IMAGE'),
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782899/03_lrl3fa.mp3', '03_lrl3fa', 'AUDIO'),
-('https://res.cloudinary.com/dwluretwy/image/upload/v1774789479/03_wnpxds.jpg', '', 'IMAGE'),
-('https://res.cloudinary.com/dwluretwy/video/upload/v1774782903/07_yzslmx.mp3', '', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/image/upload/v1774789479/03_wnpxds.jpg', 'public_id', 'IMAGE'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782903/07_yzslmx.mp3', 'public_id', 'AUDIO'),
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782904/08_ngmng4.mp3', 'audio2', 'AUDIO'),
-('https://res.cloudinary.com/dwluretwy/video/upload/v1774782907/09_c51ubt.mp3', '', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782907/09_c51ubt.mp3', 'public_id', 'AUDIO'),
 ('https://res.cloudinary.com/dwluretwy/video/upload/v1774782928/32-34_prmlco.mp3', 'audio2', 'AUDIO'),
-('https://res.cloudinary.com/dwluretwy/video/upload/v1774782876/35-37_kxxssj.mp3', '', 'AUDIO'),
-('https://res.cloudinary.com/dwluretwy/video/upload/v1774782931/38-40_rdjetj.mp3', '', 'AUDIO'),
-('https://picsum.photos/800/400?random=1', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=2', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=3', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=4', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=5', '', 'IMAGE'),
-('https://picsum.photos/800/400?random=6', '', 'IMAGE');
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782876/35-37_kxxssj.mp3', 'public_id', 'AUDIO'),
+('https://res.cloudinary.com/dwluretwy/video/upload/v1774782931/38-40_rdjetj.mp3', 'public_id', 'AUDIO'),
+('https://picsum.photos/800/400?random=1', 'public_id', 'IMAGE'),
+('https://picsum.photos/800/400?random=2', 'public_id', 'IMAGE'),
+('https://picsum.photos/800/400?random=3', 'public_id', 'IMAGE'),
+('https://picsum.photos/800/400?random=4', 'public_id', 'IMAGE'),
+('https://picsum.photos/800/400?random=5', 'public_id', 'IMAGE'),
+('https://picsum.photos/800/400?random=6', 'public_id', 'IMAGE');
 
 INSERT INTO media (url, public_id, type) VALUES
                                              ('https://picsum.photos/800/400?random=10', '', 'IMAGE'),

@@ -4,8 +4,10 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
 import FlashcardManagement from './pages/FlashcardManagement';
+import ListeningLessonManagement from './pages/ListeningLessonManagement';
 import Login from './pages/Login';
 import StoryLessonManagement from './pages/StoryLessonManagement';
+import BilingualManagement from './pages/BilingualManagement';
 import WordRaceManagement from './pages/WordRaceManagement';
 import WordHuntManagement from './pages/WordHuntManagement';
 
@@ -33,9 +35,10 @@ const App: React.FC = () => {
                       <Route path="/users" element={<UserManagement />} />
                       <Route path="/vocab/flashcards" element={<FlashcardManagement />} />
                       <Route path="/vocab/story-lessons" element={<StoryLessonManagement />} />
+                      <Route path="/vocab/bilingual" element={<BilingualManagement />} />
+                      <Route path="/listening" element={<ListeningLessonManagement />} />
                       <Route path="/vocab/word-race" element={<WordRaceManagement />} />
                       <Route path="/vocab/word-hunt" element={<WordHuntManagement />} />
-                      <Route path="/vocab/bilingual" element={<Navigate to="/vocab/story-lessons" replace />} />
                       <Route path="/vocab/games" element={<Navigate to="/vocab/word-race" replace />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
