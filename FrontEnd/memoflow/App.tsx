@@ -368,6 +368,8 @@ export default function App() {
                         setCurrentScreen('Bilingual')
                     }}
                     onNavigateToGrammar={() => setCurrentScreen('Grammar')}
+                    onNavigateToAiChat={() => setCurrentScreen('AiChat')}
+                    onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
                 />
             );
         case 'Grammar':
