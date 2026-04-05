@@ -681,7 +681,6 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     }
 
     @Override
-    @Transactional
     public ListeningLessonDetailResponse updateListeningLesson(Long id,
                                                                UpdateListeningLessonRequest request,
                                                                List<MultipartFile> audios,
@@ -1648,11 +1647,15 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
         try {
             if (file != null && !file.isEmpty()) {
-                if (lesson.getImage() != null && lesson.getImage().getPublicId() != null) {
-                    cloudinaryService.deleteImage(lesson.getImage().getPublicId());
-                }
                 Map<String, String> uploadResult = cloudinaryService.uploadFile(file, "bilingual");
-                Media media = new Media();
+                Media media = lesson.getImage();
+                if (media == null) {
+                    media = new Media();
+                } else {
+                    if (media.getPublicId() != null) {
+                        cloudinaryService.deleteImage(media.getPublicId());
+                    }
+                }
                 media.setUrl(uploadResult.get("url"));
                 media.setPublicId(uploadResult.get("publicId"));
                 media.setType(MediaType.IMAGE);

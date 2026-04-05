@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,14 +7,18 @@ import {
   ScrollView,
   Image,
   ActivityIndicator,
-  Alert
+  Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { colors } from '../theme/colors';
 import { ScreenHeader } from '../components/shared/ScreenHeader';
 import { listeningApi, ListeningResultResponse } from '../api/listeningApi';
 import * as Progress from 'react-native-progress';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AiAssistantScreen } from './AiAssistantScreen';
 
 const AudioPlayer = ({ url }: { url: string }) => {
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -141,6 +145,9 @@ export const ListeningLessonResultScreen: React.FC<Props> = ({ onBack, listening
   const [result, setResult] = useState<ListeningResultResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
+  const [isAiModalVisible, setIsAiModalVisible] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiHiddenContext, setAiHiddenContext] = useState('');
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -159,6 +166,44 @@ export const ListeningLessonResultScreen: React.FC<Props> = ({ onBack, listening
 
   const toggleExpand = (groupId: number) => {
     setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
+  const handleAiExplain = (
+    quiz: ListeningResultResponse['groups'][number]['quizzes'][number],
+    group: ListeningResultResponse['groups'][number],
+  ) => {
+    const userAnswerOption = quiz.options.find(o => o.optionId === quiz.userAnswer);
+    const correctAnswerOption = quiz.options.find(o => o.correct);
+    const userAnswerText = userAnswerOption?.optionText || 'Chưa trả lời';
+    const correctAnswerText = correctAnswerOption?.optionText || 'Không xác định';
+
+    const optionsText = quiz.options
+      .map((o, i) => `${String.fromCharCode(65 + i)}. ${o.optionText}`)
+      .join('\n');
+
+    const questionWithOptions = `${quiz.questionText}\n${optionsText}`;
+
+    const prompt = `Giải thích giúp mình câu này: "${questionWithOptions}"`;
+    const hiddenContext = `Học viên vừa làm một câu hỏi bài nghe.
+Thông tin nội bộ (không hiển thị nguyên văn cho học viên):
+- Hình ảnh bài nghe: "${group.images?.url || 'Không có'}"
+- Nội dung bài nghe: "${group.transcript || 'Không có'}"
+- Bản dịch bài nghe: "${group.translation || 'Không có'}"
+- Câu hỏi và các option: "${questionWithOptions}"
+- Bản dịch câu hỏi: "${quiz.translation || 'Không có'}"
+- Đáp án của học viên: "${userAnswerText}"
+- Đáp án đúng: "${correctAnswerText}"
+- Lời giải thích ngắn: "${(quiz as any).explanation || 'Không có'}"
+Yêu cầu phản hồi:
+- Trả lời bằng tiếng Việt.
+- Giải thích vì sao đáp án của học viên đúng/sai.
+- Nêu rõ ngữ cảnh bài nghe.
+- Nếu có hình ảnh, phải xem hình ảnh để giải thích.
+`;
+
+    setAiPrompt(prompt);
+    setAiHiddenContext(hiddenContext);
+    setIsAiModalVisible(true);
   };
 
   if (loading) {
@@ -256,19 +301,28 @@ export const ListeningLessonResultScreen: React.FC<Props> = ({ onBack, listening
                 <View key={quiz.quizId} style={styles.quizBox}>
                   <View style={styles.questionHeader}>
                     <Text style={styles.questionText}>{qIdx + 1}. {quiz.questionText}</Text>
-                    {quiz.userAnswer == null ? (
-                      <View style={[styles.miniStatus, { backgroundColor: '#F3F4F6' }]}>
-                        <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: 'bold' }}>CHƯA TRẢ LỜI</Text>
-                      </View>
-                    ) : quiz.options.find(o => o.optionId === quiz.userAnswer)?.correct ? (
-                      <View style={[styles.miniStatus, { backgroundColor: '#ECFDF5' }]}>
-                        <Text style={{ color: '#10B981', fontSize: 10, fontWeight: 'bold' }}>ĐÚNG</Text>
-                      </View>
-                    ) : (
-                      <View style={[styles.miniStatus, { backgroundColor: '#FEF2F2' }]}>
-                        <Text style={{ color: '#EF4444', fontSize: 10, fontWeight: 'bold' }}>SAI</Text>
-                      </View>
-                    )}
+                    <View style={styles.questionActions}>
+                      {quiz.userAnswer == null ? (
+                        <View style={[styles.miniStatus, { backgroundColor: '#F3F4F6' }]}>
+                          <Text style={{ color: '#6B7280', fontSize: 10, fontWeight: 'bold' }}>CHƯA TRẢ LỜI</Text>
+                        </View>
+                      ) : quiz.options.find(o => o.optionId === quiz.userAnswer)?.correct ? (
+                        <View style={[styles.miniStatus, { backgroundColor: '#ECFDF5' }]}>
+                          <Text style={{ color: '#10B981', fontSize: 10, fontWeight: 'bold' }}>ĐÚNG</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.miniStatus, { backgroundColor: '#FEF2F2' }]}>
+                          <Text style={{ color: '#EF4444', fontSize: 10, fontWeight: 'bold' }}>SAI</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => handleAiExplain(quiz, group)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={styles.aiIconBtn}
+                      >
+                        <MaterialCommunityIcons name="robot-outline" size={22} color="#3B82F6" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   <View style={styles.optionsContainer}>
@@ -326,12 +380,34 @@ export const ListeningLessonResultScreen: React.FC<Props> = ({ onBack, listening
           </View>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={isAiModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        statusBarTranslucent
+        onRequestClose={() => setIsAiModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalSafeArea} edges={['top', 'bottom']}>
+          <AiAssistantScreen
+            onBack={() => setIsAiModalVisible(false)}
+            route={{
+              params: {
+                autoSend: true,
+                autoSendMessage: aiPrompt,
+                hiddenContext: aiHiddenContext,
+              },
+            }}
+          />
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FD' },
+  modalSafeArea: { flex: 1, backgroundColor: '#F3F4F6' },
   headerTitle: { fontSize: 18, fontWeight: '900', color: '#1F2937' },
   scrollBody: { padding: 16 },
 
@@ -349,7 +425,7 @@ const styles = StyleSheet.create({
   groupCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#F1F5F9' },
 
   audioWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#F1F5F9' },
-  playIconBox: { width: 40, height: 40, backgroundColor: colors.primary, borderRadius: '50%', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  playIconBox: { width: 40, height: 40, backgroundColor: colors.primary, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   progressContainer: { flex: 1, gap: 6 },
   progressBarBg: { height: 5, backgroundColor: '#E2E8F0', borderRadius: 5, overflow: 'hidden' },
   progressBarFill: { height: '100%', backgroundColor: colors.primary },
@@ -359,8 +435,10 @@ const styles = StyleSheet.create({
   quizImage: { width: '100%', aspectRatio: 1.5, borderRadius: 12 },
   quizBox: { marginTop: 25, borderTopWidth: 0, borderTopColor: '#F1F5F9', paddingTop: 0 },
   questionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-  questionText: { fontSize: 15, fontWeight: '800', color: '#1E293B', flex: 1 },
+  questionText: { fontSize: 15, fontWeight: '800', color: '#1E293B', flex: 1, marginRight: 8 },
+  questionActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   miniStatus: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  aiIconBtn: { marginLeft: 4 },
 
   optionsContainer: { gap: 10 },
   optionItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' },

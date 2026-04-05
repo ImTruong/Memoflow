@@ -165,6 +165,96 @@ export const adminApi = {
     return response.data;
   },
 
+  // Bilingual lesson management (Song ngữ)
+  getBilingualLessons: async (
+    page = 0,
+    size = 10,
+    keyword = '',
+    sort = 'newest',
+    readFilter = 'all',
+  ) => {
+    const response = await api.get(
+      `/bilingual?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}&_sort=${sort}&readFilter=${readFilter}`,
+    );
+    return response.data;
+  },
+  getBilingualLessonDetail: async (id: string | number) => {
+    const response = await api.get(`/bilingual/${id}`);
+    return response.data;
+  },
+  createBilingualLesson: async (payload: unknown, file?: File | null) => {
+    const formData = new FormData();
+    formData.append('lesson', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    if (file) {
+      formData.append('file', file);
+    }
+    const response = await api.post('/bilingual', formData);
+    return response.data;
+  },
+  updateBilingualLesson: async (id: string | number, payload: unknown, file?: File | null) => {
+    const formData = new FormData();
+    formData.append('lesson', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    if (file) {
+      formData.append('file', file);
+    }
+    const response = await api.put(`/bilingual/${id}`, formData);
+    return response.data;
+  },
+  deleteBilingualLesson: async (id: string | number) => {
+    const response = await api.delete(`/bilingual/${id}`);
+    return response.data;
+  },
+  uploadBilingualLesson: async (excelFile: File, file?: File | null) => {
+    const formData = new FormData();
+    formData.append('excel', excelFile);
+    if (file) {
+      formData.append('file', file);
+    }
+    const response = await api.post('/bilingual/upload', formData);
+    return response.data;
+  },
+
+  // Listening lesson management (Luyện nghe)
+  getListeningLessons: async (
+    page = 0,
+    size = 10,
+    part = 1,
+    status = 'all',
+  ) => {
+    const response = await api.get(`/listening-lessons?page=${page}&size=${size}&sort=title&part=${part}&status=${status}`);
+    return response.data;
+  },
+  getListeningLessonDetail: async (id: string | number) => {
+    const response = await api.get(`/listening-lessons/${id}`);
+    return response.data;
+  },
+  uploadListeningLessonExcel: async (excelFile: File) => {
+    const formData = new FormData();
+    formData.append('excel', excelFile);
+    const response = await api.post('/listening-lessons/upload', formData);
+    return response.data;
+  },
+  createListeningLesson: async (payload: unknown, audios: File[], images: File[]) => {
+    const formData = new FormData();
+    formData.append('lesson', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    audios.forEach((audio) => formData.append('audios', audio));
+    images.forEach((image) => formData.append('images', image));
+    const response = await api.post('/listening-lessons', formData);
+    return response.data;
+  },
+  updateListeningLesson: async (id: string | number, payload: unknown, audios: File[], images: File[]) => {
+    const formData = new FormData();
+    formData.append('lesson', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    audios.forEach((audio) => formData.append('audios', audio));
+    images.forEach((image) => formData.append('images', image));
+    const response = await api.put(`/listening-lessons/${id}`, formData);
+    return response.data;
+  },
+  deleteListeningLesson: async (id: string | number) => {
+    const response = await api.delete(`/listening-lessons/${id}`);
+    return response.data;
+  },
+
   // Word race management (Dua tu voi Bot)
   getWordRaceLessons: async (page = 0, size = 10) => {
     const response = await api.get(`/word-race-lessons?page=${page}&size=${size}&sort=id,desc`);

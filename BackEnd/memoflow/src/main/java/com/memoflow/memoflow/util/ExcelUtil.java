@@ -13,16 +13,13 @@ import java.util.*;
 @Component
 public class ExcelUtil {
 
-    public CreateListeningLessonRequest parseToCreateListeningLessonRequest(MultipartFile excelFile) throws IOException {
+    public List<CreateListeningLessonRequest.ListeningGroupRequest> parseToListeningGroup(MultipartFile excelFile) throws IOException {
+
         Workbook workbook = WorkbookFactory.create(excelFile.getInputStream());
         DataFormatter formatter = new DataFormatter();
         Sheet sheet = workbook.getSheetAt(0);
 
-        CreateListeningLessonRequest request = new CreateListeningLessonRequest();
         List<CreateListeningLessonRequest.ListeningGroupRequest> groups = new ArrayList<>();
-
-        String lessonTitle = null;
-        Integer lessonPart = null;
 
         Map<String, CreateListeningLessonRequest.ListeningGroupRequest> groupMap = new LinkedHashMap<>();
         Map<String, CreateListeningLessonRequest.ListeningQuizRequest> questionMap = new LinkedHashMap<>();
@@ -33,26 +30,18 @@ public class ExcelUtil {
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
-            String title = formatter.formatCellValue(row.getCell(0));
-            String partStr = formatter.formatCellValue(row.getCell(1));
-            String groupType = formatter.formatCellValue(row.getCell(2));
-            String transcript = formatter.formatCellValue(row.getCell(3));
-            String groupTranslation = formatter.formatCellValue(row.getCell(4));
-            String hasAudioStr = formatter.formatCellValue(row.getCell(5));
-            String hasImageStr = formatter.formatCellValue(row.getCell(6));
-            String questionText = formatter.formatCellValue(row.getCell(7));
-            String questionTranslation = formatter.formatCellValue(row.getCell(8));
-            String optionText = formatter.formatCellValue(row.getCell(9));
-            String isCorrectStr = formatter.formatCellValue(row.getCell(10));
+            // ===== READ DATA =====
+            String transcript = formatter.formatCellValue(row.getCell(0));
+            String translation = formatter.formatCellValue(row.getCell(1));
+            String hasAudioStr = formatter.formatCellValue(row.getCell(2));
+            String hasImageStr = formatter.formatCellValue(row.getCell(3));
+            String questionText = formatter.formatCellValue(row.getCell(4));
+            String questionTranslation = formatter.formatCellValue(row.getCell(5));
+            String optionText = formatter.formatCellValue(row.getCell(6));
+            String isCorrectStr = formatter.formatCellValue(row.getCell(7));
 
-            if (lessonTitle == null && !title.isEmpty()) {
-                lessonTitle = title;
-            }
-            if (lessonPart == null && !partStr.isEmpty()) {
-                lessonPart = Integer.parseInt(partStr);
-            }
-
-            CellRangeAddress groupRegion = getMergedRegion(sheet, i, 3);
+            // ===== GROUP (merge theo transcript - col 0) =====
+            CellRangeAddress groupRegion = getMergedRegion(sheet, i, 0);
 
             String groupKey = (groupRegion != null)
                     ? "G-" + groupRegion.getFirstRow() + "-" + groupRegion.getLastRow()
@@ -68,18 +57,19 @@ public class ExcelUtil {
 
                 gReq = new CreateListeningLessonRequest.ListeningGroupRequest();
                 gReq.setOrderIndex(groupIndex);
-                gReq.setType(formatter.formatCellValue(baseRow.getCell(2)));
-                gReq.setTranscript(formatter.formatCellValue(baseRow.getCell(3)));
-                gReq.setTranslation(formatter.formatCellValue(baseRow.getCell(4)));
-                gReq.setHasAudio(Boolean.parseBoolean(formatter.formatCellValue(baseRow.getCell(5))));
-                gReq.setHasImage(Boolean.parseBoolean(formatter.formatCellValue(baseRow.getCell(6))));
+                gReq.setType(""); // không dùng
+                gReq.setTranscript(formatter.formatCellValue(baseRow.getCell(0)));
+                gReq.setTranslation(formatter.formatCellValue(baseRow.getCell(1)));
+                gReq.setHasAudio(Boolean.parseBoolean(formatter.formatCellValue(baseRow.getCell(2))));
+                gReq.setHasImage(Boolean.parseBoolean(formatter.formatCellValue(baseRow.getCell(3))));
                 gReq.setQuizzes(new ArrayList<>());
 
                 groupMap.put(groupKey, gReq);
                 groups.add(gReq);
             }
 
-            CellRangeAddress questionRegion = getMergedRegion(sheet, i, 7);
+            // ===== QUESTION (merge theo questionText - col 4) =====
+            CellRangeAddress questionRegion = getMergedRegion(sheet, i, 4);
 
             String questionKey = groupKey + "-" + (
                     questionRegion != null
@@ -95,19 +85,21 @@ public class ExcelUtil {
 
                 qReq = new CreateListeningLessonRequest.ListeningQuizRequest();
                 qReq.setOrderIndex(gReq.getQuizzes().size() + 1);
-                qReq.setQuestionText(formatter.formatCellValue(baseRow.getCell(7)));
-                qReq.setTranslation(formatter.formatCellValue(baseRow.getCell(8)));
+                qReq.setQuestionText(formatter.formatCellValue(baseRow.getCell(4)));
+                qReq.setTranslation(formatter.formatCellValue(baseRow.getCell(5)));
                 qReq.setOptions(new ArrayList<>());
 
                 gReq.getQuizzes().add(qReq);
                 questionMap.put(questionKey, qReq);
             }
 
+            // ===== OPTION =====
             if (!optionText.isEmpty()) {
                 CreateListeningLessonRequest.ListeningOptionRequest oReq =
                         new CreateListeningLessonRequest.ListeningOptionRequest();
 
                 oReq.setOrderIndex(qReq.getOptions().size() + 1);
+                oReq.setType(""); // không dùng
                 oReq.setOptionText(optionText);
                 oReq.setIsCorrect(Boolean.parseBoolean(isCorrectStr));
 
@@ -115,12 +107,8 @@ public class ExcelUtil {
             }
         }
 
-        request.setTitle(lessonTitle);
-        request.setPart(lessonPart != null ? lessonPart : 0);
-        request.setGroups(groups);
-
         workbook.close();
-        return request;
+        return groups;
     }
 
     private CellRangeAddress getMergedRegion(Sheet sheet, int row, int col) {
@@ -132,65 +120,27 @@ public class ExcelUtil {
         return null;
     }
 
-    public CreateBilingualLessonRequest parseToCreateBilingualLessonRequest(MultipartFile excelFile) throws IOException {
+    public List<CreateBilingualLessonRequest.Paragraph> parseToBilingualParagraphs(MultipartFile excelFile) throws IOException {
 
         Workbook workbook = WorkbookFactory.create(excelFile.getInputStream());
         DataFormatter formatter = new DataFormatter();
         Sheet sheet = workbook.getSheetAt(0);
-
-        CreateBilingualLessonRequest request = new CreateBilingualLessonRequest();
         List<CreateBilingualLessonRequest.Paragraph> paragraphs = new ArrayList<>();
-
-        String lessonTitle = null;
-        String lessonDescription = null;
-
         int order = 0;
-
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) { // bỏ header
             Row row = sheet.getRow(i);
             if (row == null) continue;
-
-            String title = formatter.formatCellValue(row.getCell(0));
-            String description = formatter.formatCellValue(row.getCell(1));
-            String en = formatter.formatCellValue(row.getCell(2));
-            String vi = formatter.formatCellValue(row.getCell(3));
-
-            if (lessonTitle == null) {
-                CellRangeAddress titleRegion = getMergedRegion(sheet, i, 0);
-                int baseRow = (titleRegion != null) ? titleRegion.getFirstRow() : i;
-                Row base = sheet.getRow(baseRow);
-                String val = formatter.formatCellValue(base.getCell(0));
-                if (!val.isEmpty()) lessonTitle = val;
-            }
-
-            if (lessonDescription == null) {
-                CellRangeAddress descRegion = getMergedRegion(sheet, i, 1);
-                int baseRow = (descRegion != null) ? descRegion.getFirstRow() : i;
-                Row base = sheet.getRow(baseRow);
-                String val = formatter.formatCellValue(base.getCell(1));
-                if (!val.isEmpty()) lessonDescription = val;
-            }
-
-            if (en.isEmpty() && vi.isEmpty()) continue;
-
+            String en = formatter.formatCellValue(row.getCell(0));
+            String vi = formatter.formatCellValue(row.getCell(1));
+            if (en.isBlank() && vi.isBlank()) continue;
             order++;
-
             CreateBilingualLessonRequest.Paragraph p = new CreateBilingualLessonRequest.Paragraph();
             p.setOrder(order);
-            p.setEn(en);
-            p.setVi(vi);
-
+            p.setEn(en.trim());
+            p.setVi(vi.trim());
             paragraphs.add(p);
         }
-
-        CreateBilingualLessonRequest.Content content = new CreateBilingualLessonRequest.Content();
-        content.setParagraphs(paragraphs);
-
-        request.setTitle(lessonTitle);
-        request.setDescription(lessonDescription);
-        request.setContent(content);
-
         workbook.close();
-        return request;
+        return paragraphs;
     }
 }
