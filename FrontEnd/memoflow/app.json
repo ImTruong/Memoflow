@@ -61,14 +61,14 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#1877F2",
-          "sounds": ["./assets/notification-sound.wav"]
+          // "icon": "./assets/notification-icon.png",
+          "color": "#1877F2"
+          // "sounds": ["./assets/notification-sound.wav"]
         }
       ]
     ],
     "notification": {
-      "icon": "./assets/notification-icon.png",
+      // "icon": "./assets/notification-icon.png",
       "color": "#1877F2"
     }
   }
