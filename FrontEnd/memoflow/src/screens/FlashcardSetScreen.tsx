@@ -9,19 +9,21 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { flashcardApi } from '../api/flashcardApi';
 import { FlashcardSetCard } from '../components/FlashcardSetCard';
 import { FlashcardActionOverlay } from '../components/FlashcardActionOverlay';
 import { useFlashcardLessons } from '../hooks/useFlashcardLessons';
+import { useUser } from '../hooks/useUser';
 
 const { width } = Dimensions.get('window');
 
 type FlashcardSetScreenProps = {
   onBack: () => void;
   onNavigateToCreate: () => void;
-  onNavigateToEdit: (id: number) => void;
+  onNavigateToEdit: (id: number, isOwner?: boolean) => void; // Add isOwner param
   onNavigateToStudy: (setName: string, id: number, onlyDue: boolean, isGlobal?: boolean) => void;
   onNavigateToGame: (setName: string, id: number) => void;
   refreshTrigger?: number;
@@ -42,11 +44,25 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [selectedSetName, setSelectedSetName] = useState('');
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const mine = useFlashcardLessons('Mine');
   const community = useFlashcardLessons('Community');
+  const { profile } = useUser();
   
   const scrollRef = useRef<ScrollView>(null);
+
+  // Filter items based on search query
+  const filterItems = (items: any[]) => {
+    if (!searchQuery) return items;
+    return items.filter(item => 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const filteredMineItems = filterItems(mine.items);
+  const filteredCommunityItems = filterItems(community.items);
 
   // --- Handlers ---
 
@@ -57,6 +73,13 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
     // Lazy load community tab if empty
     if (tab === 'Community' && community.items.length === 0) {
       community.refresh();
+    }
+  };
+
+  const toggleSearch = () => {
+    setIsSearchVisible(!isSearchVisible);
+    if (isSearchVisible) {
+      setSearchQuery('');
     }
   };
 
@@ -80,9 +103,16 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
     }
   };
 
-  const handleSetAction = (setName: string, id: number) => {
+  const handleSetAction = (setName: string, id: number, isOwner?: boolean) => {
     setSelectedSetName(setName);
     setSelectedLessonId(id);
+    
+    // Find the selected item to get isOwner flag
+    const selectedItem = activeTab === 'Mine' 
+      ? mine.items.find(item => item.id === id)
+      : community.items.find(item => item.id === id);
+    
+    // Only show overlay if user is owner or wants to study
     setIsOverlayVisible(true);
   };
 
@@ -101,11 +131,23 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
             try {
               const response = await flashcardApi.deleteLesson(selectedLessonId);
               if (response.success) {
-                mine.refresh();
+                // Show success message
+                Alert.alert("Thành công", "Đã xóa bộ thẻ thành công!");
+                
+                // Refresh the appropriate tab
+                if (activeTab === 'Mine') {
+                  mine.refresh();
+                } else {
+                  community.refresh();
+                }
+                
                 setIsOverlayVisible(false);
+              } else {
+                Alert.alert("Lỗi", response.message || "Không thể xóa bộ thẻ này.");
               }
             } catch (error) {
-              Alert.alert("Lỗi", "Không thể xóa bộ thẻ này.");
+              console.error("Delete error:", error);
+              Alert.alert("Lỗi", "Không thể xóa bộ thẻ này. Vui lòng thử lại.");
             }
           }
         }
@@ -152,13 +194,36 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Bộ từ vựng</Text>
-        <TouchableOpacity style={styles.searchBtn}>
-          <Ionicons name="search-outline" size={24} color="#9CA3AF" />
-        </TouchableOpacity>
+        {isSearchVisible ? (
+          <View style={styles.searchHeaderContainer}>
+            <TouchableOpacity style={styles.backBtn} onPress={toggleSearch}>
+              <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Tìm bộ từ vựng..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+              placeholderTextColor="#9CA3AF"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity style={styles.backBtn} onPress={onBack}>
+              <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Bộ từ vựng</Text>
+            <TouchableOpacity style={styles.searchBtn} onPress={toggleSearch}>
+              <Ionicons name="search-outline" size={24} color="#9CA3AF" />
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       {/* Tab Switcher */}
@@ -189,7 +254,7 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
         {/* Personal Sets Tab */}
         <View style={styles.tabPane}>
           <FlatList
-            data={mine.items}
+            data={filteredMineItems}
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -209,7 +274,7 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
         {/* Community Sets Tab */}
         <View style={styles.tabPane}>
           <FlatList
-            data={community.items}
+            data={filteredCommunityItems}
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -227,10 +292,22 @@ export const FlashcardSetScreen: React.FC<FlashcardSetScreenProps> = ({
       {/* Action Sheet Overlay */}
       <FlashcardActionOverlay
         isVisible={isOverlayVisible}
+        isOwner={(() => {
+          const selectedItem = activeTab === 'Mine' 
+            ? mine.items.find(item => item.id === selectedLessonId)
+            : community.items.find(item => item.id === selectedLessonId);
+          return (selectedItem?.isOwner || (profile && selectedItem?.creatorId === profile.id)) ?? true;
+        })()}
         onClose={() => setIsOverlayVisible(false)}
         onEdit={() => { 
           setIsOverlayVisible(false); 
-          if (selectedLessonId) onNavigateToEdit(selectedLessonId); 
+          if (selectedLessonId) {
+            const selectedItem = activeTab === 'Mine' 
+              ? mine.items.find(item => item.id === selectedLessonId)
+              : community.items.find(item => item.id === selectedLessonId);
+            const isOwnerValue = (selectedItem?.isOwner || (profile && selectedItem?.creatorId === profile.id)) ?? true;
+            onNavigateToEdit(selectedLessonId, isOwnerValue);
+          }
         }}
         onDelete={handleDeleteSet}
         onLearnAll={() => { 
@@ -410,5 +487,24 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#4F46E5',
     fontWeight: '700',
+  },
+  searchHeaderContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1F2937',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -58,14 +58,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     }
     setIsLoading(true);
     try {
-      const response = await authApi.login({ email, password });
+      await AsyncStorage.removeItem('authToken');
+      const response = await authApi.login({ email: email.trim().toLowerCase(), password });
       await AsyncStorage.setItem('authToken', response.data.token);
       onNavigateToHome();
     } catch (err: any) {
-      const msg =
+      let msg =
         err.message === 'Forbidden'
           ? 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.'
           : 'Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.';
+      console.log(err);
+      const errorMessage = String(err?.message || '');
+      if (/401|403|forbidden|unauthorized|bad credentials/i.test(errorMessage)) {
+        msg = 'Email hoặc mật khẩu không chính xác. Vui lòng thử lại.';
+      } else if (/network request failed|failed to fetch|load failed/i.test(errorMessage)) {
+        msg = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại backend hoặc mạng.';
+      } else if (__DEV__ && errorMessage) {
+        msg = errorMessage;
+      }
       Alert.alert('Đăng nhập thất bại', msg, [{ text: 'OK' }]);
     } finally {
       setIsLoading(false);
@@ -129,6 +139,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           style={{ flex: 1 }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
+
           <KeyboardAwareScrollView
             contentContainerStyle={styles.scroll}
             showsVerticalScrollIndicator={false}
@@ -144,6 +155,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <View style={[styles.badge, styles.badgeGoal]}>
                 <Text style={styles.badgeText}>Goal</Text>
               </View>
+
               <View style={styles.welcomeContainer}>
                 <View style={styles.aPlusBadge}>
                   <Text style={styles.aPlusText}>A+</Text>
@@ -152,7 +164,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </View>
               <Text style={styles.subtitle}>Học tiếng Anh mỗi ngày!</Text>
             </View>
-
             <View style={styles.formCard}>
               <View style={styles.inputContainer}>
                 <MaterialCommunityIcons name="email-outline" size={20} color="#94A3B8" style={styles.inputIcon} />

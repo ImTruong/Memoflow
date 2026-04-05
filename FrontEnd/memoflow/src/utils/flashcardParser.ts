@@ -67,6 +67,8 @@ export const mapLessonToListItem = (
     totalDue: startedCount,
     author: isMine ? undefined : lesson.creatorName,
     isPrivate: !!isPrivate,
+    isOwner: lesson.isOwner ?? isMine, // Use from API or fallback to isMine
+    creatorId: lesson.creatorId,
     icon,
     imageUrl: lesson.imageUrl,
     iconBgColor,

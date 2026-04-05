@@ -21,7 +21,9 @@ import { AiChatMessage, AiChatSession } from '../types/aiChat';
 import { colors } from '../theme/colors';
 
 type AiAssistantScreenProps = {
-  onBack: () => void;
+  onBack?: () => void;
+  route?: any;
+  navigation?: any;
 };
 
 type InlinePart = {
@@ -128,7 +130,7 @@ const parseMarkdownBlocks = (content: string): MarkdownBlock[] => {
     });
 };
 
-export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) => {
+export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, route, navigation }) => {
   const insets = useSafeAreaInsets();
   const [sessions, setSessions] = useState<AiChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
@@ -141,6 +143,12 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [pendingAutoSend, setPendingAutoSend] = useState<{
+    message: string;
+    hiddenContext?: string;
+    sessionId?: number;
+  } | null>(null);
+  const hasAutoSentRef = useRef(false);
 
   const messageListRef = useRef<FlatList<AiChatMessage>>(null);
 
@@ -181,12 +189,38 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
       const loadedSessions = response.data || [];
       setSessions(loadedSessions);
 
+      let bootstrapSessionId: number;
+
       if (loadedSessions.length > 0) {
         const latestSession = loadedSessions[0];
         setActiveSessionId(latestSession.id);
         await loadMessages(latestSession.id);
+        bootstrapSessionId = latestSession.id;
       } else {
-        await createAndOpenSession();
+        const createdSession = await createAndOpenSession();
+        bootstrapSessionId = createdSession.id;
+      }
+
+      const autoSend = route?.params?.autoSend === true;
+      const autoSendMessage =
+        typeof route?.params?.autoSendMessage === 'string' ? route.params.autoSendMessage.trim() : '';
+      const hiddenContext =
+        typeof route?.params?.hiddenContext === 'string' ? route.params.hiddenContext : undefined;
+
+      const initialPrompt =
+        route?.params?.initialPrompt ?? route?.params?.prefilledMessage ?? route?.params?.message;
+
+      if (autoSend && autoSendMessage && !hasAutoSentRef.current) {
+        hasAutoSentRef.current = true;
+        setPendingAutoSend({
+          message: autoSendMessage,
+          hiddenContext,
+          sessionId: bootstrapSessionId,
+        });
+      } else if (initialPrompt && typeof initialPrompt === 'string') {
+        setInputValue(initialPrompt);
+        // Clear param so it doesn't re-trigger on subsequent navs if handled properly by navigation, 
+        // though navigation params remain unless reset. Setting inputValue once during bootstrap is adequate.
       }
 
       setErrorMessage(null);
@@ -195,7 +229,16 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
     } finally {
       setLoadingInitial(false);
     }
-  }, [createAndOpenSession, loadMessages]);
+  }, [
+    createAndOpenSession,
+    loadMessages,
+    route?.params?.autoSend,
+    route?.params?.autoSendMessage,
+    route?.params?.hiddenContext,
+    route?.params?.initialPrompt,
+    route?.params?.prefilledMessage,
+    route?.params?.message,
+  ]);
 
   useEffect(() => {
     void bootstrap();
@@ -255,14 +298,17 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
     });
   };
 
-  const submitMessage = async (rawContent: string) => {
+  const submitMessage = async (
+    rawContent: string,
+    options?: { hiddenContext?: string; sessionId?: number },
+  ) => {
     const content = rawContent.trim();
     if (!content || sending) return;
 
     setInputValue('');
     setErrorMessage(null);
 
-    let sessionId = activeSessionId;
+    let sessionId = options?.sessionId ?? activeSessionId;
     if (!sessionId) {
       const created = await createAndOpenSession();
       sessionId = created.id;
@@ -286,7 +332,11 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
 
       setMessages((prev) => [...prev.filter((item) => item.id !== tempId), savedUserMessage]);
 
-      const assistantContent = await aiProviderApi.generateTutorReply(content, [...messages, savedUserMessage]);
+      const assistantContent = await aiProviderApi.generateTutorReply(
+        content,
+        [...messages, savedUserMessage],
+        options?.hiddenContext,
+      );
 
       const savedAssistantMessageResponse = await aiChatApi.saveMessage(sessionId, 'assistant', assistantContent);
       const savedAssistantMessage = savedAssistantMessageResponse.data;
@@ -317,6 +367,17 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
     setShowHistory(false);
     await loadMessages(session.id);
   };
+
+  useEffect(() => {
+    if (!pendingAutoSend || loadingInitial || sending) return;
+
+    const payload = pendingAutoSend;
+    setPendingAutoSend(null);
+    void submitMessage(payload.message, {
+      hiddenContext: payload.hiddenContext,
+      sessionId: payload.sessionId,
+    });
+  }, [loadingInitial, pendingAutoSend, sending]);
 
   const renderMessageItem = ({ item }: { item: AiChatMessage }) => {
     const isUser = item.role === 'user';
@@ -409,7 +470,11 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack }) 
                 setShowHistory(false);
                 return;
               }
-              onBack();
+              if (onBack) {
+                onBack();
+              } else if (navigation && navigation.goBack) {
+                navigation.goBack();
+              }
             }}
           >
             <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />

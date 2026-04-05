@@ -38,10 +38,24 @@ const getDifficultyLabel = (difficulty: BotDifficulty) => {
   }
 };
 
+const getMaxWordLengthByDifficulty = (difficulty: BotDifficulty): number => {
+  switch (difficulty) {
+    case 'EASY':
+      return 4;
+    case 'MEDIUM':
+      return 6;
+    case 'HARD':
+      return 8;
+    default:
+      return 8;
+  }
+};
+
 export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, difficulty, onBack, onComplete }) => {
   const config = (lesson.content || {}) as WordRaceLessonContent;
   const targetScore = Number(config.targetScore) || 40;
   const timeLimit = Number(config.timeLimit) || 15;
+  const maxWordLength = getMaxWordLengthByDifficulty(difficulty);
   const forbiddenEndings = Array.isArray(config.forbiddenEndings)
     ? config.forbiddenEndings.map((ending) => ending.toLowerCase())
     : undefined;
@@ -200,14 +214,12 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
       let possibleWords = data.filter((w: any) => {
         const wordStr = w.word;
         if (wordStr.length < 3) return false;
+        if (wordStr.length > maxWordLength) return false;
         if (messages.find(m => m.word.toLowerCase() === wordStr.toLowerCase())) return false;
         if (forbiddenEndings) {
           if (forbiddenEndings.includes(wordStr[wordStr.length - 1].toLowerCase())) return false;
         }
-        
-        if (difficulty === 'EASY' && wordStr.length > 4) return false;
-        if (difficulty === 'MEDIUM' && wordStr.length > 7) return false;
-        
+
         return true;
       });
 
@@ -299,6 +311,8 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
     </View>
   );
 
+  const canSend = turn === 'USER' && !isBotThinking && inputText.trim().length > 0;
+
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
@@ -321,6 +335,24 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
 
       {/* Score HUD */}
       <View style={styles.scoreHud}>
+        <View style={styles.botScoreBox}>
+          <View>
+            <Text style={[styles.scoreValue, { color: '#EF4444' }]}>{botScore}</Text>
+            {turn === 'BOT' && (
+              <View style={styles.timerContainer}>
+                <ActivityIndicator size="small" color="#EF4444" />
+              </View>
+            )}
+          </View>
+          <Image 
+            source={{ uri: "https://api.dicebear.com/7.x/bottts/png?seed=Robo" }} 
+            style={styles.avatar} 
+          />
+        </View>
+        <View style={styles.vsContainer}>
+          <Text style={styles.vsText}>vs</Text>
+          <View style={styles.vsDot} />
+        </View>
         <View style={styles.userScoreBox}>
           <Image 
             source={{ uri: "https://api.dicebear.com/7.x/avataaars/png?seed=Felix" }} 
@@ -337,24 +369,6 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
               </View>
             )}
           </View>
-        </View>
-        <View style={styles.vsContainer}>
-          <Text style={styles.vsText}>vs</Text>
-          <View style={styles.vsDot} />
-        </View>
-        <View style={styles.botScoreBox}>
-          <View>
-            <Text style={[styles.scoreValue, { color: '#EF4444' }]}>{botScore}</Text>
-            {turn === 'BOT' && (
-              <View style={styles.timerContainer}>
-                <ActivityIndicator size="small" color="#EF4444" />
-              </View>
-            )}
-          </View>
-          <Image 
-            source={{ uri: "https://api.dicebear.com/7.x/bottts/png?seed=Robo" }} 
-            style={styles.avatar} 
-          />
         </View>
       </View>
 
@@ -396,10 +410,10 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
             <TouchableOpacity 
               style={[
                 styles.sendButton, 
-                (!inputText.trim() || turn === 'BOT') && { backgroundColor: '#FCA5A5' }
+                canSend ? styles.sendButtonActive : styles.sendButtonIdle,
               ]} 
               onPress={handleUserSubmit}
-              disabled={turn === 'BOT' || !inputText.trim()}
+              disabled={!canSend}
             >
               <Ionicons name="arrow-up" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -703,14 +717,20 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FCA5A5',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
-    shadowColor: '#FCA5A5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
+  },
+  sendButtonActive: {
+    backgroundColor: '#EF4444',
+    shadowColor: '#EF4444',
+  },
+  sendButtonIdle: {
+    backgroundColor: '#FCA5A5',
+    shadowColor: '#FCA5A5',
   },
   emptyGame: {
     flex: 1,

@@ -60,4 +60,27 @@ public interface LearningLessonService {
 
     void deleteBilingualLesson(Long id);
 
+    PageResponse<FlashcardLessonSummaryResponse> getAllFlashcardLessons(Pageable pageable);
+
+    void deleteFlashcardLessonAdmin(Long id);
+    
+    java.util.List<GrammarTopicResponse> getGrammarTopics(UserPrincipal userPrincipal);
+
+    GrammarTopicDetailResponse getGrammarTopicDetail(Long topicId, UserPrincipal userPrincipal);
+
+    GrammarLessonDetailResponse getGrammarLessonDetail(Long lessonId, UserPrincipal userPrincipal);
+
+    java.util.List<GrammarPracticeOverviewResponse> getGrammarPracticeOverview(UserPrincipal userPrincipal);
+
+    GrammarPracticeDetailResponse getGrammarPracticeDetail(Long practiceId, UserPrincipal userPrincipal);
+
+    GrammarPracticeQuizResponse getGrammarPracticeQuiz(Long practiceId);
+
+    void submitGrammarPractice(UserPrincipal userPrincipal, Long practiceId, SubmitGrammarPracticeRequest request,
+            boolean isCompleted);
+
+    GrammarPracticeSubmissionResponse getGrammarPracticeSubmission(UserPrincipal userPrincipal, Long practiceId);
+
+    GrammarPracticeResultResponse getGrammarPracticeResult(UserPrincipal userPrincipal, Long practiceId);
+
 }

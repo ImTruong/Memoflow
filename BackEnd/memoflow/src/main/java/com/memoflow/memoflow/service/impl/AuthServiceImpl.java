@@ -16,7 +16,10 @@ import com.memoflow.memoflow.service.AuthService;
 import com.memoflow.memoflow.service.VerificationCodeService;
 import com.memoflow.memoflow.util.JwtUtil;
 import com.memoflow.memoflow.util.SenderUtil;
+import com.memoflow.memoflow.security.UserPrincipal;
+import com.memoflow.memoflow.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.cloudinary.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -50,6 +53,7 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final VerificationCodeService verificationCodeService;
     private final SenderUtil senderUtil;
+    private final ModelMapper modelMapper;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -57,7 +61,21 @@ public class AuthServiceImpl implements AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
         String token = jwtUtil.generateToken(authentication);
-        return new LoginResponse(token);
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Người dùng không tồn tại."));
+
+        UserResponse userResponse = modelMapper.map(user, UserResponse.class);
+        if (user.getAvatar() != null) {
+            userResponse.setAvatar(user.getAvatar().getUrl());
+        }
+        if (user.getRole() != null) {
+            userResponse.setRole(user.getRole().getName());
+        }
+        userResponse.setStreakDays(12); // Fake streak
+
+        return new LoginResponse(token, userResponse);
     }
 
     @Override
@@ -87,7 +105,16 @@ public class AuthServiceImpl implements AuthService {
                     return userRepository.save(newUser);
                 });
         String token = jwtUtil.generateToken(user);
-        return new LoginResponse(token);
+        UserResponse userResponse = modelMapper.map(user, UserResponse.class);
+        if (user.getAvatar() != null) {
+            userResponse.setAvatar(user.getAvatar().getUrl());
+        }
+        if (user.getRole() != null) {
+            userResponse.setRole(user.getRole().getName());
+        }
+        userResponse.setStreakDays(12); // Fake streak
+
+        return new LoginResponse(token, userResponse);
     }
 
     @Override
@@ -118,7 +145,16 @@ public class AuthServiceImpl implements AuthService {
                     return userRepository.save(newUser);
                 });
         String token = jwtUtil.generateToken(user);
-        return new LoginResponse(token);
+        UserResponse userResponse = modelMapper.map(user, UserResponse.class);
+        if (user.getAvatar() != null) {
+            userResponse.setAvatar(user.getAvatar().getUrl());
+        }
+        if (user.getRole() != null) {
+            userResponse.setRole(user.getRole().getName());
+        }
+        userResponse.setStreakDays(12); // Fake streak
+
+        return new LoginResponse(token, userResponse);
     }
 
 

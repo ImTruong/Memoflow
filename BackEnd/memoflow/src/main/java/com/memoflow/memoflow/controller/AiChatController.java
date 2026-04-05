@@ -1,7 +1,7 @@
 package com.memoflow.memoflow.controller;
 
 import java.util.List;
-
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +29,18 @@ import lombok.RequiredArgsConstructor;
 public class AiChatController {
 
     private final AiChatService aiChatService;
+    private final com.memoflow.memoflow.service.AiProviderService aiProviderService;
+
+    @PostMapping("/generate")
+    public ResponseEntity<ApiResponse<String>> generateReply(@RequestBody Map<String, String> request) {
+        String prompt = request.get("prompt");
+        String result = aiProviderService.generateResponse(prompt);
+        if (result != null) {
+            return ResponseEntity.ok(ApiResponse.success(result, "AI reply generated successfully"));
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Failed to generate AI reply", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
 
     @GetMapping("/chat-sessions")
     public ResponseEntity<ApiResponse<List<AiChatSessionResponse>>> getSessions(

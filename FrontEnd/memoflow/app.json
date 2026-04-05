@@ -21,8 +21,9 @@
           "fb-messenger-api",
           "fbauth2",
           "fbshareextension"
-        ]
-      }
+        ],
+        "NSUserNotificationUsageDescription": "Memoflow cần quyền gửi thông báo để nhắc nhở bạn học tập."
+      },
     },
     "android": {
       "adaptiveIcon": {
@@ -34,7 +35,11 @@
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
       "package": "com.anonymous.memoflow",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -52,7 +57,19 @@
           "advertiserIDCollectionEnabled": false,
           "autoLogAppEventsEnabled": false
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1877F2",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
       ]
-    ]
+    ],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#1877F2"
+    }
   }
 }

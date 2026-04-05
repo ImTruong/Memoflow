@@ -2,6 +2,8 @@ package com.memoflow.memoflow.repository;
 
 import com.memoflow.memoflow.entity.QuizQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,8 +12,13 @@ import java.util.List;
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
 
     List<QuizQuestion> findByQuizGroupId(Long quizGroupId);
+    
 
     List<QuizQuestion> findByQuizGroupIdOrderByOrderIndexAsc(Long quizGroupId);
 
     List<QuizQuestion> findByType(String type);
+
+    @Query("SELECT q FROM QuizQuestion q WHERE q.quizGroup.learningLesson.id = :lessonId ORDER BY q.quizGroup.orderIndex ASC, q.orderIndex ASC")
+    List<QuizQuestion> findByLearningLessonIdOrderByGroupAndQuestion(@Param("lessonId") Long lessonId);
 }
+

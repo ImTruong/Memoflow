@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, StatusBar } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { StyleSheet, View, StatusBar, Alert } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { NotificationScreen } from './src/screens/NotificationScreen';
 import { VocabularyLearningScreen } from './src/screens/VocabularyLearningScreen';
@@ -19,6 +20,12 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { EditProfileScreen } from './src/screens/EditProfileScreen';
 import { NotificationSettingsScreen } from './src/screens/NotificationSettingsScreen';
 import { ChangePasswordScreen } from './src/screens/ChangePasswordScreen';
+import { GrammarScreen } from './src/screens/GrammarScreen';
+import { GrammarTopicDetailScreen } from './src/screens/GrammarTopicDetailScreen';
+import { LessonContentViewScreen } from './src/screens/LessonContentViewScreen';
+import { PracticeDetailScreen } from './src/screens/PracticeDetailScreen';
+import { QuizSolvingScreen } from './src/screens/QuizSolvingScreen';
+import { QuizResultScreen } from './src/screens/QuizResultScreen';
 import { Footer } from './src/components/Footer';
 import { ScreenTransition } from './src/components/ScreenTransition';
 import { StoryListScreen } from './src/screens/StoryListScreen';
@@ -42,6 +49,8 @@ import { AiAssistantScreen } from './src/screens/AiAssistantScreen';
 import { storyApi } from './src/api/storyApi';
 import { prefetchVietnameseMeanings, wordHuntApi } from './src/api/wordHuntApi';
 import { BotDifficulty } from './src/types/wordRace';
+import { requestNotificationPermissions } from './src/services/pushNotification';
+import { AppliedExerciseScreen } from './src/screens/AppliedExerciseScreen';
 
 type Screen =
   | 'Register'
@@ -68,6 +77,12 @@ type Screen =
   | 'EditProfile'
   | 'NotificationSettings'
   | 'ChangePassword'
+  | 'Grammar'
+  | 'GrammarTopicDetail'
+  | 'LessonContentView'
+  | 'PracticeDetail'
+  | 'QuizSolving'
+  | 'QuizResult'
   | 'StoryList'
   | 'StoryDetail'
   | 'WordRaceList'
@@ -76,7 +91,10 @@ type Screen =
   | 'WordHuntGame'
   | 'Bilingual'
   | 'BilingualDetail'
-  | 'AiChat';
+  | 'AiChat'
+  | 'AppliedExercise';
+
+type FeatureEntryScreen = 'Home' | 'VocabularyLearning';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('Login');
@@ -102,9 +120,19 @@ export default function App() {
   const [wordHuntProgressList, setWordHuntProgressList] = useState<WordHuntProgress[]>([]);
   const [selectedListeningPart, setSelectedListeningPart] = useState<number | null>(null);
   const [isResumeListening, setResumeListening] = useState<boolean>(true);
+  const [isOwner, setIsOwner] = useState(true);
   const [prevScreen, setPrevScreen] = useState<Screen>('Home');
+  const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
+  const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
+  const [featureEntryScreen, setFeatureEntryScreen] = useState<FeatureEntryScreen>('VocabularyLearning');
 
-  useEffect(() => {
+    // Grammar & Quiz state
+    const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+    const [selectedGrammarLessonId, setSelectedGrammarLessonId] = useState<number | null>(null);
+    const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+    const [quizAnswers, setQuizAnswers] = useState<any>(null);
+
+    useEffect(() => {
   const initAuth = async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
@@ -119,6 +147,44 @@ export default function App() {
   };
   initAuth();
 }, []);
+
+  // Setup notification listeners
+  useEffect(() => {
+    // Request permissions on app start
+    requestNotificationPermissions().then((granted) => {
+      console.log('Notification permission granted:', granted);
+    }).catch(console.error);
+
+    // Listener for notifications received while app is in foreground
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('🔔 Notification received:', notification);
+      Alert.alert(
+        notification.request.content.title || 'Thông báo',
+        notification.request.content.body || '',
+        [{ text: 'OK' }]
+      );
+    });
+
+    // Listener for when user taps on notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('👆 Notification tapped:', response);
+      // You can navigate to specific screen based on notification data
+      const data = response.notification.request.content.data;
+      if (data?.screen) {
+        setCurrentScreen(data.screen as Screen);
+      }
+    });
+
+    // Cleanup listeners on unmount
+    return () => {
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
+  }, []);
 
   const loadStoryLessons = async () => {
     try {
@@ -269,34 +335,129 @@ export default function App() {
             lessonId={selectedLessonId || 0}
           />
         );
-      case 'Home':
-        return (
-          <HomeScreen 
-            onNavigateToNotifications={() => setCurrentScreen('Notifications')}
-            onNavigateToLearning={() => setCurrentScreen('VocabularyLearning')}
-            onNavigateToGlobalStudy={() => {
-              setActiveSetName('Ôn tập tổng quan');
-              setSelectedLessonId(null);
-              setOnlyDue(true);
-              setIsGlobalStudy(true);
-              setCurrentScreen('FlashcardStudy');
-            }}
-            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
-            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
-            onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
-            onNavigateToBilingual={() => {
-              setPrevScreen('Home')
-              setCurrentScreen('Bilingual')
-            }}
-            onNavigateToAiChat={() => setCurrentScreen('AiChat')}
-          />
-        );
-      case 'AiChat':
-        return (
-          <AiAssistantScreen
-            onBack={() => setCurrentScreen('Home')}
-          />
-        );
+        case 'AiChat':
+            return (
+                <AiAssistantScreen
+                    onBack={() => setCurrentScreen('Home')}
+                />
+            );
+        case 'AppliedExercise':
+            return (
+                <AppliedExerciseScreen
+                    onBack={() => setCurrentScreen('Home')}
+                />
+            );
+
+        case 'Home':
+            return (
+                <HomeScreen
+                    onNavigateToNotifications={() => setCurrentScreen('Notifications')}
+                    onNavigateToLearning={() => setCurrentScreen('VocabularyLearning')}
+                    onNavigateToGlobalStudy={() => {
+                        setActiveSetName('Ôn tập tổng quan');
+                        setSelectedLessonId(null);
+                        setOnlyDue(true);
+                        setIsGlobalStudy(true);
+                        setCurrentScreen('FlashcardStudy');
+                    }}
+                    onNavigateToStoryList={() => setCurrentScreen('StoryList')}
+                    onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+                    onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
+                    onNavigateToBilingual={() => {
+                        setPrevScreen('Home')
+                        setCurrentScreen('Bilingual')
+                    }}
+                    onNavigateToGrammar={() => setCurrentScreen('Grammar')}
+                />
+            );
+        case 'Grammar':
+            return (
+                <GrammarScreen
+                    navigation={{
+                        navigate: (screen: string, params: any) => {
+                            if (screen === 'GrammarTopicDetail') {
+                                setSelectedTopicId(params.topicId);
+                                setCurrentScreen('GrammarTopicDetail');
+                            } else if (screen === 'PracticeDetail') {
+                                setSelectedTaskId(params.taskId);
+                                setCurrentScreen('PracticeDetail');
+                            }
+                        }
+                    }}
+                />
+            );
+        case 'GrammarTopicDetail':
+            return (
+                <GrammarTopicDetailScreen
+                    route={{ params: { topicId: selectedTopicId } }}
+                    navigation={{
+                        goBack: () => setCurrentScreen('Grammar'),
+                        navigate: (screen: string, params: any) => {
+                            if (screen === 'LessonContentView') {
+                                setSelectedGrammarLessonId(params.lessonId);
+                                setCurrentScreen('LessonContentView');
+                            }
+                        }
+                    }}
+                />
+            );
+        case 'LessonContentView':
+            return (
+                <LessonContentViewScreen
+                    route={{ params: { lessonId: selectedGrammarLessonId } }}
+                    navigation={{
+                        goBack: () => setCurrentScreen('GrammarTopicDetail'),
+                        navigate: (screen: string, params: any) => {
+                            if (screen === 'PracticeDetail') {
+                                setSelectedTaskId(params.taskId);
+                                setCurrentScreen('PracticeDetail');
+                            }
+                        }
+                    }}
+                />
+            );
+        case 'PracticeDetail':
+            return (
+                <PracticeDetailScreen
+                    route={{ params: { taskId: selectedTaskId } }}
+                    navigation={{
+                        goBack: () => setCurrentScreen('Grammar'),
+                        navigate: (screen: string, params: any) => {
+                            if (screen === 'QuizSolving') {
+                                setCurrentScreen('QuizSolving');
+                            }
+                        }
+                    }}
+                />
+            );
+        case 'QuizSolving':
+            return (
+                <QuizSolvingScreen
+                    route={{ params: { taskId: selectedTaskId } }}
+                    navigation={{
+                        goBack: () => setCurrentScreen('PracticeDetail'),
+                        navigate: (screen: string, params: any) => {
+                            if (screen === 'QuizResult') {
+                                setQuizAnswers(params.answers);
+                                setCurrentScreen('QuizResult');
+                            }
+                        }
+                    }}
+                />
+            );
+        case 'QuizResult':
+            return (
+                <QuizResultScreen
+                    route={{ params: { answers: quizAnswers } }}
+                    navigation={{
+                        navigate: (screen: string) => {
+                            if (screen === 'Grammar') setCurrentScreen('Grammar');
+                            if (screen === 'Home') setCurrentScreen('Home');
+                            if (screen === 'PracticeDetail') setCurrentScreen('PracticeDetail');
+                        }
+                    }}
+                />
+            );        
       case 'VocabularyLearning':
         return (
           <VocabularyLearningScreen 
@@ -309,13 +470,20 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
-            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
-            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToStoryList={() => {
+              setFeatureEntryScreen('VocabularyLearning');
+              setCurrentScreen('StoryList');
+            }}
+            onNavigateToWordRaceList={() => {
+              setFeatureEntryScreen('VocabularyLearning');
+              setCurrentScreen('WordRaceList');
+            }}
             onNavigateToWordHuntList={() => setCurrentScreen('WordHuntList')}
             onNavigateToBilingual={() => {
               setPrevScreen('VocabularyLearning');
               setCurrentScreen('Bilingual');
             }}
+            onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
           />
         );
       case 'FlashcardSet':
@@ -325,11 +493,13 @@ export default function App() {
             onNavigateToCreate={() => {
               setEditMode(false);
               setSelectedLessonId(null);
+              setIsOwner(true);
               setCurrentScreen('CreateFlashcardSet');
             }}
-            onNavigateToEdit={(id) => {
+            onNavigateToEdit={(id, isOwnerValue) => {
               setEditMode(true);
               setSelectedLessonId(id);
+              setIsOwner(isOwnerValue ?? true);
               setCurrentScreen('CreateFlashcardSet');
             }}
             onNavigateToStudy={(setName, id, dueOnly, isGlobal = false) => {
@@ -356,6 +526,7 @@ export default function App() {
             }}
             lessonId={selectedLessonId || undefined}
             editMode={editMode}
+            isOwner={isOwner}
             onSetCreated={(id) => setSelectedLessonId(id)}
             refreshTrigger={refreshTrigger}
             onAddWord={(word) => {
@@ -487,7 +658,7 @@ export default function App() {
             isLoading={isStoryLoading}
             error={storyError}
             onRefresh={loadStoryLessons}
-            onBack={() => setCurrentScreen('Home')}
+            onBack={() => setCurrentScreen(featureEntryScreen)}
             onNavigateToStory={(progress) => {
               setSelectedStoryProgress(progress);
               setCurrentScreen('StoryDetail');
@@ -525,7 +696,7 @@ export default function App() {
       case 'WordRaceList':
         return (
           <WordRaceListScreen
-            onBack={() => setCurrentScreen('VocabularyLearning')}
+            onBack={() => setCurrentScreen(featureEntryScreen)}
             onNavigateToGame={(lesson, difficulty) => {
               setSelectedWordRaceLesson(lesson);
               setSelectedWordRaceDifficulty(difficulty);
@@ -597,7 +768,7 @@ export default function App() {
         ) : null;
       default:
         return (
-          <HomeScreen 
+          <HomeScreen
             onNavigateToNotifications={() => setCurrentScreen('Notifications')}
             onNavigateToLearning={() => setCurrentScreen('VocabularyLearning')}
             onNavigateToGlobalStudy={() => {
@@ -607,11 +778,22 @@ export default function App() {
               setIsGlobalStudy(true);
               setCurrentScreen('FlashcardStudy');
             }}
+            onNavigateToGrammar={() => setCurrentScreen('Grammar')}
             onNavigateToListeningParts={() => setCurrentScreen('ListeningParts')}
-            onNavigateToBilingual={() => setCurrentScreen('Bilingual')}
-            onNavigateToStoryList={() => setCurrentScreen('StoryList')}
-            onNavigateToWordRaceList={() => setCurrentScreen('WordRaceList')}
+            onNavigateToBilingual={() => {
+              setPrevScreen('Home')
+              setCurrentScreen('Bilingual')
+            }}
+            onNavigateToStoryList={() => {
+              setFeatureEntryScreen('Home');
+              setCurrentScreen('StoryList');
+            }}
+            onNavigateToWordRaceList={() => {
+              setFeatureEntryScreen('Home');
+              setCurrentScreen('WordRaceList');
+            }}
             onNavigateToAiChat={() => setCurrentScreen('AiChat')}
+            onNavigateToAppliedExercise={() => setCurrentScreen('AppliedExercise')}
           />
         );
     }
@@ -656,7 +838,8 @@ export default function App() {
           'WordRaceGame',
           'WordHuntList',
           'WordHuntGame',
-          'AiChat'
+          'AiChat',
+          'AppliedExercise'
         ].includes(currentScreen) && (
           <Footer 
             activeTab={getActiveTab(currentScreen)} 

@@ -7,8 +7,10 @@ import com.memoflow.memoflow.dto.response.WordResponse;
 import com.memoflow.memoflow.entity.LearningLesson;
 import com.memoflow.memoflow.entity.Media;
 import com.memoflow.memoflow.entity.enums.MediaType;
+import com.memoflow.memoflow.exception.ResourceNotFoundException;
 import com.memoflow.memoflow.security.UserPrincipal;
 import com.memoflow.memoflow.entity.Word;
+import com.memoflow.memoflow.repository.FlashcardReviewRepository;
 import com.memoflow.memoflow.repository.LearningLessonRepository;
 import com.memoflow.memoflow.repository.WordRepository;
 import com.memoflow.memoflow.service.CloudinaryService;
@@ -38,10 +40,47 @@ public class WordServiceImpl implements WordService {
     private final ModelMapper modelMapper;
     private final LearningLessonRepository learningLessonRepository;
     private final CloudinaryService cloudinaryService;
+    private final FlashcardReviewRepository flashcardReviewRepository;
 
     @Override
     public void deleteWord(Long id, UserPrincipal userPrincipal) {
-        wordRepository.deleteById(id);
+        Word word = findWordById(id);
+
+        if (hasBeenReviewed(word.getId())) {
+            softDeleteWord(word);
+        } else {
+            hardDeleteWord(id);
+        }
+    }
+
+    /**
+     * Check if a word has been reviewed by any user
+     */
+    private boolean hasBeenReviewed(Long wordId) {
+        return !flashcardReviewRepository.findByWordId(wordId).isEmpty();
+    }
+
+    /**
+     * Soft delete: mark word as deleted (preserves learning history)
+     */
+    private void softDeleteWord(Word word) {
+        word.setDeleted(true);
+        wordRepository.save(word);
+    }
+
+    /**
+     * Hard delete: permanently remove word from database
+     */
+    private void hardDeleteWord(Long wordId) {
+        wordRepository.deleteById(wordId);
+    }
+
+    /**
+     * Find word by ID or throw exception
+     */
+    private Word findWordById(Long id) {
+        return wordRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Word not found with id: " + id));
     }
 
     @Override
@@ -67,7 +106,8 @@ public class WordServiceImpl implements WordService {
     public WordResponse updateWord(Long id, UpdateWordRequest updateWordRequest, UserPrincipal userPrincipal) {
         Word word = wordRepository.getReferenceById(id);
 
-        // Manual mapping to avoid modelMapper wiping complex objects or incorrect mappings
+        // Manual mapping to avoid modelMapper wiping complex objects or incorrect
+        // mappings
         word.setName(updateWordRequest.getName());
         word.setIpa(updateWordRequest.getIpa());
         word.setDefinition(updateWordRequest.getDefinition());
@@ -174,7 +214,8 @@ public class WordServiceImpl implements WordService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<WordResponse> searchWordsInLesson(Long flashcardLessonId, String keyword, Pageable pageable, UserPrincipal userPrincipal) {
+    public PageResponse<WordResponse> searchWordsInLesson(Long flashcardLessonId, String keyword, Pageable pageable,
+            UserPrincipal userPrincipal) {
         Page<Word> wordPage = wordRepository.findByFlashcardLessonIdAndName(flashcardLessonId, keyword, pageable);
 
         List<WordResponse> wordResponses = wordPage.getContent().stream()
@@ -203,9 +244,11 @@ public class WordServiceImpl implements WordService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<WordResponse> getDueWordsByFlashcardLessonId(Long flashcardLessonId, Pageable pageable, UserPrincipal userPrincipal) {
+    public PageResponse<WordResponse> getDueWordsByFlashcardLessonId(Long flashcardLessonId, Pageable pageable,
+            UserPrincipal userPrincipal) {
         LocalDateTime now = LocalDateTime.now();
-        Page<Word> wordPage = wordRepository.findDueWordsByLessonAndUser(flashcardLessonId, userPrincipal.getId(), now, pageable);
+        Page<Word> wordPage = wordRepository.findDueWordsByLessonAndUser(flashcardLessonId, userPrincipal.getId(), now,
+                pageable);
 
         List<WordResponse> wordResponses = wordPage.getContent().stream()
                 .map(word -> {

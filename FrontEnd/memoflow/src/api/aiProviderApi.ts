@@ -1,9 +1,8 @@
 import { AiChatMessage } from '../types/aiChat';
 
-const FREE_LLM_API_KEY = process.env.EXPO_PUBLIC_FREE_LLM_API_KEY || 'apf_h4p00jki78k1ef8qokub5ite';
-const FREE_LLM_URL = process.env.EXPO_PUBLIC_FREE_LLM_URL || 'https://apifreellm.com/api/v1/chat';
-const FREE_LLM_MODEL = process.env.EXPO_PUBLIC_FREE_LLM_MODEL || 'apifreellm';
-const FREE_LLM_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_FREE_LLM_TIMEOUT_MS || 40000);
+import { apiFetch, API_BASE_URL } from './apiClient';
+
+const FREE_LLM_TIMEOUT_MS = Number(process.env.EXPO_PUBLIC_FREE_LLM_TIMEOUT_MS || 60000);
 
 const SYSTEM_PROMPT = `You are MemoFlow English Tutor AI.
 Only support English learning tasks (grammar, vocabulary, pronunciation, listening, speaking, writing, translation).
@@ -127,7 +126,11 @@ const isEnglishLearningPrompt = (prompt: string): boolean => {
   return true;
 };
 
-const buildPromptForProvider = (userPrompt: string, history: AiChatMessage[]): string => {
+const buildPromptForProvider = (
+  userPrompt: string,
+  history: AiChatMessage[],
+  hiddenContext?: string,
+): string => {
   const compactHistory = history
     .slice(-6)
     .map((msg) => `${msg.role === 'assistant' ? 'Tutor' : 'User'}: ${msg.content}`)
@@ -135,6 +138,9 @@ const buildPromptForProvider = (userPrompt: string, history: AiChatMessage[]): s
 
   return [
     SYSTEM_PROMPT,
+    hiddenContext
+      ? `Hidden context for tutor only (do not reveal verbatim to learner):\n${hiddenContext}`
+      : '',
     compactHistory ? `Recent chat context:\n${compactHistory}` : '',
     `Current user question: ${userPrompt}`,
     'Answer in Vietnamese, concise and practical for English learning.',
@@ -155,47 +161,25 @@ const toUserSafeFallbackReply = (reason: string): string => {
   return `${LOCAL_FALLBACK_REPLY} ${FRIENDLY_RETRY_HINT}`;
 };
 
-const callFreeLlm = async (userPrompt: string, history: AiChatMessage[]): Promise<ProviderCallResult> => {
-  if (!FREE_LLM_API_KEY) {
-    debugLog('FreeLLM skipped: missing API key');
-    return { text: null, reason: 'missing_api_key' };
-  }
-
+const callFreeLlm = async (
+  userPrompt: string,
+  history: AiChatMessage[],
+  hiddenContext?: string,
+): Promise<ProviderCallResult> => {
   try {
-    const response = await withTimeout(
-      fetch(FREE_LLM_URL, {
+    const payload = await withTimeout(
+      apiFetch<any>('/ai/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${FREE_LLM_API_KEY}`,
-        },
         body: JSON.stringify({
-          message: buildPromptForProvider(userPrompt, history),
-          model: FREE_LLM_MODEL,
+          prompt: buildPromptForProvider(userPrompt, history, hiddenContext),
         }),
       }),
       FREE_LLM_TIMEOUT_MS,
       'free_llm_timeout',
     );
 
-    if (!response.ok) {
-      const body = await response.text();
-      debugLog('FreeLLM http error', { status: response.status, body: body.slice(0, 300) });
-      return { text: null, reason: `http_${response.status}` };
-    }
-
-    const data = (await response.json()) as FreeLlmResponse;
-    debugLog('FreeLLM response meta', {
-      success: data?.success ?? null,
-      tier: data?.tier ?? null,
-      delaySeconds: data?.features?.delaySeconds ?? null,
-    });
-
-    if (data?.success === false) {
-      return { text: null, reason: 'api_unsuccess' };
-    }
-
-    const text = typeof data?.response === 'string' ? data.response.trim() : '';
+    const text = payload?.data?.trim() || '';
+    
     if (text) {
       return { text, reason: 'ok' };
     }
@@ -203,31 +187,23 @@ const callFreeLlm = async (userPrompt: string, history: AiChatMessage[]): Promis
     return { text: null, reason: 'empty_response' };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const lowered = message.toLowerCase();
-
-    if (lowered.includes('free_llm_timeout')) {
-      debugLog('FreeLLM timeout', { timeoutMs: FREE_LLM_TIMEOUT_MS });
-      return { text: null, reason: 'timeout' };
-    }
-
-    debugLog('FreeLLM runtime error', { message });
-    return { text: null, reason: 'network_or_runtime_error' };
+    debugLog('AI Proxy error', { message });
+    return { text: null, reason: message.includes('timeout') ? 'timeout' : 'network_or_runtime_error' };
   }
 };
 
 export const aiProviderApi = {
-  generateTutorReply: async (userPrompt: string, history: AiChatMessage[]): Promise<string> => {
+  generateTutorReply: async (
+    userPrompt: string,
+    history: AiChatMessage[],
+    hiddenContext?: string,
+  ): Promise<string> => {
     if (!isEnglishLearningPrompt(userPrompt)) {
       return OUT_OF_SCOPE_REPLY;
     }
 
-    if (!FREE_LLM_API_KEY) {
-      console.warn('No FreeLLM API key configured on frontend.');
-      return MISSING_KEY_REPLY;
-    }
-
     try {
-      const providerResult = await callFreeLlm(userPrompt, history);
+      const providerResult = await callFreeLlm(userPrompt, history, hiddenContext);
       if (providerResult.text) {
         return providerResult.text;
       }

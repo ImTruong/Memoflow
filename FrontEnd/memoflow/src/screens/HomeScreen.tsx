@@ -6,35 +6,43 @@ import { DailyGoal } from '../components/DailyGoal';
 import { DiscoverLessons } from '../components/DiscoverLessons';
 import { AdvancedLearning } from '../components/AdvancedLearning';
 import { NotificationOverlay } from '../components/NotificationOverlay';
+import { DailyGoalActionOverlay } from '../components/DailyGoalActionOverlay';
 import { colors } from '../theme/colors';
 
 import { useUser } from '../hooks/useUser';
 import { useDailyStats } from '../hooks/useDailyStats';
+import { useNotifications } from '../hooks/useNotifications';
 
 type HomeScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToLearning: () => void;
   onNavigateToGlobalStudy: () => void;
+  onNavigateToGrammar: () => void;
   onNavigateToStoryList: () => void;
   onNavigateToWordRaceList: () => void;
   onNavigateToListeningParts: () => void;
   onNavigateToBilingual: () => void;
   onNavigateToAiChat: () => void;
+  onNavigateToAppliedExercise: () => void;
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ 
   onNavigateToNotifications, 
   onNavigateToLearning, 
   onNavigateToGlobalStudy,
+  onNavigateToGrammar,
   onNavigateToStoryList,
   onNavigateToWordRaceList,
   onNavigateToListeningParts,
   onNavigateToBilingual,
   onNavigateToAiChat,
+  onNavigateToAppliedExercise,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showDailyGoalOverlay, setShowDailyGoalOverlay] = useState(false);
   const { profile } = useUser();
   const { reviewedTodayCount, dueTodayCount, totalReviewsCount, isLoading } = useDailyStats();
+  const { unreadCount } = useNotifications();
 
   return (
     <View style={styles.container}>
@@ -42,7 +50,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         userName={profile?.name || "Người dùng"}
         streakDays={profile?.streakDays || 0}
         avatarUrl={profile?.avatar}
-        notificationCount={3}
+        notificationCount={unreadCount}
 
         showNotifications={showNotifications}
         onToggleNotifications={() => setShowNotifications(!showNotifications)}
@@ -52,7 +60,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <View style={styles.contentWrapper}>
         <ScrollView 
           showsVerticalScrollIndicator={false}
-          scrollEnabled={!showNotifications}
+          scrollEnabled={!showNotifications && !showDailyGoalOverlay}
           style={styles.scrollView}
         >
           {totalReviewsCount > 0 && !isLoading && (
@@ -60,11 +68,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               percentage={dueTodayCount > 0 ? (reviewedTodayCount / (reviewedTodayCount + dueTodayCount)) * 100 : 100}
               completedWords={reviewedTodayCount}
               totalWords={reviewedTodayCount + dueTodayCount}
-              onPress={onNavigateToGlobalStudy}
+              onPress={() => setShowDailyGoalOverlay(true)}
             />
           )}
           <DiscoverLessons
             onNavigateToLearning={onNavigateToLearning}
+            onNavigateToGrammar={onNavigateToGrammar}
             onNavigateToListeningParts={onNavigateToListeningParts}
           />
           <AdvancedLearning
@@ -80,6 +89,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onSeeAll={onNavigateToNotifications}
           />
         )}
+
+        <DailyGoalActionOverlay
+          isVisible={showDailyGoalOverlay}
+          onClose={() => setShowDailyGoalOverlay(false)}
+          onStudyFlashcard={() => {
+            setShowDailyGoalOverlay(false);
+            onNavigateToGlobalStudy();
+          }}
+          onStudyApplied={() => {
+            setShowDailyGoalOverlay(false);
+            onNavigateToAppliedExercise();
+          }}
+        />
 
         {/* Floating Action Button (FAB) for Chat bot */}
         <TouchableOpacity style={styles.fab} onPress={onNavigateToAiChat}>

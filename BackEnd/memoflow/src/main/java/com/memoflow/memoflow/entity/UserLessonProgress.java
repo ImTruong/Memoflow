@@ -6,10 +6,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "user_lesson_progress", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "learning_lesson_id"})})
+@Table(name = "user_lesson_progress", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "user_id", "learning_lesson_id" }) })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -50,6 +52,10 @@ public class UserLessonProgress {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;

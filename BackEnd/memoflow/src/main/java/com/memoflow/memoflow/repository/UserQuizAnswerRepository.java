@@ -17,6 +17,8 @@ public interface UserQuizAnswerRepository extends JpaRepository<UserQuizAnswer, 
 
     Optional<UserQuizAnswer> findByUserIdAndQuizQuestionId(Long userId, Long quizQuestionId);
 
+    List<UserQuizAnswer> findByUserIdAndQuizQuestionIdIn(Long userId, List<Long> quizQuestionIds);
+
     @Query("SELECT a FROM UserQuizAnswer a " +
             "WHERE a.user.id = :userId " +
             "AND a.quizQuestion.quizGroup.learningLesson.id = :lessonId")

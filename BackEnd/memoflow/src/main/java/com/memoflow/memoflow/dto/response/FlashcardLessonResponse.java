@@ -19,5 +19,6 @@ public class FlashcardLessonResponse {
     private String imageUrl;
     private Map<String, Object> content;
     private Long learningActivityId;
+    private Long creatorId;
     private String creatorName;
 }
