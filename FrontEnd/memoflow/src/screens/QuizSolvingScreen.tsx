@@ -211,9 +211,12 @@ export const QuizSolvingScreen: React.FC<{ route: any; navigation: any }> = ({ r
               <TextInput
                 style={styles.textInput}
                 placeholder="Nhập câu trả lời..."
+                placeholderTextColor="#94A3B8"
                 value={typeof currentAnswer === 'string' ? currentAnswer : ''}
                 onChangeText={handleTextChange}
                 autoFocus
+                maxLength={255}
+                autoCapitalize="none"
               />
             </View>
           )}

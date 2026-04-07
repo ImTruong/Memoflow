@@ -54,6 +54,7 @@ public class AuthServiceImpl implements AuthService {
     private final VerificationCodeService verificationCodeService;
     private final SenderUtil senderUtil;
     private final ModelMapper modelMapper;
+    private final com.memoflow.memoflow.service.FlashcardReviewService flashcardReviewService;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -73,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getRole() != null) {
             userResponse.setRole(user.getRole().getName());
         }
-        userResponse.setStreakDays(12); // Fake streak
+        userResponse.setStreakDays(flashcardReviewService.calculateStreak(user.getId()));
 
         return new LoginResponse(token, userResponse);
     }
@@ -112,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getRole() != null) {
             userResponse.setRole(user.getRole().getName());
         }
-        userResponse.setStreakDays(12); // Fake streak
+        userResponse.setStreakDays(flashcardReviewService.calculateStreak(user.getId()));
 
         return new LoginResponse(token, userResponse);
     }
@@ -152,7 +153,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getRole() != null) {
             userResponse.setRole(user.getRole().getName());
         }
-        userResponse.setStreakDays(12); // Fake streak
+        userResponse.setStreakDays(flashcardReviewService.calculateStreak(user.getId()));
 
         return new LoginResponse(token, userResponse);
     }

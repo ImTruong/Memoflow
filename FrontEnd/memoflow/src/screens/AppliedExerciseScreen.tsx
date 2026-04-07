@@ -77,29 +77,37 @@ export const AppliedExerciseScreen: React.FC<AppliedExerciseScreenProps> = ({ on
       setGenerating(true);
       const wordsList = words.map(w => `${w.name} (${w.definition})`).join(', ');
       
-      const prompt = `Generate 5 English exercises for these words: ${wordsList}.
-      Types: multiple_choice (4 options) or fill_blank.
-      Format: JSON ONLY.
-      Structure: {
+      const prompt = `Bạn là một chuyên gia giáo dục ngôn ngữ. Hãy biên soạn 5 bài tập tiếng Anh ĐA DẠNG (Trắc nghiệm hoặc Điền vào chỗ trống) dựa trên danh sách từ vựng sau: ${wordsList}.
+
+      YÊU CẦU CỰC KỲ QUAN TRỌNG VỀ GIẢI THÍCH:
+      - Đối với mỗi câu hỏi, phần "explanation" PHẢI CỰC KỲ CHI TIẾT và viết bằng tiếng Việt.
+      - PHẢI GIẢI THÍCH RÕ: 1. Tại sao đáp án đúng lại phù hợp nhất trong ngữ cảnh này? 2. Tại sao TỪNG đáp án sai còn lại (B, C, D) lại không phù hợp (sai về nghĩa, sai về loại từ, hay sai về ngữ pháp)?
+      - Trình bày mạch lạc, dễ hiểu cho người học.
+
+      QUY TẮC KHÁC:
+      1. Mỗi câu hỏi tập trung kiểm tra NGỮ NGHĨA hoặc CÁCH DÙNG từ.
+      2. Xáo trộn ngẫu nhiên vị trí đáp án đúng (A, B, C, D).
+      3. Format trả về LÀ JSON DUY NHẤT theo cấu trúc:
+      {
         "exercises": [
           {
             "type": "multiple_choice",
             "question": "...",
-            "options": ["A", "B", "C", "D"],
-            "answer": "A",
-            "explanation": "GIẢI THÍCH CHI TIẾT: 1. Tại sao đáp án '${wordsList}' là đúng nhất trong ngữ cảnh này? 2. Tại sao các đáp án còn lại là sai (về ngữ pháp hoặc ý nghĩa)? Trình bày rõ ràng bằng tiếng Việt.",
+            "options": ["...", "...", "...", "..."],
+            "answer": "Nội dung đáp án đúng (phải trùng khớp hoàn toàn)",
+            "explanation": "Giải thích chi tiết tại sao đáp án này đúng và PHÂN TÍCH LỖI của 3 đáp án còn lại...",
             "word": "..."
           },
           {
             "type": "fill_blank", 
-            "question": "Sentence with ___ for the word", 
-            "answer": "The Word", 
-            "explanation": "Giải thích ngữ cảnh và cách dùng của từ trong câu.", 
+            "question": "Sentence with one ___", 
+            "answer": "Word", 
+            "explanation": "Giải thích chi tiết nghĩa của từ trong câu này...", 
             "word": "..."
           }
         ]
       }
-      Rule: The "answer" for multiple_choice must be one of the options. "fill_blank" question must have exactly one "___" where the word belongs.`;
+      Lưu ý: TRẢ VỀ JSON THUẦN, không kèm giải thích bên ngoài.`;
 
       const aiResponse = await aiProviderApi.generateTutorReply(prompt, []);
       
@@ -505,22 +513,27 @@ const styles = StyleSheet.create({
   },
   explanationBox: {
     marginTop: 30,
-    padding: 16,
+    padding: 20,
     backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    borderLeftWidth: 4,
+    borderRadius: 20,
+    borderLeftWidth: 5,
     borderLeftColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   explanationTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   explanationText: {
-    fontSize: 14,
-    color: '#64748B',
-    lineHeight: 22,
+    fontSize: 15,
+    color: '#334155',
+    lineHeight: 24,
   },
   answerBox: {
     marginTop: 20,

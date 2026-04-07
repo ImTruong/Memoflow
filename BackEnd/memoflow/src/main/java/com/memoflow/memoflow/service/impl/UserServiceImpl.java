@@ -32,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final CloudinaryService cloudinaryService;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
+    private final com.memoflow.memoflow.service.FlashcardReviewService flashcardReviewService;
 
     @Override
     @Transactional(readOnly = true)
@@ -84,7 +85,7 @@ public class UserServiceImpl implements UserService {
                 Map<String, String> uploadResult = cloudinaryService.uploadFile(request.getAvatar(), "avatars");
                 Media avatarMedia = Media.builder()
                         .url(uploadResult.get("url"))
-                        .publicId(uploadResult.get("public_id"))
+                        .publicId(uploadResult.get("publicId"))
                         .type(MediaType.IMAGE)
                         .build();
                 currentUser.setAvatar(avatarMedia);
@@ -101,7 +102,7 @@ public class UserServiceImpl implements UserService {
         if (updatedUser.getRole() != null) {
             response.setRole(updatedUser.getRole().getName());
         }
-        response.setStreakDays(12); // Fake streak
+        response.setStreakDays(flashcardReviewService.calculateStreak(updatedUser.getId()));
         return response;
     }
 
@@ -118,7 +119,7 @@ public class UserServiceImpl implements UserService {
         if (user.getRole() != null) {
             response.setRole(user.getRole().getName());
         }
-        response.setStreakDays(12); // Fake streak
+        response.setStreakDays(flashcardReviewService.calculateStreak(user.getId()));
         return response;
     }
 

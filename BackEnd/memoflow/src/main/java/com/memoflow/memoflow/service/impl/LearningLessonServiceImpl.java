@@ -84,7 +84,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
             Map<String, String> uploadResult = cloudinaryService.uploadFile(request.getImage(), "lessons");
             return Media.builder()
                     .url(uploadResult.get("url"))
-                    .publicId(uploadResult.get("public_id"))
+                    .publicId(uploadResult.get("publicId"))
                     .type(MediaType.IMAGE)
                     .build();
         } catch (IOException e) {
@@ -142,7 +142,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 Map<String, String> uploadResult = cloudinaryService.uploadFile(request.getImage(), "lessons");
                 Media imageMedia = Media.builder()
                         .url(uploadResult.get("url"))
-                        .publicId(uploadResult.get("public_id"))
+                        .publicId(uploadResult.get("publicId"))
                         .type(MediaType.IMAGE)
                         .build();
                 lesson.setImage(imageMedia);
@@ -1473,9 +1473,9 @@ public class LearningLessonServiceImpl implements LearningLessonService {
             boolean correct;
             if (isFillInBlankType(question.getType())) {
                 String correctText = correctTextByQuestion.get(question.getId());
-                correct = answer != null
-                        && !isBlank(answer.getTextAnswer())
-                        && normalizeAnswer(answer.getTextAnswer()).equals(normalizeAnswer(correctText));
+                String userAns = answer != null ? answer.getTextAnswer() : null;
+                correct = !isBlank(correctText) && !isBlank(userAns)
+                        && normalizeAnswer(userAns).equals(normalizeAnswer(correctText));
             } else {
                 correct = answer != null
                         && answer.getQuizOption() != null

@@ -142,7 +142,9 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
                 .build();
     }
 
-    private int calculateStreak(Long userId) {
+    @Override
+    @Transactional(readOnly = true)
+    public int calculateStreak(Long userId) {
         List<Object> reviewDates = flashcardReviewRepository.findReviewDatesByUserId(userId);
         if (reviewDates.isEmpty())
             return 0;
