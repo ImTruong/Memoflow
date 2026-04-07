@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_BASE_URL = 'http://172.17.74.244:8080';
+export const API_BASE_URL = 'http://172.17.86.250:8080';
 
 // Note: In a real app, this would be managed by an Auth context/Redux
 // export const AUTH_BEARER_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4Lm5ndXllbkBleGFtcGxlLmNvbSIsInVzZXJJZCI6MSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImlhdCI6MTc3MzU2OTExOCwiZXhwIjoxNzc0NDMzMTE4fQ.HdM1VzLYimekeY-Gv8rOFejajjY_QL-GdweWbaOS8fc';

@@ -23,7 +23,7 @@
           "fbshareextension"
         ],
         "NSUserNotificationUsageDescription": "Memoflow cần quyền gửi thông báo để nhắc nhở bạn học tập."
-      },
+      }
     },
     "android": {
       "adaptiveIcon": {
