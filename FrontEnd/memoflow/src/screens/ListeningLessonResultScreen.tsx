@@ -199,6 +199,8 @@ Yêu cầu phản hồi:
 - Giải thích vì sao đáp án của học viên đúng/sai.
 - Nêu rõ ngữ cảnh bài nghe.
 - Nếu có hình ảnh, phải xem hình ảnh để giải thích.
+- Phải giải thích tất cả các đáp án.
+- Đáp án nào sai thì giải thích tại sao sai. Đáp án nào đúng thì giải thích tại sao đúng.
 `;
 
     setAiPrompt(prompt);

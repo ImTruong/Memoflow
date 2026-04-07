@@ -49,6 +49,12 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     private static final String GRAMMAR_LESSON_TYPE = "GRAMMAR_LESSON";
     private static final String GRAMMAR_PRACTICE_TYPE = "GRAMMAR_PRACTICE";
 
+    private enum GrammarLessonState {
+        NOT_STARTED,
+        IN_PROGRESS,
+        COMPLETED
+    }
+
     @Override
     public FlashcardLessonResponse createFlashcardLesson(Long learningActivityId,
             CreateFlashcardLearningLessonRequest request, UserPrincipal userPrincipal) {
@@ -929,9 +935,9 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         List<LearningLesson> topics = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_TOPIC_TYPE);
         List<LearningLesson> grammarLessons = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_LESSON_TYPE);
 
-        Map<Long, UserLessonProgress> progressMap = loadProgressMap(
-                userPrincipal.getId(),
-                grammarLessons.stream().map(LearningLesson::getId).toList());
+        Map<Long, GrammarLessonState> lessonStateMap = buildGrammarLessonStateMap(
+            userPrincipal.getId(),
+            grammarLessons);
 
         return topics.stream().map(topic -> {
             List<LearningLesson> topicLessons = grammarLessons.stream()
@@ -941,10 +947,8 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
             int totalLessons = topicLessons.size();
             int completedLessons = (int) topicLessons.stream()
-                    .filter(lesson -> {
-                        UserLessonProgress progress = progressMap.get(lesson.getId());
-                        return progress != null && Boolean.TRUE.equals(progress.getIsCompleted());
-                    })
+                    .filter(lesson -> lessonStateMap.getOrDefault(lesson.getId(), GrammarLessonState.NOT_STARTED)
+                        == GrammarLessonState.COMPLETED)
                     .count();
             int progressPercent = totalLessons == 0 ? 0 : (completedLessons * 100) / totalLessons;
 
@@ -967,17 +971,17 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                 .sorted(grammarOrderComparator())
                 .toList();
 
-        Map<Long, UserLessonProgress> progressMap = loadProgressMap(
-                userPrincipal.getId(),
-                grammarLessons.stream().map(LearningLesson::getId).toList());
+        Map<Long, GrammarLessonState> lessonStateMap = buildGrammarLessonStateMap(
+            userPrincipal.getId(),
+            grammarLessons);
 
         List<GrammarTopicDetailResponse.SubLessonResponse> subLessons = grammarLessons.stream()
                 .map(lesson -> {
-                    UserLessonProgress progress = progressMap.get(lesson.getId());
                     String status;
-                    if (progress == null) {
+                    GrammarLessonState state = lessonStateMap.getOrDefault(lesson.getId(), GrammarLessonState.NOT_STARTED);
+                    if (state == GrammarLessonState.NOT_STARTED) {
                         status = "Chưa học";
-                    } else if (Boolean.TRUE.equals(progress.getIsCompleted())) {
+                    } else if (state == GrammarLessonState.COMPLETED) {
                         status = "Đã xong";
                     } else {
                         status = "Đang học";
@@ -993,10 +997,8 @@ public class LearningLessonServiceImpl implements LearningLessonService {
 
         int totalLessons = grammarLessons.size();
         int completedLessons = (int) grammarLessons.stream()
-                .filter(lesson -> {
-                    UserLessonProgress progress = progressMap.get(lesson.getId());
-                    return progress != null && Boolean.TRUE.equals(progress.getIsCompleted());
-                })
+                .filter(lesson -> lessonStateMap.getOrDefault(lesson.getId(), GrammarLessonState.NOT_STARTED)
+                        == GrammarLessonState.COMPLETED)
                 .count();
 
         return GrammarTopicDetailResponse.builder()
@@ -1412,6 +1414,68 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         return result;
     }
 
+    private Map<Long, GrammarLessonState> buildGrammarLessonStateMap(Long userId, List<LearningLesson> grammarLessons) {
+        if (grammarLessons == null || grammarLessons.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Long> grammarLessonIds = grammarLessons.stream().map(LearningLesson::getId).toList();
+        Map<Long, UserLessonProgress> grammarLessonProgressMap = loadProgressMap(userId, grammarLessonIds);
+
+        List<LearningLesson> allPractices = learningLessonRepository.findByTypeOrderByIdAsc(GRAMMAR_PRACTICE_TYPE);
+        Map<Long, Long> grammarLessonIdByPracticeId = resolveGrammarLessonIdByPractice(allPractices);
+        Map<Long, List<Long>> practiceIdsByGrammarLessonId = new HashMap<>();
+        for (LearningLesson practice : allPractices) {
+            Long lessonId = grammarLessonIdByPracticeId.get(practice.getId());
+            if (lessonId != null) {
+                practiceIdsByGrammarLessonId.computeIfAbsent(lessonId, ignored -> new ArrayList<>())
+                        .add(practice.getId());
+            }
+        }
+
+        Map<Long, UserLessonProgress> practiceProgressMap = loadProgressMap(
+                userId,
+                allPractices.stream().map(LearningLesson::getId).toList());
+
+        Map<Long, GrammarLessonState> stateMap = new HashMap<>();
+        for (LearningLesson lesson : grammarLessons) {
+            Long lessonId = lesson.getId();
+            UserLessonProgress lessonProgress = grammarLessonProgressMap.get(lessonId);
+
+            boolean lessonCompleted = lessonProgress != null && Boolean.TRUE.equals(lessonProgress.getIsCompleted());
+            if (lessonCompleted) {
+                stateMap.put(lessonId, GrammarLessonState.COMPLETED);
+                continue;
+            }
+
+            List<Long> practiceIds = practiceIdsByGrammarLessonId.getOrDefault(lessonId, Collections.emptyList());
+            int practiceCount = practiceIds.size();
+            int completedPracticeCount = 0;
+            int attemptedPracticeCount = 0;
+
+            for (Long practiceId : practiceIds) {
+                UserLessonProgress practiceProgress = practiceProgressMap.get(practiceId);
+                if (practiceProgress == null) {
+                    continue;
+                }
+                attemptedPracticeCount++;
+                if (Boolean.TRUE.equals(practiceProgress.getIsCompleted())) {
+                    completedPracticeCount++;
+                }
+            }
+
+            if (practiceCount > 0 && completedPracticeCount == practiceCount) {
+                stateMap.put(lessonId, GrammarLessonState.COMPLETED);
+            } else if (lessonProgress != null || attemptedPracticeCount > 0) {
+                stateMap.put(lessonId, GrammarLessonState.IN_PROGRESS);
+            } else {
+                stateMap.put(lessonId, GrammarLessonState.NOT_STARTED);
+            }
+        }
+
+        return stateMap;
+    }
+
     private List<GrammarPracticeTaskResponse> buildPracticeTaskResponses(
             List<LearningLesson> practices,
             Map<Long, UserLessonProgress> progressByPracticeId) {
@@ -1521,7 +1585,6 @@ public class LearningLessonServiceImpl implements LearningLessonService {
         return value == null || value.trim().isEmpty();
     }
 
-    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> readSections(Map<String, Object> content) {
         if (content == null) {
             return Collections.emptyList();

@@ -10,22 +10,33 @@ export const GrammarTopicDetailScreen: React.FC<{ route: any, navigation: any }>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await grammarApi.getTopicDetail(topicId);
-        setTopic(res.data);
-      } catch (err: any) {
-        setError(err?.message || 'Không thể tải chủ điểm lý thuyết.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await grammarApi.getTopicDetail(topicId);
+      setTopic(res.data);
+    } catch (err: any) {
+      setError(err?.message || 'Không thể tải chủ điểm lý thuyết.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (topicId) load();
+  useEffect(() => {
+    if (topicId) {
+      void load();
+    }
   }, [topicId]);
+
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('focus', () => {
+      if (topicId) {
+        void load();
+      }
+    });
+    return unsubscribe;
+  }, [navigation, topicId]);
 
   if (loading) {
     return (

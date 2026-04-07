@@ -170,3 +170,7 @@ Memoflow/
 - Frontend (Expo) runs on port `8081`
 - MySQL runs on port `3306`
 - All services communicate through Docker network
+
+
+seed data
+docker exec -i memoflow-mysql mysql -uroot -p12345678 -D memoflow < /Users/sakai/VIET_Working/STUDY_WORK/Ki8/Mobile/Memoflow/BackEnd/memoflow/src/main/resources/data.sql
