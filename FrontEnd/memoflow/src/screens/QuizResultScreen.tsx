@@ -53,6 +53,8 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
   Yêu cầu phản hồi:
   - Trả lời bằng tiếng Việt.
   - Giải thích vì sao đáp án của học viên đúng/sai.
+  - Phải giải thích tất cả các đáp án.
+  - Đáp án nào sai thì giải thích tại sao sai. Đáp án nào đúng thì giải thích tại sao đúng.
   - Nêu rõ cấu trúc ngữ pháp áp dụng.
   - Cho thêm 2 ví dụ tương tự.`;
 
