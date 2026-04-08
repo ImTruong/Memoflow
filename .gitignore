@@ -57,3 +57,6 @@ BackEnd/memoflow/target/
 
 # Logs
 *.log
+
+# Large files / AI Models
+*.bin
