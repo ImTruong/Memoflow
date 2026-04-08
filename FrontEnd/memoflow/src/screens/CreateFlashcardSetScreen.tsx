@@ -31,6 +31,7 @@ type CreateFlashcardSetScreenProps = {
   onEditWord?: (data: WordFormData) => void;
   onSetCreated?: (id: number) => void;
   refreshTrigger?: number;
+  isOwner?: boolean; // New prop to check ownership
 };
 
 // Stable Header Component to prevent focus loss
@@ -41,14 +42,22 @@ const SetHeader = React.memo(({
   imageUri, handlePickImage, setImageUri,
   totalWords,
   searchKeyword, setSearchKeyword,
-  handleAddWordPress
+  handleAddWordPress,
+  recommendedWords = [],
+  isSuggestionsLoading = false,
+  isOwner = true // Add isOwner prop
 }: any) => {
   return (
     <View onStartShouldSetResponder={() => true}>
       <View style={styles.topSection}>
         <TouchableOpacity 
-          style={[styles.imagePicker, imageUri && styles.imagePickerActive]} 
-          onPress={handlePickImage}
+          style={[
+            styles.imagePicker, 
+            imageUri && styles.imagePickerActive,
+            !isOwner && styles.disabledButton
+          ]} 
+          onPress={isOwner ? handlePickImage : undefined}
+          disabled={!isOwner}
         >
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.pickedImage} />
@@ -69,11 +78,12 @@ const SetHeader = React.memo(({
           <Text style={styles.label}>Tên bộ từ</Text>
           <View style={styles.nameInputContainer}>
             <TextInput
-              style={styles.nameInput}
+              style={[styles.nameInput, !isOwner && styles.disabledInput]}
               placeholder="Ví dụ: IELTS Vocabulary..."
               value={setName}
-              onChangeText={setSetName}
+              onChangeText={isOwner ? setSetName : undefined}
               placeholderTextColor="#9CA3AF"
+              editable={isOwner}
             />
           </View>
         </View>
@@ -82,13 +92,14 @@ const SetHeader = React.memo(({
       <View style={styles.section}>
         <Text style={styles.label}>Mô tả (Không bắt buộc)</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
+          style={[styles.input, styles.textArea, !isOwner && styles.disabledInput]}
           placeholder="Mô tả ngắn gọn về bộ từ này..."
           value={description}
-          onChangeText={setDescription}
+          onChangeText={isOwner ? setDescription : undefined}
           placeholderTextColor="#9CA3AF"
           multiline
           numberOfLines={3}
+          editable={isOwner}
         />
       </View>
 
@@ -104,9 +115,10 @@ const SetHeader = React.memo(({
         </View>
         <Switch
           value={isPublic}
-          onValueChange={setIsPublic}
+          onValueChange={isOwner ? setIsPublic : undefined}
           trackColor={{ false: '#D1D5DB', true: '#5B62E3' }}
           thumbColor="#FFFFFF"
+          disabled={!isOwner}
         />
       </View>
 
@@ -129,35 +141,49 @@ const SetHeader = React.memo(({
           />
         </View>
 
-        <Text style={styles.hintTitle}>GỢI Ý TỪ VỰNG</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hintsScroll}>
-          <TouchableOpacity 
-            style={[styles.hintBtn, { backgroundColor: '#EEF2FF' }]}
-            onPress={() => handleAddWordPress('Adventure')}
-          >
-            <Text style={[styles.hintText, { color: '#5B62E3' }]}>+ Adventure</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.hintBtn, { backgroundColor: '#ECFDF5' }]}
-            onPress={() => handleAddWordPress('Journey')}
-          >
-            <Text style={[styles.hintText, { color: '#10B981' }]}>+ Journey</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.hintBtn, { backgroundColor: '#F5F3FF' }]}
-            onPress={() => handleAddWordPress('Baggage')}
-          >
-            <Text style={[styles.hintText, { color: '#8B5CF6' }]}>+ Baggage</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        {isOwner && (
+          <>
+            <Text style={styles.hintTitle}>GỢI Ý TỪ VỰNG THÔNG MINH (AI)</Text>
+            <View style={{ marginBottom: 20 }}>
+              {isSuggestionsLoading ? (
+                <ActivityIndicator size="small" color="#5B62E3" style={{ alignSelf: 'flex-start', marginLeft: 10 }} />
+              ) : recommendedWords.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hintsScroll}>
+                  {recommendedWords.map((word: string, index: number) => {
+                    const colors = [
+                      { bg: '#EEF2FF', text: '#5B62E3' },
+                      { bg: '#ECFDF5', text: '#10B981' },
+                      { bg: '#F5F3FF', text: '#8B5CF6' },
+                      { bg: '#FFF7ED', text: '#F97316' }
+                    ];
+                    const color = colors[index % colors.length];
+                    return (
+                      <TouchableOpacity 
+                        key={index}
+                        style={[styles.hintBtn, { backgroundColor: color.bg }]}
+                        onPress={() => handleAddWordPress(word)}
+                      >
+                        <Text style={[styles.hintText, { color: color.text }]}>+ {word}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              ) : (
+                <Text style={{ color: '#9CA3AF', marginLeft: 10, fontSize: 13, marginBottom: 10 }}>
+                   (Học thêm từ để nhận gợi ý cá nhân hóa)
+                </Text>
+              )}
+            </View>
 
-        <TouchableOpacity 
-          style={styles.addWordBtn}
-          onPress={() => handleAddWordPress()}
-        >
-          <MaterialCommunityIcons name="plus-circle" size={24} color="#5B62E3" />
-          <Text style={styles.addWordText}>Thêm từ mới</Text>
-        </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.addWordBtn}
+              onPress={() => handleAddWordPress()}
+            >
+              <MaterialCommunityIcons name="plus-circle" size={24} color="#5B62E3" />
+              <Text style={styles.addWordText}>Thêm từ mới</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -170,7 +196,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
   onAddWord,
   onEditWord,
   onSetCreated,
-  refreshTrigger = 0
+  refreshTrigger = 0,
+  isOwner = true // Default to true for backward compatibility
 }) => {
   const [isPublic, setIsPublic] = useState(true);
   const [setName, setSetName] = useState('');
@@ -186,6 +213,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
   const [isWordsLoading, setIsWordsLoading] = useState(false);
   const [totalWords, setTotalWords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [recommendedWords, setRecommendedWords] = useState<string[]>([]);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success'|'error' }>({
     visible: false,
@@ -255,7 +284,24 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
     if (currentLessonId) {
       fetchWords(currentLessonId, 0, searchKeyword, false);
     }
+    if (isOwner) {
+      fetchSuggestions();
+    }
   }, [refreshTrigger, currentLessonId]);
+
+  const fetchSuggestions = async () => {
+    try {
+      setIsSuggestionsLoading(true);
+      const response = await flashcardApi.getRecommendedWords();
+      if (response.success) {
+        setRecommendedWords(response.data);
+      }
+    } catch (error) {
+      console.error('Fetch recommendations error:', error);
+    } finally {
+      setIsSuggestionsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -433,8 +479,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
 
   const renderWord = useCallback(({ item }: { item: WordResponse }) => (
     <TouchableOpacity 
-      style={styles.wordCard}
-      onPress={() => onEditWord?.({
+      style={[styles.wordCard, !isOwner && styles.disabledButton]}
+      onPress={isOwner ? () => onEditWord?.({
         id: item.id,
         term: item.name,
         phonetic: item.ipa || '',
@@ -442,7 +488,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
         example: item.example || '',
         imageUri: item.imageUrl || undefined,
         audioUrl: item.audioUrl || undefined
-      } as any)}
+      } as any) : undefined}
+      disabled={!isOwner}
     >
       <View style={styles.wordImageContainer}>
         {item.imageUrl ? (
@@ -460,14 +507,17 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
         </View>
         <Text style={styles.wordDef} numberOfLines={2}>{item.definition}</Text>
       </View>
-      <TouchableOpacity 
-        style={styles.deleteWordBtn}
-        onPress={() => handleDeleteWord(item.id, item.name)}
-      >
-        <Ionicons name="trash-outline" size={20} color="#D1D5DB" />
-      </TouchableOpacity>
+      {/* Only show delete button for owners */}
+      {isOwner && (
+        <TouchableOpacity 
+          style={styles.deleteWordBtn}
+          onPress={() => handleDeleteWord(item.id, item.name)}
+        >
+          <Ionicons name="trash-outline" size={20} color="#D1D5DB" />
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
-  ), [onEditWord]);
+  ), [onEditWord, isOwner]);
 
   return (
     <View style={styles.container}>
@@ -498,6 +548,9 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
               totalWords={totalWords}
               searchKeyword={searchKeyword} setSearchKeyword={setSearchKeyword}
               handleAddWordPress={handleAddWordPress}
+              recommendedWords={recommendedWords}
+              isSuggestionsLoading={isSuggestionsLoading}
+              isOwner={isOwner}
           />
         }
         ListEmptyComponent={
@@ -522,7 +575,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
       />
 
       <View style={styles.footer}>
-        {editMode && (
+        {/* Only show delete button for owners in edit mode */}
+        {editMode && isOwner && (
           <TouchableOpacity 
             style={styles.deleteBtn} 
             onPress={handleDelete}
@@ -531,20 +585,23 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
             <Ionicons name="trash-outline" size={24} color="#EF4444" />
           </TouchableOpacity>
         )}
-        <TouchableOpacity 
-          style={[styles.saveBtn, isLoading && { opacity: 0.7 }, { flex: 1 }]} 
-          onPress={handleSave}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <Ionicons name="save-outline" size={24} color="#FFF" style={{ marginRight: 8 }} />
-              <Text style={styles.saveBtnText}>Lưu bộ từ</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {/* Only show save button for owners */}
+        {isOwner && (
+          <TouchableOpacity 
+            style={[styles.saveBtn, isLoading && { opacity: 0.7 }, { flex: 1 }]} 
+            onPress={handleSave}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <>
+                <Ionicons name="save-outline" size={24} color="#FFF" style={{ marginRight: 8 }} />
+                <Text style={styles.saveBtnText}>Lưu bộ từ</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -882,5 +939,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#94A3B8',
     fontWeight: '500',
+  },
+  disabledInput: {
+    backgroundColor: '#F3F4F6',
+    color: '#9CA3AF',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });

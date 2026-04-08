@@ -13,16 +13,15 @@ import com.memoflow.memoflow.entity.Word;
 import com.memoflow.memoflow.repository.FlashcardReviewRepository;
 import com.memoflow.memoflow.repository.WordRepository;
 import com.memoflow.memoflow.service.FlashcardReviewService;
+import com.memoflow.memoflow.service.NotificationSchedulerService;
 import com.memoflow.memoflow.util.SM2Calculator;
 import com.memoflow.memoflow.util.SM2Result;
 import lombok.RequiredArgsConstructor;
-
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,9 +39,11 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
     private final WordRepository wordRepository;
     private final UserRepository userRepository;
     private final SM2Calculator sm2Calculator;
+    private final NotificationSchedulerService notificationSchedulerService;
 
     @Override
-    public FlashcardReviewResponse save(Long wordId, CreateFlashcardReviewRequest createFlashcardReviewRequest, UserPrincipal userPrincipal) {
+    public FlashcardReviewResponse save(Long wordId, CreateFlashcardReviewRequest createFlashcardReviewRequest,
+            UserPrincipal userPrincipal) {
 
         Optional<FlashcardReview> optionalFlashcardReview = flashcardReviewRepository
                 .findFirstByUserIdAndWordIdOrderByCreatedAtDesc(userPrincipal.getId(), wordId);
@@ -79,7 +80,16 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
         flashcardReview.setNextReviewDate(sm2Result.getNextReviewDate());
 
         FlashcardReview savedReview = flashcardReviewRepository.save(flashcardReview);
-        
+
+        // Schedule notification for next review time
+        if (savedReview.getNextReviewDate() != null) {
+            notificationSchedulerService.scheduleFlashcardReviewNotification(
+                    userPrincipal.getId(),
+                    word.getId(),
+                    word.getName(),
+                    savedReview.getNextReviewDate());
+        }
+
         return FlashcardReviewResponse.builder()
                 .id(savedReview.getId())
                 .difficulty(savedReview.getDifficulty())
@@ -95,7 +105,6 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
                 .userId(userPrincipal.getId())
                 .build();
     }
-
 
     private int mapDifficultyToQuality(String difficulty) {
         if (difficulty == null)
@@ -118,12 +127,13 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
     public DailyStudyStatsResponse getDailyStats(UserPrincipal userPrincipal) {
         LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
         LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
-        
-        long reviewedToday = flashcardReviewRepository.countDistinctWordsReviewedToday(userPrincipal.getId(), startOfDay);
+
+        long reviewedToday = flashcardReviewRepository.countDistinctWordsReviewedToday(userPrincipal.getId(),
+                startOfDay);
         long dueToday = flashcardReviewRepository.countTotalDueWordsByUserId(userPrincipal.getId(), endOfDay);
         long totalReviews = flashcardReviewRepository.countByUserId(userPrincipal.getId());
         int streak = calculateStreak(userPrincipal.getId());
-        
+
         return DailyStudyStatsResponse.builder()
                 .reviewedTodayCount(reviewedToday)
                 .dueTodayCount(dueToday)
@@ -132,14 +142,18 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
                 .build();
     }
 
-    private int calculateStreak(Long userId) {
+    @Override
+    @Transactional(readOnly = true)
+    public int calculateStreak(Long userId) {
         List<Object> reviewDates = flashcardReviewRepository.findReviewDatesByUserId(userId);
-        if (reviewDates.isEmpty()) return 0;
+        if (reviewDates.isEmpty())
+            return 0;
 
         int streak = 0;
         LocalDate today = LocalDate.now();
-        
-        // Handle potential different types returned by the query based on DB (e.g. java.sql.Date or java.time.LocalDate)
+
+        // Handle potential different types returned by the query based on DB (e.g.
+        // java.sql.Date or java.time.LocalDate)
         LocalDate lastDate = convertToLocalDate(reviewDates.get(0));
 
         if (!lastDate.equals(today) && !lastDate.equals(today.minusDays(1))) {
@@ -172,23 +186,26 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
         throw new IllegalArgumentException("Unsupported date type: " + dateObj.getClass().getName());
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FlashcardReviewResponse> getReviewHistory(LocalDate date, Pageable pageable, UserPrincipal userPrincipal) {
+    public PageResponse<FlashcardReviewResponse> getReviewHistory(LocalDate date, Pageable pageable,
+            UserPrincipal userPrincipal) {
         LocalDateTime start;
         LocalDateTime end;
         if (date != null) {
             start = date.atStartOfDay();
             end = date.atTime(LocalTime.MAX);
         } else {
-            // Default to all history if no date provided? Better to provide a default range or just all if possible.
-            // But the repository method expects start/end. Let's use a very old date as start if null.
+            // Default to all history if no date provided? Better to provide a default range
+            // or just all if possible.
+            // But the repository method expects start/end. Let's use a very old date as
+            // start if null.
             start = LocalDateTime.of(2000, 1, 1, 0, 0);
             end = LocalDateTime.now();
         }
 
-        Page<FlashcardReview> reviewPage = flashcardReviewRepository.findByUserIdAndCreatedAtBetween(userPrincipal.getId(), start, end, pageable);
+        Page<FlashcardReview> reviewPage = flashcardReviewRepository
+                .findByUserIdAndCreatedAtBetween(userPrincipal.getId(), start, end, pageable);
         return mapToPageResponse(reviewPage);
     }
 
@@ -197,12 +214,12 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
     public List<HeatmapDataResponse> getHeatmapData(int month, int year, UserPrincipal userPrincipal) {
         LocalDate firstDay = LocalDate.of(year, month, 1);
         LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
-        
+
         LocalDateTime start = firstDay.atStartOfDay();
         LocalDateTime end = lastDay.atTime(LocalTime.MAX);
-        
+
         List<Object[]> results = flashcardReviewRepository.countReviewsByDay(userPrincipal.getId(), start, end);
-        
+
         return results.stream()
                 .map(row -> {
                     LocalDate date;
@@ -215,19 +232,21 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
                     } else {
                         date = LocalDate.parse(row[0].toString());
                     }
-                    
+
                     return HeatmapDataResponse.builder()
-                        .date(date)
-                        .reviewCount(((Number) row[1]).longValue())
-                        .build();
+                            .date(date)
+                            .reviewCount(((Number) row[1]).longValue())
+                            .build();
                 })
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FlashcardReviewResponse> searchReviews(String keyword, Pageable pageable, UserPrincipal userPrincipal) {
-        Page<FlashcardReview> reviewPage = flashcardReviewRepository.searchByKeyword(userPrincipal.getId(), keyword, pageable);
+    public PageResponse<FlashcardReviewResponse> searchReviews(String keyword, Pageable pageable,
+            UserPrincipal userPrincipal) {
+        Page<FlashcardReview> reviewPage = flashcardReviewRepository.searchByKeyword(userPrincipal.getId(), keyword,
+                pageable);
         return mapToPageResponse(reviewPage);
     }
 

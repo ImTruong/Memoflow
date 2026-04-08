@@ -1,0 +1,46 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: memoflow-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: memoflow
+      MYSQL_USER: memoflow
+      MYSQL_PASSWORD: 12345678
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data1:/var/lib/mysql
+    networks:
+      - memoflow-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./BackEnd/memoflow
+      dockerfile: Dockerfile
+    container_name: memoflow-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://memoflow-mysql:3306/memoflow?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+      SPRING_SQL_INIT_MODE: never
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - memoflow-network
+
+volumes:
+  mysql_data1:
+
+networks:
+  memoflow-network:
+    driver: bridge

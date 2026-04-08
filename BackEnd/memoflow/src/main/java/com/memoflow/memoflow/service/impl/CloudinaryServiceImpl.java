@@ -29,7 +29,7 @@ public class CloudinaryServiceImpl implements CloudinaryService{
 
         // Lưu cả URL và publicId vào Map và trả về
         return Map.of(
-                "url", uploadResult.get("url").toString(),
+                "url", uploadResult.get("secure_url").toString(),
                 "publicId", uploadResult.get("public_id").toString()
         );
     }

@@ -21,6 +21,8 @@ export type LessonSummary = {
   imageUrl?: string;
   content?: Record<string, any>;
   creatorName?: string;
+  creatorId?: number;
+  isOwner?: boolean;
   totalWords: number;
   learnedWords: number;
   totalDueWord: number;
@@ -33,6 +35,9 @@ export type FlashcardLessonResponse = {
   imageUrl?: string;
   type: string;
   content?: Record<string, any>;
+  creatorId?: number;
+  creatorName?: string;
+  isOwner?: boolean;
 };
 
 export type FlashcardListItem = {
@@ -43,6 +48,8 @@ export type FlashcardListItem = {
   totalDue: number;
   author?: string;
   isPrivate?: boolean;
+  isOwner?: boolean;
+  creatorId?: number;
   icon: string;
   imageUrl?: string;
   iconBgColor: string;

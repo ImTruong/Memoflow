@@ -5,49 +5,47 @@ import { colors, typography } from '../theme/colors';
 import { NotificationOverlay } from '../components/NotificationOverlay';
 
 import { useUser } from '../hooks/useUser';
+import { useNotifications } from '../hooks/useNotifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { Header } from '../components/Header';
 
 type ProfileScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToEditProfile: () => void;
   onNavigateToNotificationSettings: () => void;
   onNavigateToChangePassword: () => void;
+  onNavigateToLogin: () => void;
 };
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ 
   onNavigateToNotifications,
   onNavigateToEditProfile,
   onNavigateToNotificationSettings,
-  onNavigateToChangePassword
+  onNavigateToChangePassword,
+  onNavigateToLogin,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const { profile } = useUser();
+  const { unreadCount } = useNotifications();
 
   const userName = profile?.name || "Người dùng";
   const streakDays = profile?.streakDays || 0;
   const avatarUrl = profile?.avatar || 'https://i.pravatar.cc/300?img=11';
 
-
-
   return (
     <View style={styles.container}>
-      {/* Header with Underline - Exactly like Home */}
-      <View style={styles.header}>
-        <View style={{ width: 40 }} />
-        <Text style={styles.headerTitle}>Trang cá nhân</Text>
-        <TouchableOpacity 
-          style={[styles.notificationBtn, showNotifications && styles.activeNotificationBtn]}
-          onPress={() => setShowNotifications(!showNotifications)}
-        >
-          <Ionicons 
-            name="notifications" 
-            size={24} 
-            color={showNotifications ? colors.primary : colors.textPrimary} 
-          />
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      <Header 
+        userName={userName}
+        streakDays={streakDays}
+        avatarUrl={avatarUrl}
+        notificationCount={unreadCount}
+        showNotifications={showNotifications}
+        onToggleNotifications={() => setShowNotifications(!showNotifications)}
+        titleMode={true}
+        title="Trang cá nhân"
+        centerTitle={true}
+      />
 
       <View style={styles.contentWrapper}>
         <ScrollView 
@@ -122,7 +120,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
 
           {/* Logout Section */}
-          <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8}
+            onPress={async () => {
+              await AsyncStorage.removeItem('authToken');
+              onNavigateToLogin();
+            }}>
             <Text style={styles.logoutText}>Đăng xuất</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -142,54 +144,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF', // Same as Home
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    zIndex: 100,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  headerTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  notificationBtn: {
-    position: 'relative',
-    padding: 4,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  activeNotificationBtn: {
-    backgroundColor: colors.cardBackgrounds.purpleLight,
-  },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -4,
-    backgroundColor: colors.danger,
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  badgeText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
   contentWrapper: {
     flex: 1,

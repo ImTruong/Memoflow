@@ -2,29 +2,41 @@ import React, { useState } from 'react';
 import { StyleSheet, ScrollView, View, Text } from 'react-native';
 import { Header } from '../components/Header';
 import { NotificationOverlay } from '../components/NotificationOverlay';
+import { DailyGoalActionOverlay } from '../components/DailyGoalActionOverlay';
 import { LearningMethodCard } from '../components/LearningMethodCard';
 import { colors } from '../theme/colors';
 
 import { useUser } from '../hooks/useUser';
 import { useDailyStats } from '../hooks/useDailyStats';
+import { useNotifications } from '../hooks/useNotifications';
 import { ActivityIndicator, TouchableOpacity } from 'react-native';
 
 type VocabularyLearningScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToFlashcards: () => void;
   onNavigateToGlobalStudy: () => void;
+  onNavigateToStoryList: () => void;
+  onNavigateToWordRaceList: () => void;
+  onNavigateToWordHuntList: () => void;
+  onNavigateToBilingual: () => void;
+  onNavigateToAppliedExercise: () => void;
 };
 
 export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> = ({ 
   onNavigateToNotifications,
   onNavigateToFlashcards,
-  onNavigateToGlobalStudy
+  onNavigateToGlobalStudy,
+  onNavigateToStoryList,
+  onNavigateToWordRaceList,
+  onNavigateToWordHuntList,
+  onNavigateToBilingual,
+  onNavigateToAppliedExercise,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showDailyGoalOverlay, setShowDailyGoalOverlay] = useState(false);
   const { profile } = useUser();
   const { reviewedTodayCount, dueTodayCount, totalReviewsCount, isLoading } = useDailyStats();
-
-
+  const { unreadCount } = useNotifications();
 
   const learningMethods = [
     {
@@ -44,7 +56,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
       backgroundColor: '#FFFBEB',
     },
     {
-      title: 'Bài viết song ngữ',
+      title: 'Bài đọc song ngữ',
       subtitle: 'Đọc hiểu Anh-Việt mỗi ngày',
       icon: 'translate',
       iconType: 'material' as const,
@@ -75,8 +87,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
         userName={profile?.name || "Người dùng"}
         streakDays={profile?.streakDays || 0}
         avatarUrl={profile?.avatar}
-        notificationCount={3}
-
+        notificationCount={unreadCount}
 
         showNotifications={showNotifications}
         onToggleNotifications={() => setShowNotifications(!showNotifications)}
@@ -85,7 +96,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
       <View style={styles.contentWrapper}>
         <ScrollView 
           showsVerticalScrollIndicator={false}
-          scrollEnabled={!showNotifications}
+          scrollEnabled={!showNotifications && !showDailyGoalOverlay}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
         >
@@ -97,7 +108,7 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
           {totalReviewsCount > 0 && !isLoading && (
             <TouchableOpacity 
               style={styles.progressCard} 
-              onPress={onNavigateToGlobalStudy}
+              onPress={() => setShowDailyGoalOverlay(true)}
               activeOpacity={0.9}
             >
               <View style={styles.progressHeader}>
@@ -133,6 +144,15 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
                 onPress={() => {
                   if (method.title === 'Flashcard') {
                     onNavigateToFlashcards();
+                  } else if (method.title === 'Truyện chêm') {
+                    onNavigateToStoryList();
+                  } else if (method.title === 'Đua từ với Bot') {
+                    onNavigateToWordRaceList();
+                  }
+                  else if (method.title === 'Tinh mắt tìm từ') {
+                    onNavigateToWordHuntList();
+                  } else if (method.title === 'Bài đọc song ngữ') {
+                    onNavigateToBilingual();
                   }
                 }}
               />
@@ -146,6 +166,19 @@ export const VocabularyLearningScreen: React.FC<VocabularyLearningScreenProps> =
             onSeeAll={onNavigateToNotifications}
           />
         )}
+
+        <DailyGoalActionOverlay
+          isVisible={showDailyGoalOverlay}
+          onClose={() => setShowDailyGoalOverlay(false)}
+          onStudyFlashcard={() => {
+            setShowDailyGoalOverlay(false);
+            onNavigateToGlobalStudy();
+          }}
+          onStudyApplied={() => {
+            setShowDailyGoalOverlay(false);
+            onNavigateToAppliedExercise();
+          }}
+        />
       </View>
     </View>
   );

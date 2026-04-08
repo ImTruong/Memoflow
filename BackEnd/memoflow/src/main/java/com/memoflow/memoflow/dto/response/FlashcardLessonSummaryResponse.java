@@ -19,9 +19,9 @@ public class FlashcardLessonSummaryResponse {
     private String imageUrl;
     private Map<String, Object> content;
     private Long learningActivityId;
+    private Long creatorId;
     private String creatorName;
     private long totalWords;
     private long learnedWords;
     private long totalDueWord;
 }
-

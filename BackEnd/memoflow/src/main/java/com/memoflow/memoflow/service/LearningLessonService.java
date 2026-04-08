@@ -1,13 +1,13 @@
 package com.memoflow.memoflow.service;
 
-import com.memoflow.memoflow.dto.request.CreateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.request.UpdateFlashcardLearningLessonRequest;
-import com.memoflow.memoflow.dto.response.FlashcardLessonDetailResponse;
-import com.memoflow.memoflow.dto.response.FlashcardLessonResponse;
-import com.memoflow.memoflow.dto.response.FlashcardLessonSummaryResponse;
-import com.memoflow.memoflow.dto.response.PageResponse;
+import com.memoflow.memoflow.dto.request.*;
+import com.memoflow.memoflow.dto.response.*;
+import org.springframework.web.multipart.MultipartFile;
 import com.memoflow.memoflow.security.UserPrincipal;
 import org.springframework.data.domain.Pageable;
+
+import java.io.IOException;
+import java.util.List;
 
 public interface LearningLessonService {
 
@@ -22,5 +22,65 @@ public interface LearningLessonService {
     PageResponse<FlashcardLessonSummaryResponse> getCommunityFlashcardLessons(UserPrincipal userPrincipal, Pageable pageable);
     
     FlashcardLessonDetailResponse getFlashcardLessonDetail(Long id, UserPrincipal userPrincipal, Pageable pageable);
+
+    PageResponse<ListeningLessonResponse> getListeningLessons(UserPrincipal userPrincipal, Long part, String status, Pageable pageable);
+
+    ListeningLessonDetailResponse getListeningLessonDetail(Long lessonId);
+
+    void submitListeningLesson(UserPrincipal userPrincipal, Long lessonId, SubmitListeningLessonRequest request, boolean isCompleted);
+
+    ListeningLessonSubmissionResponse getListeningSubmission(UserPrincipal userPrincipal, Long lessonId);
+
+    ListeningResultResponse getListeningResult(UserPrincipal userPrincipal, Long lessonId);
+
+    ListeningLessonDetailResponse createListeningLesson(CreateListeningLessonRequest request,
+                                                        List<MultipartFile> audios,
+                                                        List<MultipartFile> images) throws IOException;
+
+    ListeningLessonDetailResponse updateListeningLesson(Long id,
+                                                        UpdateListeningLessonRequest request,
+                                                        List<MultipartFile> audios,
+                                                        List<MultipartFile> images) throws IOException;
+
+    void deleteListeningLesson(Long id) throws IOException;
+
+    PageResponse<BilingualResponse> searchBilingual(String keyword,
+                                                    Pageable pageable,
+                                                    String _sort,
+                                                    String readFilter,
+                                                    UserPrincipal userPrincipal);
+
+    BilingualResponse getBilingualDetail(Long lessonId, Long userId);
+
+    void markAsSeen(Long lessonId, UserPrincipal userPrincipal);
+
+    BilingualResponse createBilingualLesson(CreateBilingualLessonRequest request, MultipartFile file);
+
+    BilingualResponse updateBilingualLesson(Long id, CreateBilingualLessonRequest request, MultipartFile file);
+
+    void deleteBilingualLesson(Long id);
+
+    PageResponse<FlashcardLessonSummaryResponse> getAllFlashcardLessons(Pageable pageable);
+
+    void deleteFlashcardLessonAdmin(Long id);
+    
+    java.util.List<GrammarTopicResponse> getGrammarTopics(UserPrincipal userPrincipal);
+
+    GrammarTopicDetailResponse getGrammarTopicDetail(Long topicId, UserPrincipal userPrincipal);
+
+    GrammarLessonDetailResponse getGrammarLessonDetail(Long lessonId, UserPrincipal userPrincipal);
+
+    java.util.List<GrammarPracticeOverviewResponse> getGrammarPracticeOverview(UserPrincipal userPrincipal);
+
+    GrammarPracticeDetailResponse getGrammarPracticeDetail(Long practiceId, UserPrincipal userPrincipal);
+
+    GrammarPracticeQuizResponse getGrammarPracticeQuiz(Long practiceId);
+
+    void submitGrammarPractice(UserPrincipal userPrincipal, Long practiceId, SubmitGrammarPracticeRequest request,
+            boolean isCompleted);
+
+    GrammarPracticeSubmissionResponse getGrammarPracticeSubmission(UserPrincipal userPrincipal, Long practiceId);
+
+    GrammarPracticeResultResponse getGrammarPracticeResult(UserPrincipal userPrincipal, Long practiceId);
 
 }

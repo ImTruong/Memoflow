@@ -8,10 +8,11 @@ type AdvancedItemProps = {
   subtitle: string;
   icon: React.ReactNode;
   iconBgColor: string;
+  onPress?: () => void;
 };
 
-const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, iconBgColor }) => (
-  <TouchableOpacity style={styles.itemContainer}>
+const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, iconBgColor, onPress }) => (
+  <TouchableOpacity style={styles.itemContainer} onPress={onPress}>
     <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
       {icon}
     </View>
@@ -23,7 +24,17 @@ const AdvancedItem: React.FC<AdvancedItemProps> = ({ title, subtitle, icon, icon
   </TouchableOpacity>
 );
 
-export const AdvancedLearning = () => {
+type AdvancedLearningProps = {
+  onNavigateToStoryList?: () => void;
+  onNavigateToWordRaceList?: () => void;
+  onNavigateToBilingual?: () => void;
+};
+
+export const AdvancedLearning: React.FC<AdvancedLearningProps> = ({
+  onNavigateToStoryList,
+  onNavigateToWordRaceList,
+  onNavigateToBilingual,
+}) => {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Học tập nâng cao</Text>
@@ -34,14 +45,16 @@ export const AdvancedLearning = () => {
           subtitle="Học từ vựng qua các mẩu chuyện"
           icon={<FontAwesome5 name="book-open" size={20} color="#EF4444" />}
           iconBgColor="#FEE2E2" // red-100
+          onPress={onNavigateToStoryList}
         />
         <View style={styles.divider} />
         
         <AdvancedItem 
-          title="Đọc báo"
-          subtitle="Học từ vựng qua tin tức"
+          title="Song ngữ"
+          subtitle="Đọc hiểu Anh - Việt mỗi ngày"
           icon={<Ionicons name="newspaper-outline" size={24} color="#3B82F6" />}
           iconBgColor="#DBEAFE" // blue-100
+          onPress={onNavigateToBilingual}
         />
         <View style={styles.divider} />
         
@@ -50,6 +63,7 @@ export const AdvancedLearning = () => {
           subtitle="Thách đấu điền từ vựng"
           icon={<FontAwesome5 name="robot" size={20} color="#EC4899" />}
           iconBgColor="#FCE7F3" // pink-100
+          onPress={onNavigateToWordRaceList}
         />
       </View>
     </View>

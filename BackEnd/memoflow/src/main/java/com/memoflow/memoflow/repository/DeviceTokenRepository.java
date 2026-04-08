@@ -14,7 +14,15 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
 
     Optional<DeviceToken> findByToken(String token);
 
+    Optional<DeviceToken> findBySocketSessionId(String socketSessionId);
+
+    List<DeviceToken> findByUserIdAndSocketSessionIdIsNotNull(Long userId);
+
     boolean existsByToken(String token);
 
+    boolean existsBySocketSessionId(String socketSessionId);
+
     void deleteByToken(String token);
+
+    void deleteBySocketSessionId(String socketSessionId);
 }

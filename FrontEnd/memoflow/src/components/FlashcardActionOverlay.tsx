@@ -11,6 +11,7 @@ type FlashcardActionOverlayProps = {
   onLearnAll: () => void;
   onLearnDue: () => void;
   onGame: () => void;
+  isOwner?: boolean; // New prop to check ownership
 };
 
 export const FlashcardActionOverlay: React.FC<FlashcardActionOverlayProps> = ({
@@ -21,6 +22,7 @@ export const FlashcardActionOverlay: React.FC<FlashcardActionOverlayProps> = ({
   onLearnAll,
   onLearnDue,
   onGame,
+  isOwner = true, // Default to true for backward compatibility
 }) => {
   return (
     <Modal
@@ -58,18 +60,28 @@ export const FlashcardActionOverlay: React.FC<FlashcardActionOverlayProps> = ({
                   <Text style={[styles.actionText, { color: '#10B981' }]}>Game điền từ</Text>
                 </TouchableOpacity>
 
+                {/* Show "Xem chi tiết" for non-owners, "Sửa bộ từ" for owners */}
                 <TouchableOpacity style={[styles.actionBox, styles.editBox]} onPress={onEdit}>
                   <View style={styles.iconContainer}>
-                    <MaterialCommunityIcons name="pencil" size={32} color="#4B5563" />
+                    <MaterialCommunityIcons 
+                      name={isOwner ? "pencil" : "eye-outline"} 
+                      size={32} 
+                      color="#4B5563" 
+                    />
                   </View>
-                  <Text style={[styles.actionText, { color: '#4B5563' }]}>Sửa bộ từ</Text>
+                  <Text style={[styles.actionText, { color: '#4B5563' }]}>
+                    {isOwner ? "Sửa bộ từ" : "Xem chi tiết"}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
-                <MaterialCommunityIcons name="trash-can-outline" size={24} color="#EF4444" />
-                <Text style={styles.deleteText}>Xoá bộ từ</Text>
-              </TouchableOpacity>
+              {/* Only show delete button for owners */}
+              {isOwner && (
+                <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
+                  <MaterialCommunityIcons name="trash-can-outline" size={24} color="#EF4444" />
+                  <Text style={styles.deleteText}>Xoá bộ từ</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>

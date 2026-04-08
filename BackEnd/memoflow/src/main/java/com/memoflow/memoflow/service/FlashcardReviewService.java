@@ -21,4 +21,6 @@ public interface FlashcardReviewService {
     List<HeatmapDataResponse> getHeatmapData(int month, int year, UserPrincipal userPrincipal);
 
     PageResponse<FlashcardReviewResponse> searchReviews(String keyword, Pageable pageable, UserPrincipal userPrincipal);
+
+    int calculateStreak(Long userId);
 }

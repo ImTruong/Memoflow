@@ -56,7 +56,7 @@ export const flashcardApi = {
     if (data.description) formData.append('description', data.description);
     formData.append('privacyMode', data.privacyMode);
     
-    if (data.image) {
+    if (data.image && (data.image.startsWith('file://') || data.image.startsWith('content://'))) {
       formData.append('image', {
         uri: data.image,
         name: 'lesson_image.jpg',
@@ -168,4 +168,7 @@ export const flashcardApi = {
     apiFetch<ApiResponse<PageResponse<FlashcardReviewResponse>>>(
       `/flashcard-reviews/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
     ),
+
+  getRecommendedWords: () => 
+    apiFetch<ApiResponse<string[]>>('/suggestions/recommended-words'),
 };

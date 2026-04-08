@@ -34,14 +34,20 @@ export const useFlashcardLessons = (type: 'Mine' | 'Community') => {
         mapLessonToListItem(lesson, isMine)
       );
 
-      setState((prev) => ({
-        items: shouldAppend ? [...prev.items, ...mappedItems] : mappedItems,
-        pageNumber: payload.data.pageNumber,
-        last: payload.data.last,
-        isInitialLoading: false,
-        isLoadingMore: false,
-        error: null,
-      }));
+      setState((prev) => {
+        const newItems = shouldAppend 
+          ? [...prev.items, ...mappedItems.filter(mi => !prev.items.some(pi => pi.id === mi.id))] 
+          : mappedItems;
+        
+        return {
+          items: newItems,
+          pageNumber: payload.data.pageNumber,
+          last: payload.data.last,
+          isInitialLoading: false,
+          isLoadingMore: false,
+          error: null,
+        };
+      });
     } catch (error) {
       setState((prev) => ({
         ...prev,

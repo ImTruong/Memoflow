@@ -1,27 +1,37 @@
 package com.memoflow.memoflow.service;
 
+import com.memoflow.memoflow.dto.response.NotificationResponse;
+import com.memoflow.memoflow.dto.response.PageResponse;
 import com.memoflow.memoflow.entity.Notification;
-
-import java.util.List;
-import java.util.Optional;
+import com.memoflow.memoflow.security.UserPrincipal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import java.util.Map;
 
 public interface NotificationService {
+    PageResponse<NotificationResponse> getNotifications(UserPrincipal userPrincipal, Pageable pageable);
 
-    List<Notification> findAll();
+    long countUnread(UserPrincipal userPrincipal);
 
-    Optional<Notification> findById(Long id);
+    NotificationResponse markAsRead(Long id, UserPrincipal userPrincipal);
 
-    List<Notification> findByUserId(Long userId);
+    void deleteNotification(Long id, UserPrincipal userPrincipal);
 
-    List<Notification> findByUserIdAndIsRead(Long userId, Boolean isRead);
+    void broadcastToAll(String title, String body, Map<String, String> data);
+
+    // Additional methods needed by controller
+    Page<Notification> findByUserId(Long userId, Pageable pageable);
 
     long countUnreadByUserId(Long userId);
-
-    Notification save(Notification notification);
 
     Notification markAsRead(Long id);
 
     void markAllAsReadByUserId(Long userId);
 
     void deleteById(Long id);
+
+    NotificationResponse toResponse(Notification notification);
+
+    // WebSocket notification methods
+    void sendToUser(Long userId, String title, String body, Map<String, String> data);
 }

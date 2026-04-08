@@ -1,0 +1,1210 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Dimensions,
+  Modal,
+  PanResponder,
+  PanResponderInstance,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors } from '../theme/colors';
+import { WordHuntCell, WordHuntProgress } from '../types/wordHunt';
+import {
+  fetchVietnameseMeaning,
+  getCachedVietnameseMeaning,
+  prefetchVietnameseMeanings,
+} from '../api/wordHuntApi';
+import { generateWordHuntBoard } from '../utils/wordHuntBoard';
+
+const { width } = Dimensions.get('window');
+
+const ORANGE = '#F97316';
+const BOARD_MARGIN_HORIZONTAL = 14;
+const BOARD_PADDING = 6;
+const CELL_GAP = 4;
+const MIN_CELL_SIZE = 23;
+const MAX_CELL_SIZE = 36;
+const BOARD_BORDER_WIDTH = 2;
+const DIRECTION_LOCK_DISTANCE = 1.6;
+
+type FinishPayload = {
+  progressId: number;
+  isCompleted: boolean;
+  progressPercent: number;
+  score: number;
+  completedAt?: string;
+  hintsUsedToday: number;
+  hintsUsedDate: string;
+};
+
+type FoundPopup = {
+  word: string;
+  meaning: string;
+};
+
+type WordHuntGameScreenProps = {
+  progress: WordHuntProgress;
+  onBack: () => void;
+  onFinish: (payload: FinishPayload) => void;
+};
+
+type DragDirection = {
+  rowStep: number;
+  colStep: number;
+};
+
+const toCellKey = (row: number, col: number): string => `${row}-${col}`;
+
+const DIRECTION_STEPS: DragDirection[] = [
+  { rowStep: 0, colStep: 1 },
+  { rowStep: 1, colStep: 1 },
+  { rowStep: 1, colStep: 0 },
+  { rowStep: 1, colStep: -1 },
+  { rowStep: 0, colStep: -1 },
+  { rowStep: -1, colStep: -1 },
+  { rowStep: -1, colStep: 0 },
+  { rowStep: -1, colStep: 1 },
+];
+
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.max(min, Math.min(max, value));
+};
+
+const getDirectionByDelta = (rowDelta: number, colDelta: number): DragDirection => {
+  const angle = Math.atan2(rowDelta, colDelta);
+  const directionIndex = Math.round(angle / (Math.PI / 4));
+  const normalizedIndex = ((directionIndex % 8) + 8) % 8;
+  return DIRECTION_STEPS[normalizedIndex];
+};
+
+const getDirectionalLineCells = (
+  start: WordHuntCell,
+  direction: DragDirection,
+  steps: number,
+  boardSize: number
+): WordHuntCell[] => {
+  const safeSteps = Math.max(0, steps);
+
+  const cells: WordHuntCell[] = [];
+
+  for (let i = 0; i <= safeSteps; i += 1) {
+    const row = start.row + i * direction.rowStep;
+    const col = start.col + i * direction.colStep;
+
+    if (row < 0 || col < 0 || row >= boardSize || col >= boardSize) {
+      break;
+    }
+
+    cells.push({ row, col, letter: '' });
+  }
+
+  return cells;
+};
+
+const getStepsByFingerDistance = (
+  start: WordHuntCell,
+  localX: number,
+  localY: number,
+  boardGridSize: number,
+  step: number,
+  cellSize: number,
+  direction: DragDirection
+): number => {
+  const clampedX = clamp(localX, 0, boardGridSize);
+  const clampedY = clamp(localY, 0, boardGridSize);
+
+  const startCenterX = start.col * step + cellSize / 2;
+  const startCenterY = start.row * step + cellSize / 2;
+
+  const dx = clampedX - startCenterX;
+  const dy = clampedY - startCenterY;
+
+  // Project finger movement onto locked direction axis.
+  const directionNormSq =
+    direction.rowStep * direction.rowStep + direction.colStep * direction.colStep;
+  const axisProjectionRaw = (dy / step) * direction.rowStep + (dx / step) * direction.colStep;
+  const axisProjection = axisProjectionRaw / Math.max(directionNormSq, 1);
+
+  // Require crossing most of a cell before advancing to next one.
+  return Math.max(0, Math.floor(axisProjection + 0.15));
+};
+
+const formatTime = (seconds: number): string => {
+  const minute = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const second = Math.max(0, seconds % 60)
+    .toString()
+    .padStart(2, '0');
+
+  return `${minute}:${second}`;
+};
+
+const getTodayDateKey = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress, onBack, onFinish }) => {
+  const content = progress.learningLesson.content;
+  const boardSize = useMemo(() => {
+    const raw = Number(content.boardSize) || 10;
+    return Math.max(6, Math.min(10, raw));
+  }, [content.boardSize]);
+
+  const lessonWords = useMemo(
+    () => content.words.slice(0, content.targetWordCount).map((word) => word.toUpperCase()),
+    [content.words, content.targetWordCount]
+  );
+
+  const [boardData, setBoardData] = useState(() => generateWordHuntBoard(lessonWords, boardSize));
+  const [foundWords, setFoundWords] = useState<Set<string>>(new Set());
+  const [foundCellKinds, setFoundCellKinds] = useState<Record<string, 'normal' | 'hint'>>({});
+  const [selectedCells, setSelectedCells] = useState<WordHuntCell[]>([]);
+  const selectedCellsRef = useRef<WordHuntCell[]>([]);
+  const [dragStart, setDragStart] = useState<WordHuntCell | null>(null);
+  const [dragDirection, setDragDirection] = useState<DragDirection | null>(null);
+  const [timeLeft, setTimeLeft] = useState(content.timeLimitSeconds);
+  const [hintsUsed, setHintsUsed] = useState(() => {
+    const today = getTodayDateKey();
+    if (progress.hintsUsedDate && progress.hintsUsedDate !== today) {
+      return 0;
+    }
+
+    return progress.hintsUsedToday ?? 0;
+  });
+  const [activeHintWord, setActiveHintWord] = useState<string | null>(null);
+  const [hintMeaning, setHintMeaning] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showHintConfirm, setShowHintConfirm] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showWinModal, setShowWinModal] = useState(false);
+  const [showLoseModal, setShowLoseModal] = useState(false);
+  const [foundPopup, setFoundPopup] = useState<FoundPopup | null>(null);
+  const [pendingWin, setPendingWin] = useState(false);
+
+  const boardMaxWidth = Math.min(width - BOARD_MARGIN_HORIZONTAL * 2, 420);
+  const rawCellSize = Math.floor(
+    (boardMaxWidth - BOARD_PADDING * 2 - CELL_GAP * (boardSize - 1)) / boardSize
+  );
+  const cellSize = Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, rawCellSize));
+  const boardPixelSize = BOARD_PADDING * 2 + boardSize * cellSize + CELL_GAP * (boardSize - 1);
+  const boardGridSize = boardSize * cellSize + CELL_GAP * (boardSize - 1);
+  const letterFontSize = Math.max(14, Math.min(22, Math.floor(cellSize * 0.52)));
+  const step = cellSize + CELL_GAP;
+
+  const targetWords = useMemo(() => {
+    const placedWordSet = new Set(boardData.placedWords.map((placed) => placed.word));
+    return lessonWords.filter((word) => placedWordSet.has(word));
+  }, [boardData.placedWords, lessonWords]);
+  const targetWordCount = targetWords.length;
+  const foundCount = foundWords.size;
+
+  const isGameEnded = showWinModal || showLoseModal;
+
+  const currentHintMeaning = activeHintWord ? hintMeaning : null;
+
+  const clearErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wordMeaningMapRef = useRef<Record<string, string>>({});
+
+  const getKnownMeaning = useCallback((word: string): string | null => {
+    const upperWord = word.toUpperCase();
+    const localMeaning = wordMeaningMapRef.current[upperWord];
+    if (localMeaning) {
+      return localMeaning;
+    }
+
+    return getCachedVietnameseMeaning(upperWord);
+  }, []);
+
+  const loadMeaningForWord = useCallback(
+    async (word: string): Promise<string> => {
+      const upperWord = word.toUpperCase();
+      const knownMeaning = getKnownMeaning(upperWord);
+      if (knownMeaning) {
+        wordMeaningMapRef.current[upperWord] = knownMeaning;
+        return knownMeaning;
+      }
+
+      const fetchedMeaning = await fetchVietnameseMeaning(upperWord);
+      const resolvedMeaning = fetchedMeaning || 'Từ vựng tiếng Anh';
+      wordMeaningMapRef.current[upperWord] = resolvedMeaning;
+      return resolvedMeaning;
+    },
+    [getKnownMeaning]
+  );
+
+  const showTransientError = useCallback((message: string) => {
+    setErrorMessage(message);
+    if (clearErrorTimeoutRef.current) {
+      clearTimeout(clearErrorTimeoutRef.current);
+    }
+    clearErrorTimeoutRef.current = setTimeout(() => {
+      setErrorMessage(null);
+    }, 1800);
+  }, []);
+
+  const setSelection = useCallback((cells: WordHuntCell[]) => {
+    selectedCellsRef.current = cells;
+    setSelectedCells(cells);
+  }, []);
+
+  const getCellFromLocalPoint = useCallback(
+    (localX: number, localY: number, mode: 'strict' | 'drag' = 'drag'): WordHuntCell | null => {
+      if (localX < 0 || localY < 0 || localX > boardGridSize || localY > boardGridSize) {
+        return null;
+      }
+
+      if (mode === 'strict') {
+        const col = Math.floor(localX / step);
+        const row = Math.floor(localY / step);
+
+        if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) {
+          return null;
+        }
+
+        const offsetX = localX - col * step;
+        const offsetY = localY - row * step;
+        if (offsetX < 0 || offsetY < 0 || offsetX > cellSize || offsetY > cellSize) {
+          return null;
+        }
+
+        return {
+          row,
+          col,
+          letter: boardData.board[row][col],
+        };
+      }
+
+      const col = Math.max(0, Math.min(boardSize - 1, Math.floor(localX / step)));
+      const row = Math.max(0, Math.min(boardSize - 1, Math.floor(localY / step)));
+
+      if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) {
+        return null;
+      }
+
+      return {
+        row,
+        col,
+        letter: boardData.board[row][col],
+      };
+    },
+    [boardData.board, boardGridSize, boardSize, cellSize, step]
+  );
+
+  const mapLineWithLetters = useCallback(
+    (line: WordHuntCell[]): WordHuntCell[] =>
+      line.map((cell) => ({
+        ...cell,
+        letter: boardData.board[cell.row][cell.col],
+      })),
+    [boardData.board]
+  );
+
+  const evaluateSelection = useCallback(
+    (lineCells: WordHuntCell[]) => {
+      if (lineCells.length < 2) {
+        return;
+      }
+
+      const selectedWord = lineCells.map((cell) => cell.letter).join('');
+      const reversedWord = selectedWord.split('').reverse().join('');
+
+      const matched = targetWords.find((word) => {
+        if (foundWords.has(word)) return false;
+        return word === selectedWord || word === reversedWord;
+      });
+
+      if (!matched) {
+        showTransientError('Từ được chọn không chính xác');
+        return;
+      }
+
+      const hintMatched = activeHintWord === matched;
+      setFoundWords((prev) => new Set(prev).add(matched));
+      setFoundCellKinds((prev) => {
+        const next = { ...prev };
+        for (const cell of lineCells) {
+          next[toCellKey(cell.row, cell.col)] = hintMatched ? 'hint' : 'normal';
+        }
+        return next;
+      });
+
+      if (hintMatched) {
+        setActiveHintWord(null);
+      }
+
+      const initialMeaning = getKnownMeaning(matched) || 'Đang tải nghĩa...';
+
+      setFoundPopup({
+        word: matched,
+        meaning: initialMeaning,
+      });
+
+      void loadMeaningForWord(matched).then((resolvedMeaning) => {
+        setFoundPopup((prev) =>
+          prev && prev.word === matched
+            ? { ...prev, meaning: resolvedMeaning }
+            : prev
+        );
+      });
+
+      const nextCount = foundWords.size + 1;
+      if (nextCount >= targetWordCount) {
+        setPendingWin(true);
+      }
+    },
+    [
+      activeHintWord,
+      foundWords,
+      getKnownMeaning,
+      loadMeaningForWord,
+      showTransientError,
+      targetWordCount,
+      targetWords,
+    ]
+  );
+
+  const handleRestart = useCallback(() => {
+    const regenerated = generateWordHuntBoard(lessonWords, boardSize);
+    setBoardData(regenerated);
+    setFoundWords(new Set());
+    setFoundCellKinds({});
+    setSelection([]);
+    setDragStart(null);
+    setDragDirection(null);
+    setTimeLeft(content.timeLimitSeconds);
+    setActiveHintWord(null);
+    setHintMeaning(null);
+    setShowLoseModal(false);
+    setShowWinModal(false);
+    setFoundPopup(null);
+    setPendingWin(false);
+    setErrorMessage(null);
+  }, [boardSize, content.timeLimitSeconds, lessonWords, setSelection]);
+
+  const finishGame = useCallback(
+    (isCompleted: boolean) => {
+      const progressPercent = targetWordCount === 0 ? 0 : Math.round((foundWords.size / targetWordCount) * 100);
+      const payload: FinishPayload = {
+        progressId: progress.id,
+        isCompleted,
+        progressPercent: isCompleted ? 100 : Math.max(progress.progressPercent, progressPercent),
+        score: foundWords.size,
+        hintsUsedToday: hintsUsed,
+        hintsUsedDate: getTodayDateKey(),
+        completedAt: isCompleted ? new Date().toISOString() : progress.completedAt,
+      };
+
+      onFinish(payload);
+    },
+    [foundWords.size, hintsUsed, onFinish, progress.completedAt, progress.id, progress.progressPercent, targetWordCount]
+  );
+
+  const panResponder = useMemo<PanResponderInstance>(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !isGameEnded,
+        onMoveShouldSetPanResponder: () => !isGameEnded,
+        onPanResponderGrant: (event) => {
+          const cell = getCellFromLocalPoint(event.nativeEvent.locationX, event.nativeEvent.locationY, 'strict');
+          if (!cell) return;
+          setDragStart(cell);
+          setDragDirection(null);
+          setSelection([cell]);
+        },
+        onPanResponderMove: (event) => {
+          if (!dragStart) return;
+          const localX = event.nativeEvent.locationX;
+          const localY = event.nativeEvent.locationY;
+
+          const targetCell = getCellFromLocalPoint(localX, localY);
+          if (!targetCell) return;
+
+          const rowDelta = targetCell.row - dragStart.row;
+          const colDelta = targetCell.col - dragStart.col;
+          const dragDistance = Math.hypot(rowDelta, colDelta);
+
+          if (dragDistance < 0.2) {
+            setSelection([dragStart]);
+            return;
+          }
+
+          // Soft-lock direction only after a meaningful drag distance to avoid wrong early lock.
+          const shouldLockDirection = !dragDirection && dragDistance >= DIRECTION_LOCK_DISTANCE;
+          const direction = dragDirection || getDirectionByDelta(rowDelta, colDelta);
+
+          if (shouldLockDirection) {
+            setDragDirection(direction);
+          }
+
+          const steps = getStepsByFingerDistance(
+            dragStart,
+            localX,
+            localY,
+            boardGridSize,
+            step,
+            cellSize,
+            direction
+          );
+
+          const line = getDirectionalLineCells(dragStart, direction, steps, boardSize);
+          if (line.length === 0) {
+            setSelection([dragStart]);
+            return;
+          }
+
+          setSelection(mapLineWithLetters(line));
+        },
+        onPanResponderRelease: () => {
+          const currentLine = selectedCellsRef.current;
+          setDragStart(null);
+          setDragDirection(null);
+          setSelection([]);
+
+          if (currentLine.length > 1) {
+            evaluateSelection(currentLine);
+          }
+        },
+        onPanResponderTerminate: () => {
+          setDragStart(null);
+          setDragDirection(null);
+          setSelection([]);
+        },
+      }),
+    [
+      boardSize,
+      boardGridSize,
+      cellSize,
+      dragDirection,
+      dragStart,
+      evaluateSelection,
+      getCellFromLocalPoint,
+      isGameEnded,
+      mapLineWithLetters,
+      setSelection,
+      step,
+    ]
+  );
+
+  useEffect(() => {
+    if (isGameEnded || showHintConfirm || showExitConfirm || foundPopup) {
+      return;
+    }
+
+    if (timeLeft <= 0) {
+      setShowLoseModal(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [foundPopup, isGameEnded, showExitConfirm, showHintConfirm, timeLeft]);
+
+  useEffect(() => {
+    return () => {
+      if (clearErrorTimeoutRef.current) {
+        clearTimeout(clearErrorTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    prefetchVietnameseMeanings(lessonWords);
+    void Promise.allSettled(lessonWords.map((word) => loadMeaningForWord(word)));
+  }, [lessonWords, loadMeaningForWord]);
+
+  useEffect(() => {
+    if (!activeHintWord) {
+      setHintMeaning(null);
+      return;
+    }
+
+    let isCancelled = false;
+    const immediateMeaning = getKnownMeaning(activeHintWord);
+    setHintMeaning(immediateMeaning || 'Đang tải nghĩa...');
+
+    const loadHintMeaning = async () => {
+      const meaning = await loadMeaningForWord(activeHintWord);
+      if (isCancelled) {
+        return;
+      }
+
+      setHintMeaning(meaning);
+    };
+
+    void loadHintMeaning();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeHintWord, getKnownMeaning, loadMeaningForWord]);
+
+  const hintRemaining = Math.max(content.maxHintsPerDay - hintsUsed, 0);
+
+  const requestHint = () => {
+    if (hintRemaining <= 0 || isGameEnded) {
+      showTransientError('Bạn đã hết lượt gợi ý hôm nay');
+      return;
+    }
+
+    setShowHintConfirm(true);
+  };
+
+  const confirmHint = () => {
+    const remainingWords = targetWords
+      .filter((word) => !foundWords.has(word));
+
+    if (remainingWords.length === 0) {
+      setShowHintConfirm(false);
+      return;
+    }
+
+    const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
+    setActiveHintWord(randomWord);
+    setHintsUsed((prev) => prev + 1);
+    setShowHintConfirm(false);
+  };
+
+  const closeFoundPopup = () => {
+    setFoundPopup(null);
+    if (pendingWin) {
+      setPendingWin(false);
+      setShowWinModal(true);
+      finishGame(true);
+    }
+  };
+
+  const progressBars = useMemo(() => {
+    const bars: boolean[] = [];
+    for (let i = 0; i < targetWordCount; i += 1) {
+      bars.push(i < foundCount);
+    }
+    return bars;
+  }, [foundCount, targetWordCount]);
+
+  const selectedWordPreview = useMemo(() => {
+    if (selectedCells.length === 0) {
+      return '';
+    }
+
+    return selectedCells.map((cell) => cell.letter).join('');
+  }, [selectedCells]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => setShowExitConfirm(true)}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Tinh mắt tìm từ</Text>
+          <Text style={styles.headerSubtitle}>CHỦ ĐỀ: {progress.learningLesson.title.toUpperCase()}</Text>
+        </View>
+        <View style={styles.backButton} />
+      </View>
+
+      <View style={styles.infoRow}>
+        <View style={styles.timeCard}>
+          <View style={styles.timeLabelWrap}>
+            <Ionicons name="timer-outline" size={14} color={ORANGE} />
+            <Text style={styles.timeLabel}>Thời gian</Text>
+          </View>
+          <Text style={styles.timeValue}>{formatTime(timeLeft)}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.hintButton} onPress={requestHint}>
+          <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color="#FFFFFF" />
+          <Text style={styles.hintButtonText}>GỢI Ý</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.dragWordBanner}>
+        <Text style={styles.dragWordLabel}>ĐANG KÉO</Text>
+        <Text style={styles.dragWordValue}>{selectedWordPreview || '...'}</Text>
+      </View>
+
+      {activeHintWord && (
+        <View style={styles.activeHintBanner}>
+          <View style={styles.activeHintIcon}>
+            <Ionicons name="bulb-outline" size={14} color="#CA8A04" />
+          </View>
+          <View>
+            <Text style={styles.activeHintTitle}>GỢI Ý ĐANG BẬT</Text>
+            <Text style={styles.activeHintText}>Gợi ý: {currentHintMeaning || 'Đang tải nghĩa...'}</Text>
+          </View>
+        </View>
+      )}
+
+      {errorMessage && (
+        <View style={styles.errorBanner}>
+          <Ionicons name="alert-circle" size={16} color="#E11D48" />
+          <Text style={styles.errorText}>{errorMessage}</Text>
+          <TouchableOpacity onPress={() => setErrorMessage(null)}>
+            <Ionicons name="close" size={16} color="#FB7185" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={styles.boardWrapper}>
+        <View style={[styles.boardCard, { width: boardPixelSize, height: boardPixelSize, padding: BOARD_PADDING }]}> 
+          <View
+            style={styles.boardGridLayer}
+          >
+            {boardData.board.map((row, rowIndex) => (
+              <View
+                key={`row-${rowIndex}`}
+                style={[styles.boardRow, { marginBottom: rowIndex === boardData.board.length - 1 ? 0 : CELL_GAP }]}
+              >
+                {row.map((letter, colIndex) => {
+                  const key = toCellKey(rowIndex, colIndex);
+                  const isSelected = selectedCells.some((cell) => cell.row === rowIndex && cell.col === colIndex);
+                  const foundKind = foundCellKinds[key];
+
+                  let backgroundColor = '#E9EEF5';
+                  let textColor = '#1F2937';
+
+                  if (foundKind === 'normal') {
+                    backgroundColor = '#22C55E';
+                    textColor = '#FFFFFF';
+                  }
+
+                  if (foundKind === 'hint') {
+                    backgroundColor = '#16A34A';
+                    textColor = '#FFFFFF';
+                  }
+
+                  if (isSelected && !foundKind) {
+                    backgroundColor = '#DCFCE7';
+                    textColor = '#14532D';
+                  }
+
+                  return (
+                    <View
+                      key={key}
+                      style={[
+                        styles.cell,
+                        {
+                          width: cellSize,
+                          height: cellSize,
+                          backgroundColor,
+                          marginRight: colIndex === row.length - 1 ? 0 : CELL_GAP,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.cellText, { color: textColor, fontSize: letterFontSize }]}>{letter}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ))}
+
+            <View style={styles.gestureOverlay} {...panResponder.panHandlers} />
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.wordProgressCard}>
+        <Text style={styles.wordProgressTitle}>TỪ CẦN TÌM ({foundCount}/{targetWordCount})</Text>
+        <View style={styles.progressBarRow}>
+          {progressBars.map((filled, index) => (
+            <View key={`progress-${index}`} style={[styles.progressPiece, filled && styles.progressPieceFilled]} />
+          ))}
+        </View>
+      </View>
+
+      <Modal transparent visible={showHintConfirm} animationType="fade" statusBarTranslucent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalTopIconOrange}>
+              <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={ORANGE} />
+            </View>
+            <Text style={styles.modalTitle}>Dùng gợi ý?</Text>
+            <Text style={styles.modalDescription}>
+              Bạn có chắc chắn muốn sử dụng gợi ý không? Lưu ý: mỗi ngày chỉ được dùng tối đa {content.maxHintsPerDay} lần ({hintRemaining}/{content.maxHintsPerDay}).
+            </Text>
+
+            <TouchableOpacity style={styles.confirmPrimaryBtn} onPress={confirmHint}>
+              <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.confirmPrimaryText}>Có, dùng gợi ý</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.confirmGhostBtn} onPress={() => setShowHintConfirm(false)}>
+              <Text style={styles.confirmGhostText}>Hủy</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={!!foundPopup} animationType="fade" statusBarTranslucent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCardSmall}>
+            <View style={styles.modalTopIconGreen}>
+              <Ionicons name="checkmark" size={28} color="#22C55E" />
+            </View>
+            <Text style={styles.wordFoundLabel}>CHÍNH XÁC!</Text>
+            <Text style={styles.wordFoundWord}>{foundPopup?.word}</Text>
+            <Text style={styles.wordFoundMeaning}>{foundPopup?.meaning}</Text>
+
+            <TouchableOpacity style={styles.confirmPrimaryBtn} onPress={closeFoundPopup}>
+              <Text style={styles.confirmPrimaryText}>TIẾP TỤC</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={showExitConfirm} animationType="fade" statusBarTranslucent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalTopIconBlue}>
+              <Ionicons name="pause-outline" size={24} color="#3B82F6" />
+            </View>
+            <Text style={styles.modalTitle}>Bạn có chắc muốn rời đi?</Text>
+            <Text style={styles.modalDescription}>Tiến trình trận đấu hiện tại sẽ không được lưu.</Text>
+
+            <TouchableOpacity style={styles.confirmPrimaryBtn} onPress={() => setShowExitConfirm(false)}>
+              <Text style={styles.confirmPrimaryText}>TIẾP TỤC CHƠI</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.confirmGhostBtn}
+              onPress={() => {
+                const progressPercent =
+                  targetWordCount === 0 ? 0 : Math.round((foundWords.size / targetWordCount) * 100);
+
+                onFinish({
+                  progressId: progress.id,
+                  isCompleted: false,
+                  progressPercent: Math.max(progress.progressPercent, progressPercent),
+                  score: foundWords.size,
+                  hintsUsedToday: hintsUsed,
+                  hintsUsedDate: getTodayDateKey(),
+                  completedAt: progress.completedAt,
+                });
+                setShowExitConfirm(false);
+                onBack();
+              }}
+            >
+              <Text style={styles.confirmGhostText}>RỜI GAME</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={showLoseModal} animationType="fade" statusBarTranslucent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalTopIconOrange}>
+              <Ionicons name="timer-outline" size={24} color={ORANGE} />
+            </View>
+            <Text style={styles.modalTitle}>Hết giờ rồi!</Text>
+            <Text style={styles.modalDescription}>Bạn đã tìm được {foundCount}/{targetWordCount} từ. Thử lại để phá đảo điểm số nhé.</Text>
+
+            <TouchableOpacity
+              style={styles.confirmPrimaryBtn}
+              onPress={() => {
+                finishGame(false);
+                handleRestart();
+              }}
+            >
+              <Text style={styles.confirmPrimaryText}>CHƠI LẠI</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.confirmGhostBtn}
+              onPress={() => {
+                finishGame(false);
+                setShowLoseModal(false);
+                onBack();
+              }}
+            >
+              <Text style={styles.confirmGhostText}>VỀ DANH SÁCH</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={showWinModal} animationType="fade" statusBarTranslucent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalTopIconGreen}>
+              <Ionicons name="trophy-outline" size={24} color="#16A34A" />
+            </View>
+            <Text style={styles.modalTitle}>Bạn đã chiến thắng!</Text>
+            <Text style={styles.modalDescription}>
+              Chúc mừng! Bạn đã tìm đủ {targetWordCount}/{targetWordCount} từ và mở khóa màn tiếp theo.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.confirmPrimaryBtn}
+              onPress={() => {
+                setShowWinModal(false);
+                onBack();
+              }}
+            >
+              <Text style={styles.confirmPrimaryText}>TIẾP TỤC</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 10,
+  },
+  backButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    alignItems: 'center',
+  },
+  headerTitle: {
+    color: ORANGE,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  headerSubtitle: {
+    marginTop: 2,
+    color: '#9CA3AF',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+  },
+  infoRow: {
+    marginHorizontal: 12,
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  timeCard: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  timeLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeLabel: {
+    color: '#1F2937',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timeValue: {
+    color: ORANGE,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  hintButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: ORANGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hintButtonText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  dragWordBanner: {
+    marginHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dragWordLabel: {
+    fontSize: 11,
+    color: '#166534',
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  dragWordValue: {
+    fontSize: 16,
+    color: '#14532D',
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  activeHintBanner: {
+    marginHorizontal: 12,
+    marginTop: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FDE047',
+    backgroundColor: '#FEFCE8',
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activeHintIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FEF08A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeHintTitle: {
+    fontSize: 10,
+    color: '#A16207',
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  activeHintText: {
+    marginTop: 2,
+    fontSize: 14,
+    color: '#1F2937',
+    fontWeight: '700',
+  },
+  errorBanner: {
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    backgroundColor: '#FFF1F2',
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  errorText: {
+    flex: 1,
+    color: '#E11D48',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  boardWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  boardCard: {
+    borderRadius: 16,
+    borderWidth: BOARD_BORDER_WIDTH,
+    borderColor: '#CFD8E3',
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+  },
+  boardRow: {
+    flexDirection: 'row',
+  },
+  boardGridLayer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  gestureOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 5,
+  },
+  cell: {
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cellText: {
+    fontWeight: '700',
+  },
+  wordProgressCard: {
+    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#EEF2F7',
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 14,
+    marginHorizontal: 12,
+    marginBottom: 20,
+  },
+  wordProgressTitle: {
+    color: '#6B7280',
+    fontSize: 12,
+    letterSpacing: 1,
+    marginBottom: 8,
+    fontWeight: '700',
+  },
+  progressBarRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  progressPiece: {
+    flex: 1,
+    height: 4,
+    backgroundColor: '#CBD5E1',
+    borderRadius: 3,
+  },
+  progressPieceFilled: {
+    backgroundColor: ORANGE,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(17, 24, 39, 0.24)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    alignItems: 'center',
+    shadowColor: '#111827',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  modalCardSmall: {
+    width: '80%',
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    alignItems: 'center',
+    shadowColor: '#111827',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  modalTopIconOrange: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: '#FFF1E7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  modalTopIconGreen: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  modalTopIconBlue: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    color: '#111827',
+    fontSize: 26,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  modalDescription: {
+    marginTop: 8,
+    color: '#64748B',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  confirmPrimaryBtn: {
+    width: '100%',
+    borderRadius: 10,
+    backgroundColor: ORANGE,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  confirmPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  confirmGhostBtn: {
+    width: '100%',
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 11,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  confirmGhostText: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  wordFoundLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  wordFoundWord: {
+    marginTop: 6,
+    fontSize: 34,
+    color: '#111827',
+    fontWeight: '800',
+  },
+  wordFoundMeaning: {
+    marginTop: 4,
+    marginBottom: 10,
+    color: ORANGE,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});

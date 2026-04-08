@@ -1,52 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   View, 
   Text, 
   TouchableOpacity, 
   ScrollView, 
-  Dimensions 
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { statsApi, ListeningStatsOverview, PartStats } from '../api/statsApi';
+import { DonutChart } from '../components/shared/DonutChart';
 
 const { width } = Dimensions.get('window');
 
 type ListeningStatsOverviewScreenProps = {
   onBack: () => void;
-  onNavigateToExamDetail: (examId: string) => void;
+  onNavigateToExamDetail: (examId: number) => void;
+  onNavigateToPartExams: (partNumber: number) => void;
 };
 
 export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreenProps> = ({ 
   onBack, 
-  onNavigateToExamDetail 
+  onNavigateToExamDetail,
+  onNavigateToPartExams
 }) => {
-  const parts = [
-    { name: 'Part 1: Mô tả hình ảnh', percentage: '25%', color: '#818CF8' },
-    { name: 'Part 2: Hỏi & Đáp', percentage: '35%', color: '#34D399' },
-    { name: 'Part 3: Đoạn hội thoại', percentage: '25%', color: '#FBBF24' },
-    { name: 'Part 4: Bài nói ngắn', percentage: '15%', color: '#F472B6' },
-  ];
+  const [stats, setStats] = useState<ListeningStatsOverview | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const topics = [
-    { 
-      id: 'p1', 
-      title: 'Part 1: Mô tả hình ảnh', 
-      subtitle: 'Photographs', 
-      exams: ['Đề 01', 'Đề 02', 'Đề 05'], 
-      moreCount: 9,
-      iconColor: '#818CF8',
-      iconName: 'image-outline' 
-    },
-    { 
-      id: 'p2', 
-      title: 'Part 2: Hỏi & Đáp', 
-      subtitle: 'Question & Response', 
-      exams: ['Đề 03', 'Đề 04', 'Đề 08'], 
-      moreCount: 15,
-      iconColor: '#34D399',
-      iconName: 'chatbubble-outline' 
-    },
-  ];
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const data = await statsApi.getListeningOverview();
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to load listening stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderDonutChart = () => {
+    if (!stats) return null;
+    
+    const chartData = stats.parts.map(part => ({
+      value: part.completedCount,
+      color: part.color
+    }));
+
+    return (
+      <DonutChart
+        data={chartData}
+        centerLabel="TỔNG ĐỀ"
+        centerValue={stats.totalExams || 0}
+        centerSubLabel={stats.newExamsThisWeek > 0 ? `+${stats.newExamsThisWeek} tuần này` : undefined}
+      />
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -67,22 +89,11 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
         {/* Main Chart Card */}
         <View style={styles.chartCard}>
           <View style={styles.chartContainer}>
-            <View style={styles.circularChart}>
-              {/* Fake segments using borders */}
-              <View style={[styles.segment, { borderColor: '#818CF8', transform: [{ rotate: '0deg' }] }]} />
-              <View style={[styles.segment, { borderColor: '#34D399', transform: [{ rotate: '90deg' }] }]} />
-              <View style={[styles.segment, { borderColor: '#FBBF24', transform: [{ rotate: '180deg' }] }]} />
-              <View style={[styles.segment, { borderColor: '#F472B6', transform: [{ rotate: '270deg' }] }]} />
-              <View style={styles.chartInner}>
-                <Text style={styles.totalExamsLabel}>TỔNG ĐỀ</Text>
-                <Text style={styles.totalExamsValue}>48</Text>
-                <Text style={styles.totalExamsGrowth}>+3 tuần này</Text>
-              </View>
-            </View>
+            {renderDonutChart()}
           </View>
 
           <View style={styles.legendContainer}>
-            {parts.map((part, index) => (
+            {stats?.parts.map((part, index) => (
               <View key={index} style={styles.legendItem}>
                 <View style={styles.legendLabelGroup}>
                   <View style={[styles.legendDot, { backgroundColor: part.color }]} />
@@ -97,39 +108,41 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
         {/* Topics Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Chủ đề luyện nghe</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>Xem tất cả</Text>
-          </TouchableOpacity>
         </View>
 
-        {topics.map((topic, index) => (
-          <View key={index} style={styles.topicCard}>
+        {stats?.parts.map((part, index) => (
+          <TouchableOpacity 
+            key={index} 
+            style={styles.topicCard}
+            onPress={() => onNavigateToPartExams(part.partNumber)}
+          >
             <View style={styles.topicTop}>
-              <View style={[styles.topicIconWrapper, { backgroundColor: topic.iconColor + '15' }]}>
-                <Ionicons name={topic.iconName as any} size={24} color={topic.iconColor} />
+              <View style={[styles.topicIconWrapper, { backgroundColor: part.color + '15' }]}>
+                <Ionicons name={part.iconName as any} size={24} color={part.color} />
               </View>
               <View style={topicStyles.topicInfo}>
-                <Text style={styles.topicTitle}>{topic.title}</Text>
-                <Text style={styles.topicSubtitle}>{topic.subtitle}</Text>
+                <Text style={styles.topicTitle}>{part.name}</Text>
+                <Text style={styles.topicSubtitle}>Học lại các đề đã làm</Text>
               </View>
-              <TouchableOpacity style={styles.chevronBtn}>
+              <View style={styles.chevronBtn}>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-              </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.examsRow}>
-              {topic.exams.map((exam, eIndex) => (
-                <TouchableOpacity 
+              {part.recentExams.map((exam, eIndex) => (
+                <View 
                   key={eIndex} 
                   style={styles.examBadge}
-                  onPress={() => onNavigateToExamDetail(exam)}
                 >
                   <Text style={styles.examBadgeText}>{exam}</Text>
-                </TouchableOpacity>
+                </View>
               ))}
-              <Text style={styles.moreExamsText}>+{topic.moreCount} nữa</Text>
+              {part.moreCount > 0 && (
+                <Text style={styles.moreExamsText}>+{part.moreCount} nữa</Text>
+              )}
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
         
         <View style={{ height: 40 }} />
@@ -195,6 +208,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
   chartCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
@@ -212,27 +230,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 40,
   },
-  circularChart: {
+  circularChartContainer: {
     width: 180,
     height: 180,
     borderRadius: 90,
-    borderWidth: 20,
-    borderColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-  segment: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 20,
-    borderLeftColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderRightColor: 'transparent',
-  },
   chartInner: {
+    position: 'absolute',
     alignItems: 'center',
   },
   totalExamsLabel: {

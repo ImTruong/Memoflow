@@ -1,5 +1,6 @@
 package com.memoflow.memoflow.util;
 
+import com.memoflow.memoflow.entity.User;
 import com.memoflow.memoflow.security.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -35,6 +36,23 @@ public class JwtUtil {
                 .setSubject(userPrincipal.getUsername())
                 .claim("userId", userPrincipal.getId())
                 .claim("roles", roles)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public String generateToken(User user) {
+        SecretKey secretKey = getSigningKey();
+        String roleName = user.getRole().getName();
+        String subject = user.getEmail();
+        if (subject == null || subject.isEmpty()) {
+            subject = String.valueOf(user.getId());
+        }
+        return Jwts.builder()
+                .setSubject(subject)
+                .claim("userId", user.getId())
+                .claim("roles", List.of(roleName))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(secretKey)
