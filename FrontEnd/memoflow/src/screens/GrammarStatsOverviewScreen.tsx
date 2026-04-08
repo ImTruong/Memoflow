@@ -9,23 +9,23 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { statsApi, ListeningStatsOverview, PartStats } from '../api/statsApi';
+import { statsApi, GrammarStatsOverview, CategoryStats } from '../api/statsApi';
 import { DonutChart } from '../components/shared/DonutChart';
 
 const { width } = Dimensions.get('window');
 
-type ListeningStatsOverviewScreenProps = {
+type GrammarStatsOverviewScreenProps = {
   onBack: () => void;
-  onNavigateToExamDetail: (examId: number) => void;
-  onNavigateToPartExams: (partNumber: number) => void;
+  onNavigateToPracticeDetail: (practiceId: number) => void;
+  onNavigateToTopicPractices: (topicId: number) => void;
 };
 
-export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreenProps> = ({ 
+export const GrammarStatsOverviewScreen: React.FC<GrammarStatsOverviewScreenProps> = ({ 
   onBack, 
-  onNavigateToExamDetail,
-  onNavigateToPartExams
+  onNavigateToPracticeDetail,
+  onNavigateToTopicPractices
 }) => {
-  const [stats, setStats] = useState<ListeningStatsOverview | null>(null);
+  const [stats, setStats] = useState<GrammarStatsOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,10 +35,10 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
   const loadStats = async () => {
     try {
       setLoading(true);
-      const data = await statsApi.getListeningOverview();
+      const data = await statsApi.getGrammarOverview();
       setStats(data);
     } catch (error) {
-      console.error("Failed to load listening stats:", error);
+      console.error("Failed to load grammar stats:", error);
     } finally {
       setLoading(false);
     }
@@ -47,17 +47,17 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
   const renderDonutChart = () => {
     if (!stats) return null;
     
-    const chartData = stats.parts.map(part => ({
-      value: part.completedCount,
-      color: part.color
+    const chartData = stats.categories.map(cat => ({
+      value: cat.completedCount,
+      color: cat.color
     }));
 
     return (
       <DonutChart
         data={chartData}
-        centerLabel="TỔNG ĐỀ"
-        centerValue={stats.totalExams || 0}
-        centerSubLabel={stats.newExamsThisWeek > 0 ? `+${stats.newExamsThisWeek} tuần này` : undefined}
+        centerLabel="TỔNG BÀI"
+        centerValue={stats.totalLessons || 0}
+        centerSubLabel={stats.newLessonsThisWeek > 0 ? `+${stats.newLessonsThisWeek} tuần này` : undefined}
       />
     );
   };
@@ -65,7 +65,7 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
   if (loading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#6366F1" />
+        <ActivityIndicator size="large" color="#F59E0B" />
       </View>
     );
   }
@@ -73,7 +73,7 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
   return (
     <View style={styles.container}>
       {/* Background Overlays */}
-      <View style={[styles.blob, styles.blobBlue, { top: -150, right: -50 }]} />
+      <View style={[styles.blob, styles.blobOrange, { top: -150, right: -50 }]} />
       <View style={[styles.blob, styles.blobGreen, { bottom: 100, left: -50 }]} />
 
       {/* Header */}
@@ -81,7 +81,7 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thống kê nghe</Text>
+        <Text style={styles.headerTitle}>Thống kê ngữ pháp</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -93,13 +93,13 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
           </View>
 
           <View style={styles.legendContainer}>
-            {stats?.parts.map((part, index) => (
+            {stats?.categories.map((category, index) => (
               <View key={index} style={styles.legendItem}>
                 <View style={styles.legendLabelGroup}>
-                  <View style={[styles.legendDot, { backgroundColor: part.color }]} />
-                  <Text style={styles.legendName}>{part.name}</Text>
+                  <View style={[styles.legendDot, { backgroundColor: category.color }]} />
+                  <Text style={styles.legendName} numberOfLines={1}>{category.name}</Text>
                 </View>
-                <Text style={styles.legendPercentage}>{part.percentage}</Text>
+                <Text style={styles.legendPercentage}>{category.percentage}</Text>
               </View>
             ))}
           </View>
@@ -107,22 +107,22 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
 
         {/* Topics Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Chủ đề luyện nghe</Text>
+          <Text style={styles.sectionTitle}>Chủ điểm ngữ pháp</Text>
         </View>
 
-        {stats?.parts.map((part, index) => (
+        {stats?.categories.map((category, index) => (
           <TouchableOpacity 
             key={index} 
             style={styles.topicCard}
-            onPress={() => onNavigateToPartExams(part.partNumber)}
+            onPress={() => onNavigateToTopicPractices(category.categoryId)}
           >
             <View style={styles.topicTop}>
-              <View style={[styles.topicIconWrapper, { backgroundColor: part.color + '15' }]}>
-                <Ionicons name={part.iconName as any} size={24} color={part.color} />
+              <View style={[styles.topicIconWrapper, { backgroundColor: category.color + '15' }]}>
+                <MaterialCommunityIcons name={category.iconName as any} size={24} color={category.color} />
               </View>
               <View style={topicStyles.topicInfo}>
-                <Text style={styles.topicTitle}>{part.name}</Text>
-                <Text style={styles.topicSubtitle}>Học lại các đề đã làm</Text>
+                <Text style={styles.topicTitle}>{category.name}</Text>
+                <Text style={styles.topicSubtitle}>Học lại các bài đã luyện tập</Text>
               </View>
               <View style={styles.chevronBtn}>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -130,16 +130,17 @@ export const ListeningStatsOverviewScreen: React.FC<ListeningStatsOverviewScreen
             </View>
 
             <View style={styles.examsRow}>
-              {part.recentExams.map((exam, eIndex) => (
-                <View 
-                  key={eIndex} 
-                  style={styles.examBadge}
+              {category.recentLessons.map((lesson, eIndex) => (
+                <TouchableOpacity 
+                   key={eIndex} 
+                   style={styles.examBadge}
+                   onPress={() => onNavigateToPracticeDetail(lesson.id)}
                 >
-                  <Text style={styles.examBadgeText}>{exam}</Text>
-                </View>
+                  <Text style={styles.examBadgeText} numberOfLines={1}>{lesson.title}</Text>
+                </TouchableOpacity>
               ))}
-              {part.moreCount > 0 && (
-                <Text style={styles.moreExamsText}>+{part.moreCount} nữa</Text>
+              {category.moreCount > 0 && (
+                <Text style={styles.moreExamsText}>+{category.moreCount} nữa</Text>
               )}
             </View>
           </TouchableOpacity>
@@ -161,7 +162,7 @@ const topicStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FD', // Subtle off-white/blueish background
+    backgroundColor: '#F8F9FD',
   },
   blob: {
     position: 'absolute',
@@ -170,8 +171,8 @@ const styles = StyleSheet.create({
     borderRadius: 150,
     opacity: 0.1,
   },
-  blobBlue: {
-    backgroundColor: '#3B82F6',
+  blobOrange: {
+    backgroundColor: '#F59E0B',
     opacity: 0.05,
   },
   blobGreen: {
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 32,
     padding: 30,
-    shadowColor: '#4F46E5',
+    shadowColor: '#F59E0B',
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.08,
     shadowRadius: 30,
@@ -270,6 +271,7 @@ const styles = StyleSheet.create({
   legendLabelGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   legendDot: {
     width: 12,
@@ -281,11 +283,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     fontWeight: '700',
+    flex: 1,
   },
   legendPercentage: {
     fontSize: 14,
     color: '#1E293B',
     fontWeight: '900',
+    marginLeft: 10,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -297,11 +301,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '900',
     color: '#1E293B',
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#6366F1',
-    fontWeight: 'bold',
   },
   topicCard: {
     backgroundColor: '#FFFFFF',
@@ -354,16 +353,18 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F8FAFC',
     paddingTop: 20,
+    flexWrap: 'wrap',
   },
   examBadge: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#FFF7ED',
+    maxWidth: '45%',
   },
   examBadgeText: {
     fontSize: 12,
-    color: '#6366F1',
+    color: '#F59E0B',
     fontWeight: 'bold',
   },
   moreExamsText: {

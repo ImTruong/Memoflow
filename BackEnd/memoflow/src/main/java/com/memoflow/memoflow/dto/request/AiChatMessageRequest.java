@@ -13,6 +13,6 @@ public class AiChatMessageRequest {
     private String role;
 
     @NotBlank(message = "Message content is required")
-    @Size(max = 1200, message = "Message content must be at most 1200 characters")
+    @Size(max = 6000, message = "Message content must be at most 6000 characters")
     private String content;
 }

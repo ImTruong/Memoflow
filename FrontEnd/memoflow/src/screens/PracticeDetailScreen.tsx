@@ -270,6 +270,16 @@ export const PracticeDetailScreen: React.FC<{ route: any, navigation: any }> = (
                                 )}
 
                                 <TouchableOpacity
+                                    style={[styles.retakeBtn, { backgroundColor: '#10B981', marginBottom: 12 }]}
+                                    onPress={() => {
+                                        setShowResultModal(false);
+                                        navigation.navigate('QuizResult', { practiceId: selectedTask?.id || taskId });
+                                    }}
+                                >
+                                    <Text style={styles.retakeBtnText}>Xem chi tiết</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
                                     style={styles.retakeBtn}
                                     onPress={() => {
                                         setShowResultModal(false);

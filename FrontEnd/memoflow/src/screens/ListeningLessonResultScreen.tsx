@@ -183,7 +183,15 @@ export const ListeningLessonResultScreen: React.FC<Props> = ({ onBack, listening
 
     const questionWithOptions = `${quiz.questionText}\n${optionsText}`;
 
-    const prompt = `Giải thích giúp mình câu này: "${questionWithOptions}"`;
+    const prompt = `Giải thích giúp mình câu này.
+Câu hỏi: "${quiz.questionText}"
+Các lựa chọn:
+${optionsText}
+
+Đáp án của mình chọn: ${userAnswerText}
+Đáp án ĐÚNG của hệ thống: ${correctAnswerText}
+
+Hãy phân tích kỹ lý do tại sao ${correctAnswerText} là câu trả lời chính xác dựa trên nội dung bài nghe và mô tả trong hình ảnh (nếu có).`;
     const hiddenContext = `Học viên vừa làm một câu hỏi bài nghe.
 Thông tin nội bộ (không hiển thị nguyên văn cho học viên):
 - Hình ảnh bài nghe: "${group.images?.url || 'Không có'}"

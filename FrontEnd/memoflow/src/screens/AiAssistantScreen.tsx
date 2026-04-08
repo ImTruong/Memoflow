@@ -610,7 +610,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
                   placeholder="Hoi bat cu dieu gi ve bai hoc..."
                   placeholderTextColor="#9CA3AF"
                   multiline
-                  maxLength={1200}
+                  maxLength={6000}
                 />
 
                 <TouchableOpacity

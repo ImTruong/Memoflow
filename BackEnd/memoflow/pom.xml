@@ -162,6 +162,18 @@
             <version>2.21.1</version>
         </dependency>
 
+		<!-- DeepLearning4j for Word2Vec -->
+		<dependency>
+			<groupId>org.deeplearning4j</groupId>
+			<artifactId>deeplearning4j-nlp</artifactId>
+			<version>1.0.0-M2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.nd4j</groupId>
+			<artifactId>nd4j-native-platform</artifactId>
+			<version>1.0.0-M2.1</version>
+		</dependency>
+
 	</dependencies>
 	<!-- <dependencyManagement>
 		<dependencies>

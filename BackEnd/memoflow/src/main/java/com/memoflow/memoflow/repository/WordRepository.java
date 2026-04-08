@@ -20,6 +20,9 @@ public interface WordRepository extends JpaRepository<Word, Long> {
        @Query("SELECT w FROM Word w WHERE w.learningLesson.id = :flashcardLessonId AND w.deleted = false")
        Page<Word> findByFlashcardLessonId(@Param("flashcardLessonId") Long flashcardLessonId, Pageable pageable);
 
+       @Query("SELECT w FROM Word w WHERE w.learningLesson.id IN :flashcardLessonIds AND w.deleted = false")
+       List<Word> findByFlashcardLessonIdIn(@Param("flashcardLessonIds") List<Long> flashcardLessonIds);
+
        @Query("SELECT w FROM Word w WHERE w.learningLesson.id = :flashcardLessonId AND w.deleted = false AND LOWER(w.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
        Page<Word> findByFlashcardLessonIdAndName(@Param("flashcardLessonId") Long flashcardLessonId,
                      @Param("keyword") String keyword, Pageable pageable);

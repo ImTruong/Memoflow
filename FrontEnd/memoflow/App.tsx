@@ -15,7 +15,11 @@ import { VocabularyStatsScreen } from './src/screens/VocabularyStatsScreen';
 import { VocabularyDailyStatsScreen } from './src/screens/VocabularyDailyStatsScreen';
 import { WordDetailStatsScreen } from './src/screens/WordDetailStatsScreen';
 import { ListeningStatsOverviewScreen } from './src/screens/ListeningStatsOverviewScreen';
-import { ListeningExamDetailScreen } from './src/screens/ListeningExamDetailScreen';
+import { ListeningPartExamsScreen } from './src/screens/ListeningPartExamsScreen';
+import { GrammarStatsOverviewScreen } from './src/screens/GrammarStatsOverviewScreen';
+import { GrammarTopicExamsScreen } from './src/screens/GrammarTopicExamsScreen';
+import { VocabularyStatsOverviewScreen } from './src/screens/VocabularyStatsOverviewScreen';
+import { VocabularyTopicSetsScreen } from './src/screens/VocabularyTopicSetsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { EditProfileScreen } from './src/screens/EditProfileScreen';
 import { NotificationSettingsScreen } from './src/screens/NotificationSettingsScreen';
@@ -92,7 +96,16 @@ type Screen =
   | 'Bilingual'
   | 'BilingualDetail'
   | 'AiChat'
-  | 'AppliedExercise';
+  | 'AppliedExercise'
+  | 'ListeningPartExams'
+  | 'GrammarStats'
+  | 'GrammarTopicExams'
+  | 'VocabularyStatsOverview'
+  | 'VocabularyTopicSets'
+  | 'Profile'
+  | 'EditProfile'
+  | 'NotificationSettings'
+  | 'ChangePassword';
 
 type FeatureEntryScreen = 'Home' | 'VocabularyLearning';
 
@@ -107,7 +120,7 @@ export default function App() {
   const [onlyDue, setOnlyDue] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedWord, setSelectedWord] = useState('');
-  const [selectedExam, setSelectedExam] = useState('');
+  const [selectedExam, setSelectedExam] = useState<string | number>('');
   const [isGlobalStudy, setIsGlobalStudy] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedStoryProgress, setSelectedStoryProgress] = useState<UserLessonProgress | null>(null);
@@ -131,6 +144,7 @@ export default function App() {
     const [selectedGrammarLessonId, setSelectedGrammarLessonId] = useState<number | null>(null);
     const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
     const [quizAnswers, setQuizAnswers] = useState<any>(null);
+    const [selectedVocabCategory, setSelectedVocabCategory] = useState<string | number>('');
 
     useEffect(() => {
   const initAuth = async () => {
@@ -245,6 +259,13 @@ export default function App() {
     } catch (error) {
       console.error('Failed to load Word Hunt lesson detail', error);
     }
+  };
+
+  const handleNavigateToFlashcardEdit = (id: number, isOwnerValue: boolean) => {
+    setEditMode(true);
+    setSelectedLessonId(id);
+    setIsOwner(isOwnerValue);
+    setCurrentScreen('CreateFlashcardSet');
   };
 
   useEffect(() => {
@@ -586,8 +607,9 @@ export default function App() {
         return (
           <StatsScreen 
             onNavigateToNotifications={() => setCurrentScreen('Notifications')}
-            onNavigateToVocabularyStats={() => setCurrentScreen('VocabularyStats')}
+            onNavigateToVocabularyStats={() => setCurrentScreen('VocabularyStatsOverview')}
             onNavigateToListeningStats={() => setCurrentScreen('ListeningStats')}
+            onNavigateToGrammarStats={() => setCurrentScreen('GrammarStats')}
           />
         );
       case 'VocabularyStats':
@@ -623,16 +645,73 @@ export default function App() {
           <ListeningStatsOverviewScreen 
             onBack={() => setCurrentScreen('Stats')}
             onNavigateToExamDetail={(examId) => {
-              setSelectedExam(examId);
-              setCurrentScreen('ListeningExamDetail');
+              setSelectedLessonId(examId);
+              setCurrentScreen('ListeningLessonResult');
+            }}
+            onNavigateToPartExams={(part) => {
+              setSelectedListeningPart(part);
+              setCurrentScreen('ListeningPartExams');
             }}
           />
         );
-      case 'ListeningExamDetail':
+      case 'ListeningPartExams':
         return (
-          <ListeningExamDetailScreen 
+          <ListeningPartExamsScreen
             onBack={() => setCurrentScreen('ListeningStats')}
-            examId={selectedExam}
+            partNumber={selectedListeningPart || 1}
+            onNavigateToResult={(lessonId) => {
+              setSelectedLessonId(lessonId);
+              setCurrentScreen('ListeningLessonResult');
+            }}
+          />
+        );
+      case 'GrammarStats':
+        return (
+          <GrammarStatsOverviewScreen
+            onBack={() => setCurrentScreen('Stats')}
+            onNavigateToPracticeDetail={(practiceId) => {
+              setSelectedTaskId(practiceId);
+              setCurrentScreen('QuizResult');
+            }}
+            onNavigateToTopicPractices={(topicId) => {
+              setSelectedTopicId(topicId);
+              setCurrentScreen('GrammarTopicExams');
+            }}
+          />
+        );
+      case 'GrammarTopicExams':
+        return (
+          <GrammarTopicExamsScreen
+            onBack={() => setCurrentScreen('GrammarStats')}
+            topicId={selectedTopicId || 0}
+            onNavigateToResult={(practiceId) => {
+              setSelectedTaskId(practiceId);
+              setCurrentScreen('QuizResult');
+            }}
+          />
+        );
+      case 'VocabularyStatsOverview':
+        return (
+          <VocabularyStatsOverviewScreen
+            onBack={() => setCurrentScreen('Stats')}
+            onNavigateToCategoryHistory={(category) => {
+              setSelectedVocabCategory(category);
+              setCurrentScreen('VocabularyTopicSets');
+            }}
+            onNavigateToSetDetail={(id) => handleNavigateToFlashcardEdit(id, true)}
+            onNavigateToHistory={() => setCurrentScreen('VocabularyStats')}
+          />
+        );
+      case 'VocabularyTopicSets':
+        return (
+          <VocabularyTopicSetsScreen
+            onBack={() => setCurrentScreen('VocabularyStatsOverview')}
+            categoryName={selectedVocabCategory}
+            onNavigateToSetDetail={(id) => handleNavigateToFlashcardEdit(id, true)}
+            onNavigateToResult={(id) => {
+              setSelectedTaskId(id);
+              setCurrentScreen('QuizResult');
+            }}
           />
         );
       case 'Notifications':

@@ -1,6 +1,5 @@
 package com.memoflow.memoflow.repository;
 
-import com.memoflow.memoflow.dto.response.BilingualResponse;
 import com.memoflow.memoflow.dto.response.ListeningLessonResponse;
 import com.memoflow.memoflow.entity.LearningLesson;
 import org.springframework.data.domain.Page;
@@ -28,10 +27,16 @@ public interface LearningLessonRepository extends JpaRepository<LearningLesson, 
 
         List<LearningLesson> findByTypeAndLearningActivityIdOrderByIdAsc(String type, Long learningActivityId);
 
-        @Query("SELECT l FROM LearningLesson l WHERE l.creator.id = :userId AND l.deleted = false")
+        @Query("SELECT l FROM LearningLesson l WHERE l.creator.id = :userId AND l.deleted = false AND l.type = 'FLASHCARD'")
+        List<LearningLesson> findAllByCreatorId(@Param("userId") Long userId);
+
+        @Query("SELECT l FROM LearningLesson l WHERE l.creator.id = :userId AND l.deleted = false AND l.type = 'FLASHCARD'")
         Page<LearningLesson> findByCreatorId(@Param("userId") Long userId, Pageable pageable);
 
-        @Query(value = "SELECT * FROM learning_lessons l WHERE l.is_deleted = false AND JSON_EXTRACT(l.content, '$.privacyMode') = 'PUBLIC'", nativeQuery = true)
+        @Query("SELECT l FROM LearningLesson l WHERE l.deleted = false AND l.type = 'FLASHCARD' AND FUNCTION('JSON_EXTRACT', l.content, '$.privacyMode') = 'PUBLIC'")
+        List<LearningLesson> findAllCommunityFlashcardLessons();
+
+        @Query("SELECT l FROM LearningLesson l WHERE l.deleted = false AND l.type = 'FLASHCARD' AND FUNCTION('JSON_EXTRACT', l.content, '$.privacyMode') = 'PUBLIC'")
         Page<LearningLesson> findCommunityFlashcardLessons(Pageable pageable);
 
         @Query("SELECT new com.memoflow.memoflow.dto.response.ListeningLessonResponse(" +

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { colors, typography } from '../theme/colors';
 import { NotificationOverlay } from '../components/NotificationOverlay';
 import { useNotifications } from '../hooks/useNotifications';
 import { Header } from '../components/Header';
 import { useUser } from '../hooks/useUser';
+import { statsApi, OverviewStats } from '../api/statsApi';
+import { DonutChart } from '../components/shared/DonutChart';
 
 const { width } = Dimensions.get('window');
 
@@ -13,16 +15,62 @@ type StatsScreenProps = {
   onNavigateToNotifications: () => void;
   onNavigateToVocabularyStats: () => void;
   onNavigateToListeningStats: () => void;
+  onNavigateToGrammarStats: () => void;
 };
 
 export const StatsScreen: React.FC<StatsScreenProps> = ({ 
   onNavigateToNotifications, 
   onNavigateToVocabularyStats,
-  onNavigateToListeningStats
+  onNavigateToListeningStats,
+  onNavigateToGrammarStats
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const { unreadCount } = useNotifications();
   const { profile } = useUser();
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const data = await statsApi.getOverview();
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to load overview stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderDonutChart = () => {
+    if (!stats) return null;
+
+    const data = [
+      { value: stats.vocabularyCount, color: '#3B82F6' },
+      { value: stats.grammarCount, color: '#10B981' },
+      { value: stats.listeningCount, color: '#A855F7' }
+    ];
+
+    return (
+      <DonutChart
+        data={data}
+        centerValue={stats.totalActivities || 0}
+        centerSubLabel="Hoạt động"
+      />
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -49,38 +97,29 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
             <View style={styles.todayHeader}>
               <Text style={styles.sectionTitle}>Hôm nay</Text>
               <View style={styles.dateBadge}>
-                <Text style={styles.dateText}>Thứ 3, 24/10</Text>
+                <Text style={styles.dateText}>{stats?.todayDate || "Đang tải..."}</Text>
               </View>
             </View>
 
             <View style={styles.chartContainer}>
-              <View style={styles.circularChart}>
-                <View style={[styles.chartSegment, { borderColor: '#3B82F6', borderTopColor: 'transparent', transform: [{ rotate: '45deg' }] }]} />
-                <View style={[styles.chartSegment, { borderColor: '#10B981', borderLeftColor: 'transparent', borderTopColor: 'transparent', transform: [{ rotate: '-45deg' }] }]} />
-                <View style={[styles.chartSegment, { borderColor: '#A855F7', borderRightColor: 'transparent', borderTopColor: 'transparent', transform: [{ rotate: '180deg' }] }]} />
-                
-                <View style={styles.chartInner}>
-                  <Text style={styles.chartNumber}>6</Text>
-                  <Text style={styles.chartSubtext}>Hoạt động</Text>
-                </View>
-              </View>
+              {renderDonutChart()}
             </View>
 
             <View style={styles.legendRow}>
               <View style={[styles.legendItem, { backgroundColor: '#EFF6FF' }]}>
                 <View style={[styles.legendDot, { backgroundColor: '#3B82F6' }]} />
                 <Text style={styles.legendLabel}>TỪ VỰNG</Text>
-                <Text style={styles.legendValue}>3 bộ</Text>
+                <Text style={styles.legendValue}>{stats?.vocabularyCount || 0} bộ</Text>
               </View>
               <View style={[styles.legendItem, { backgroundColor: '#F0FDF4' }]}>
                 <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
                 <Text style={styles.legendLabel}>NGỮ PHÁP</Text>
-                <Text style={styles.legendValue}>1 bài</Text>
+                <Text style={styles.legendValue}>{stats?.grammarCount || 0} bài</Text>
               </View>
               <View style={[styles.legendItem, { backgroundColor: '#FAF5FF' }]}>
                 <View style={[styles.legendDot, { backgroundColor: '#A855F7' }]} />
                 <Text style={styles.legendLabel}>NGHE</Text>
-                <Text style={styles.legendValue}>2 bài</Text>
+                <Text style={styles.legendValue}>{stats?.listeningCount || 0} bài</Text>
               </View>
             </View>
           </View>
@@ -115,7 +154,7 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
             </TouchableOpacity>
 
             {/* Grammar Detailed Card */}
-            <TouchableOpacity style={styles.detailCard}>
+            <TouchableOpacity style={styles.detailCard} onPress={onNavigateToGrammarStats}>
               <View style={styles.cardTop}>
                 <View style={[styles.iconBox, { backgroundColor: '#F0FDF4' }]}>
                   <Ionicons name="pencil-outline" size={24} color="#10B981" />
@@ -182,6 +221,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   contentWrapper: {
     flex: 1,
     position: 'relative',
@@ -231,24 +274,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
   },
-  circularChart: {
+  circularChartContainer: {
     width: 180,
     height: 180,
     borderRadius: 90,
-    borderWidth: 20,
-    borderColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-  chartSegment: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 20,
-  },
   chartInner: {
+    position: 'absolute',
     alignItems: 'center',
   },
   chartNumber: {

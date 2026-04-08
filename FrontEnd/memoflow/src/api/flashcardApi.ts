@@ -168,4 +168,7 @@ export const flashcardApi = {
     apiFetch<ApiResponse<PageResponse<FlashcardReviewResponse>>>(
       `/flashcard-reviews/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`
     ),
+
+  getRecommendedWords: () => 
+    apiFetch<ApiResponse<string[]>>('/suggestions/recommended-words'),
 };

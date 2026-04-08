@@ -24,6 +24,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     private final QuizAnswerRepository quizAnswerRepository;
     private final UserQuizAnswerRepository userQuizAnswerRepository;
     public final MediaRepository mediaRepository;
+    private final com.memoflow.memoflow.service.Word2VecService word2VecService;
 
     private static final String GRAMMAR_TOPIC_TYPE = "GRAMMAR_TOPIC";
     private static final String GRAMMAR_LESSON_TYPE = "GRAMMAR_LESSON";
@@ -253,16 +256,69 @@ public class LearningLessonServiceImpl implements LearningLessonService {
     @Transactional(readOnly = true)
     public PageResponse<FlashcardLessonSummaryResponse> getMyFlashcardLessons(UserPrincipal userPrincipal,
             Pageable pageable) {
-        Page<LearningLesson> lessonPage = learningLessonRepository.findByCreatorId(userPrincipal.getId(), pageable);
-        return mapToFlashcardLessonSummaryPageResponse(lessonPage, userPrincipal.getId());
+        List<LearningLesson> allLessons = learningLessonRepository.findAllByCreatorId(userPrincipal.getId());
+        return sortAndPaginateLessons(allLessons, userPrincipal.getId(), pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FlashcardLessonSummaryResponse> getCommunityFlashcardLessons(UserPrincipal userPrincipal,
             Pageable pageable) {
-        Page<LearningLesson> lessonPage = learningLessonRepository.findCommunityFlashcardLessons(pageable);
-        return mapToFlashcardLessonSummaryPageResponse(lessonPage, userPrincipal.getId());
+        List<LearningLesson> allLessons = learningLessonRepository.findAllCommunityFlashcardLessons();
+        return sortAndPaginateLessons(allLessons, userPrincipal.getId(), pageable);
+    }
+
+    private PageResponse<FlashcardLessonSummaryResponse> sortAndPaginateLessons(List<LearningLesson> lessons, Long userId, Pageable pageable) {
+        if (lessons.isEmpty()) {
+            return PageResponse.<FlashcardLessonSummaryResponse>builder()
+                    .content(Collections.emptyList())
+                    .pageNumber(pageable.getPageNumber())
+                    .pageSize(pageable.getPageSize())
+                    .totalElements(0)
+                    .totalPages(0)
+                    .last(true)
+                    .build();
+        }
+
+        // 1. Get user's recent words for interest profile
+        List<FlashcardReview> recentReviews = flashcardReviewRepository.findTop10ByUserIdOrderByCreatedAtDesc(userId);
+        List<String> recentUserWords = recentReviews.stream()
+                .map(fr -> fr.getWord().getName())
+                .distinct()
+                .limit(5)
+                .collect(Collectors.toList());
+
+        // 2. Fetch all words for these lessons in bulk to avoid N+1
+        List<Long> lessonIds = lessons.stream().map(LearningLesson::getId).collect(Collectors.toList());
+        List<Word> allWords = wordRepository.findByFlashcardLessonIdIn(lessonIds);
+        Map<Long, List<String>> lessonWordsMap = allWords.stream()
+                .collect(Collectors.groupingBy(
+                        w -> w.getLearningLesson().getId(),
+                        Collectors.mapping(Word::getName, Collectors.toList())
+                ));
+
+        // 3. Calculate similarity score for each lesson (only if user has history)
+        if (!recentUserWords.isEmpty()) {
+            Map<Long, Double> scores = new HashMap<>();
+            for (LearningLesson lesson : lessons) {
+                List<String> wordsInLesson = lessonWordsMap.getOrDefault(lesson.getId(), Collections.emptyList());
+                double score = word2VecService.calculateSimilarity(recentUserWords, wordsInLesson);
+                scores.put(lesson.getId(), score);
+            }
+
+            // 4. Sort lessons by score descending
+            lessons.sort((l1, l2) -> Double.compare(scores.getOrDefault(l2.getId(), 0.0), scores.getOrDefault(l1.getId(), 0.0)));
+        }
+
+        // 5. Manual Pagination
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), lessons.size());
+        
+        List<LearningLesson> pagedContent = (start < lessons.size()) ? lessons.subList(start, end) : Collections.emptyList();
+        
+        Page<LearningLesson> lessonPage = new PageImpl<>(pagedContent, pageable, lessons.size());
+        
+        return mapToFlashcardLessonSummaryPageResponse(lessonPage, userId);
     }
 
     private PageResponse<FlashcardLessonSummaryResponse> mapToFlashcardLessonSummaryPageResponse(
@@ -434,6 +490,12 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                     .build();
         }
         progress.setIsCompleted(isCompleted);
+        if (isCompleted) {
+            progress.setCompletedAt(java.time.LocalDateTime.now());
+            progress.setProgressPercent(100.0);
+        } else {
+            progress.setCompletedAt(null);
+        }
 
         int score = 0;
         if (!isCompleted) {

@@ -27,4 +27,21 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
     boolean existsByUserIdAndCreatedAtAfter(Long userId, LocalDateTime after);
 
     boolean existsByUserIdAndLearningLessonIdAndIsCompletedTrue(Long userId, Long lessonId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp " +
+                                                "WHERE ulp.user.id = :userId " +
+                                                "AND ulp.isCompleted = true " +
+                                                "AND ulp.completedAt >= :startOfDay " +
+                                                "AND ulp.learningLesson.type LIKE :typePattern")
+    long countCompletedLessonsByTypeToday(@org.springframework.data.repository.query.Param("userId") Long userId, 
+                                        @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay, 
+                                        @org.springframework.data.repository.query.Param("typePattern") String typePattern);
+
+    @org.springframework.data.jpa.repository.Query("SELECT ulp FROM UserLessonProgress ulp " +
+                                                "WHERE ulp.user.id = :userId " +
+                                                "AND ulp.isCompleted = true " +
+                                                "AND ulp.learningLesson.type = :type " +
+                                                "ORDER BY ulp.completedAt DESC")
+    List<UserLessonProgress> findCompletedLessonsByUserIdAndType(@org.springframework.data.repository.query.Param("userId") Long userId, 
+                                                               @org.springframework.data.repository.query.Param("type") String type);
 }

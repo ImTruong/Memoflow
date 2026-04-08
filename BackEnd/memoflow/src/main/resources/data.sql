@@ -85,13 +85,13 @@ UPDATE users SET avatar_media_id = 1 WHERE id = 1;
 UPDATE users SET avatar_media_id = 1 WHERE id = 2;
 
 INSERT IGNORE INTO learning_modes (name, description, icon_media_id) VALUES
-    ('Từ vựng', 'Ghi nhớ theo đường cong lãng quên', 2), 
-    ('Ngữ pháp', 'Lý thuyết và Trắc nghiệm', 3), 
+    ('Từ vựng', 'Ghi nhớ theo đường cong lãng quên', 2),
+    ('Ngữ pháp', 'Lý thuyết và Trắc nghiệm', 3),
     ('Luyện nghe', 'Đề thi mẫu Toeic', 4);
 
 INSERT IGNORE INTO learning_activities (title, description, icon_media_id, learning_mode_id) VALUES
-    ('Flashcard', 'Luyện nhớ nhanh qua thẻ', 5, 1) , 
-    ('Truyện chêm' , 'Học từ vựng qua ngữ cảnh', 5, 1) , 
+    ('Flashcard', 'Luyện nhớ nhanh qua thẻ', 5, 1) ,
+    ('Truyện chêm' , 'Học từ vựng qua ngữ cảnh', 5, 1) ,
     ('Bài viết song ngữ', 'Đọc hiểu Anh-Việt mỗi ngày', 5, 1),
     ('Đua từ với Bot', 'Thử thách tốc độ phản xạ', 5, 1),
     ('Tinh mắt tìm từ', 'Tìm từ ẩn trong mê cung', 5, 1),

@@ -43,6 +43,8 @@ const SetHeader = React.memo(({
   totalWords,
   searchKeyword, setSearchKeyword,
   handleAddWordPress,
+  recommendedWords = [],
+  isSuggestionsLoading = false,
   isOwner = true // Add isOwner prop
 }: any) => {
   return (
@@ -141,27 +143,37 @@ const SetHeader = React.memo(({
 
         {isOwner && (
           <>
-            <Text style={styles.hintTitle}>GỢI Ý TỪ VỰNG</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hintsScroll}>
-              <TouchableOpacity 
-                style={[styles.hintBtn, { backgroundColor: '#EEF2FF' }]}
-                onPress={() => handleAddWordPress('Adventure')}
-              >
-                <Text style={[styles.hintText, { color: '#5B62E3' }]}>+ Adventure</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.hintBtn, { backgroundColor: '#ECFDF5' }]}
-                onPress={() => handleAddWordPress('Journey')}
-              >
-                <Text style={[styles.hintText, { color: '#10B981' }]}>+ Journey</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.hintBtn, { backgroundColor: '#F5F3FF' }]}
-                onPress={() => handleAddWordPress('Baggage')}
-              >
-                <Text style={[styles.hintText, { color: '#8B5CF6' }]}>+ Baggage</Text>
-              </TouchableOpacity>
-            </ScrollView>
+            <Text style={styles.hintTitle}>GỢI Ý TỪ VỰNG THÔNG MINH (AI)</Text>
+            <View style={{ marginBottom: 20 }}>
+              {isSuggestionsLoading ? (
+                <ActivityIndicator size="small" color="#5B62E3" style={{ alignSelf: 'flex-start', marginLeft: 10 }} />
+              ) : recommendedWords.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hintsScroll}>
+                  {recommendedWords.map((word: string, index: number) => {
+                    const colors = [
+                      { bg: '#EEF2FF', text: '#5B62E3' },
+                      { bg: '#ECFDF5', text: '#10B981' },
+                      { bg: '#F5F3FF', text: '#8B5CF6' },
+                      { bg: '#FFF7ED', text: '#F97316' }
+                    ];
+                    const color = colors[index % colors.length];
+                    return (
+                      <TouchableOpacity 
+                        key={index}
+                        style={[styles.hintBtn, { backgroundColor: color.bg }]}
+                        onPress={() => handleAddWordPress(word)}
+                      >
+                        <Text style={[styles.hintText, { color: color.text }]}>+ {word}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              ) : (
+                <Text style={{ color: '#9CA3AF', marginLeft: 10, fontSize: 13, marginBottom: 10 }}>
+                   (Học thêm từ để nhận gợi ý cá nhân hóa)
+                </Text>
+              )}
+            </View>
 
             <TouchableOpacity 
               style={styles.addWordBtn}
@@ -201,6 +213,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
   const [isWordsLoading, setIsWordsLoading] = useState(false);
   const [totalWords, setTotalWords] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [recommendedWords, setRecommendedWords] = useState<string[]>([]);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success'|'error' }>({
     visible: false,
@@ -270,7 +284,24 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
     if (currentLessonId) {
       fetchWords(currentLessonId, 0, searchKeyword, false);
     }
+    if (isOwner) {
+      fetchSuggestions();
+    }
   }, [refreshTrigger, currentLessonId]);
+
+  const fetchSuggestions = async () => {
+    try {
+      setIsSuggestionsLoading(true);
+      const response = await flashcardApi.getRecommendedWords();
+      if (response.success) {
+        setRecommendedWords(response.data);
+      }
+    } catch (error) {
+      console.error('Fetch recommendations error:', error);
+    } finally {
+      setIsSuggestionsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -517,6 +548,8 @@ export const CreateFlashcardSetScreen: React.FC<CreateFlashcardSetScreenProps> =
               totalWords={totalWords}
               searchKeyword={searchKeyword} setSearchKeyword={setSearchKeyword}
               handleAddWordPress={handleAddWordPress}
+              recommendedWords={recommendedWords}
+              isSuggestionsLoading={isSuggestionsLoading}
               isOwner={isOwner}
           />
         }

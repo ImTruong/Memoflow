@@ -64,36 +64,85 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
   };
 
   const renderResultItem = (question: GrammarPracticeResultResponse['questions'][number], index: number) => {
-    const isMultipleChoice = question.type === 'MULTIPLE_CHOICE';
+    const hasOptions = question.options && question.options.length > 0;
+    const isAnswered = question.userOptionId !== null || (question.userTextAnswer !== null && question.userTextAnswer !== undefined && question.userTextAnswer.trim() !== '');
+
+    let statusText = '';
+    let statusColor = '';
+    if (!isAnswered) {
+      statusText = 'Chưa làm';
+      statusColor = '#94A3B8';
+    } else if (question.correct) {
+      statusText = 'Đúng';
+      statusColor = '#10B981';
+    } else {
+      statusText = 'Sai';
+      statusColor = '#EF4444';
+    }
 
     return (
       <View key={question.quizId} style={styles.resultCard}>
         <View style={styles.resultHeader}>
-          <MaterialCommunityIcons
-            name={question.correct ? 'check-circle-outline' : 'close-circle-outline'}
-            size={24}
-            color={question.correct ? '#10B981' : '#EF4444'}
-          />
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+            <Text style={[styles.statusBadgeText, { color: statusColor }]}>{statusText}</Text>
+          </View>
           <Text style={styles.questionNumText}>{index + 1}. {question.questionText}</Text>
           <TouchableOpacity onPress={() => handleAiExplain(question)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <MaterialCommunityIcons name="robot-outline" size={24} color="#3B82F6" />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.answerDetails}>
-          <Text style={styles.userAnswerText}>
-            Câu trả lời của bạn: <Text style={question.correct ? styles.correctText : styles.wrongText}>
-              {isMultipleChoice
-                ? question.options.find((option) => option.optionId === question.userOptionId)?.optionText || 'Chưa trả lời'
-                : question.userTextAnswer || 'Chưa trả lời'}
-            </Text>
-          </Text>
-          {!question.correct && (
-            <Text style={styles.correctAnswerInfo}>
-              Đáp án đúng: <Text style={styles.correctTextHighlight}>{isMultipleChoice ? question.correctTextAnswer : question.correctTextAnswer}</Text>
-            </Text>
-          )}
-        </View>
+        {hasOptions ? (
+          <View style={styles.optionsList}>
+            {question.options.map((option, optIdx) => {
+              const letter = String.fromCharCode(65 + optIdx);
+              const isUserChoice = option.optionId === question.userOptionId;
+              const isCorrectChoice = option.isCorrect;
+
+              let optionStyle = styles.optionItem;
+              if (isUserChoice) {
+                optionStyle = isCorrectChoice ? styles.optionItemCorrect : styles.optionItemWrong;
+              } else if (isCorrectChoice) {
+                optionStyle = styles.optionItemChoice; // Highlight correct answer even if not chosen
+                // We'll use a special style for correct answer when not chosen
+              }
+
+              return (
+                <View key={option.optionId} style={[optionStyle, isCorrectChoice && !isUserChoice && styles.optionItemCorrectBorder]}>
+                  <View style={[styles.optionLetterCircle, (isUserChoice || isCorrectChoice) ? styles.optionLetterCircleActive : null]}>
+                    <Text style={[styles.optionLetterText, (isUserChoice || isCorrectChoice) ? styles.optionLetterTextActive : null]}>{letter}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.optionContentText, (isUserChoice || isCorrectChoice) ? styles.optionContentTextActive : null]}>
+                      {option.optionText}
+                    </Text>
+                    <View style={styles.labelRow}>
+                      {isUserChoice && <Text style={[styles.choiceLabel, isCorrectChoice ? styles.labelCorrect : styles.labelWrong]}>Lựa chọn của bạn</Text>}
+                      {isCorrectChoice && <Text style={[styles.choiceLabel, styles.labelCorrect]}>Đáp án đúng</Text>}
+                    </View>
+                  </View>
+                  {isCorrectChoice && <MaterialCommunityIcons name="check-circle" size={20} color={isUserChoice || isCorrectChoice ? "#FFF" : "#10B981"} />}
+                  {isUserChoice && !isCorrectChoice && <MaterialCommunityIcons name="close-circle" size={20} color="#FFF" />}
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.answerDetails}>
+            <View style={styles.textAnswerRow}>
+              <Text style={styles.answerLabel}>Câu trả lời của bạn:</Text>
+              <Text style={[styles.userAnswerTextVal, question.correct ? styles.correctText : styles.wrongText]}>
+                {question.userTextAnswer || 'Chưa trả lời'}
+              </Text>
+            </View>
+            <View style={styles.textAnswerRow}>
+              <Text style={styles.answerLabel}>Đáp án đúng:</Text>
+              <Text style={[styles.correctAnswerInfoVal, styles.correctText]}>
+                {question.correctTextAnswer}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <TouchableOpacity
           style={styles.explanationBtn}
@@ -192,23 +241,45 @@ const styles = StyleSheet.create({
   motivationalText: { fontSize: 16, color: '#64748B', marginTop: 8 },
   detailsHeader: { padding: 20 },
   detailsTitle: { fontSize: 18, fontWeight: 'bold', color: '#0F172A' },
-  resultCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginHorizontal: 20, marginBottom: 16, borderWidth: 1, borderColor: '#F1F5F9' },
-  resultHeader: { flexDirection: 'row', alignItems: 'flex-start' },
-  questionNumText: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#0F172A', marginLeft: 12, lineHeight: 24 },
-  answerDetails: { marginTop: 12, paddingLeft: 36 },
+  resultCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, marginHorizontal: 20, marginBottom: 20, borderWidth: 1, borderColor: '#F1F5F9', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 },
+  resultHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, marginRight: 12 },
+  statusBadgeText: { fontSize: 12, fontWeight: 'bold' },
+  questionNumText: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#0F172A', marginRight: 12, lineHeight: 24 },
+  answerDetails: { marginTop: 12, paddingLeft: 0 },
+  textAnswerRow: { marginBottom: 16, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+  answerLabel: { fontSize: 13, color: '#64748B', marginBottom: 4 },
+  userAnswerTextVal: { fontSize: 16, fontWeight: 'bold' },
+  correctAnswerInfoVal: { fontSize: 16, fontWeight: 'bold' },
   userAnswerText: { fontSize: 15, color: '#64748B' },
-  correctText: { color: '#10B981', fontWeight: 'bold' },
-  wrongText: { color: '#EF4444', fontWeight: 'bold', textDecorationLine: 'line-through' },
+  correctText: { color: '#10B981' },
+  wrongText: { color: '#EF4444' },
   correctAnswerInfo: { fontSize: 15, color: '#10B981', marginTop: 4, fontWeight: '500' },
   correctTextHighlight: { fontWeight: 'bold' },
-  explanationBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingLeft: 36 },
+  explanationBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingVertical: 8 },
   explanationBtnText: { fontSize: 14, color: '#3B82F6', fontWeight: 'bold', marginRight: 4 },
-  explanationBox: { marginTop: 12, backgroundColor: '#FFF1F2', borderRadius: 12, padding: 16, marginLeft: 36 },
-  explanationTitle: { fontSize: 14, fontWeight: 'bold', color: '#BE123C', marginBottom: 4 },
+  explanationBox: { marginTop: 12, backgroundColor: '#EFF6FF', borderRadius: 12, padding: 16 },
+  explanationTitle: { fontSize: 14, fontWeight: 'bold', color: '#1E40AF', marginBottom: 4 },
   explanationText: { fontSize: 14, color: '#4B5563', lineHeight: 20 },
   footerActions: { flexDirection: 'row', padding: 20, gap: 16, marginTop: 24 },
   retryBtn: { flex: 1, height: 56, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
   retryBtnText: { fontSize: 16, fontWeight: 'bold', color: '#0F172A' },
   continueBtn: { flex: 1, height: 56, borderRadius: 16, backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center' },
   continueBtnText: { fontSize: 16, fontWeight: 'bold', color: '#FFF' },
+  optionsList: { gap: 12 },
+  optionItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9' },
+  optionItemCorrect: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, backgroundColor: '#10B981', borderWidth: 1, borderColor: '#10B981' },
+  optionItemCorrectBorder: { borderColor: '#10B981', borderWidth: 2 },
+  optionItemWrong: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, backgroundColor: '#EF4444', borderWidth: 1, borderColor: '#EF4444' },
+  optionItemChoice: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#CBD5E1' },
+  optionLetterCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  optionLetterCircleActive: { backgroundColor: 'rgba(255,255,255,0.3)' },
+  optionLetterText: { fontSize: 14, fontWeight: 'bold', color: '#64748B' },
+  optionLetterTextActive: { color: '#FFF' },
+  optionContentText: { fontSize: 15, color: '#475569', marginBottom: 2 },
+  optionContentTextActive: { color: '#FFF', fontWeight: 'bold' },
+  labelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  choiceLabel: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' },
+  labelCorrect: { color: '#FFF', backgroundColor: 'rgba(255,255,255,0.2)' },
+  labelWrong: { color: '#FFF', backgroundColor: 'rgba(255,255,255,0.2)' },
 });

@@ -52,6 +52,12 @@ public interface FlashcardReviewRepository extends JpaRepository<FlashcardReview
        long countDistinctWordsReviewedToday(@Param("userId") Long userId,
                      @Param("startOfDay") LocalDateTime startOfDay);
 
+       @Query(value = "SELECT COUNT(DISTINCT w.learning_lesson_id) FROM flashcard_reviews fr " +
+                     "JOIN words w ON fr.word_id = w.id " +
+                     "WHERE fr.user_id = :userId AND fr.created_at >= :startOfDay", nativeQuery = true)
+       long countDistinctLessonsReviewedToday(@Param("userId") Long userId,
+                     @Param("startOfDay") LocalDateTime startOfDay);
+
        @Query(value = "SELECT COUNT(DISTINCT w.id) FROM words w " +
                      "JOIN flashcard_reviews fr ON fr.word_id = w.id " +
                      "WHERE w.is_deleted = false " +
@@ -82,4 +88,6 @@ public interface FlashcardReviewRepository extends JpaRepository<FlashcardReview
                      "WHERE fr.nextReviewDate <= :now " +
                      "ORDER BY fr.nextReviewDate ASC")
        List<Object[]> findDueFlashcardsForReminder(@Param("now") LocalDateTime now);
+
+       List<FlashcardReview> findTop10ByUserIdOrderByCreatedAtDesc(Long userId);
 }
