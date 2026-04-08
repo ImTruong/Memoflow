@@ -14,6 +14,8 @@ import java.util.List;
 @Repository
 public interface WordRepository extends JpaRepository<Word, Long> {
 
+       long countByDeletedFalse();
+
        @Query("SELECT w FROM Word w WHERE w.learningLesson.id = :flashcardLessonId AND w.deleted = false")
        List<Word> findByFlashcardLessonId(@Param("flashcardLessonId") Long flashcardLessonId);
 

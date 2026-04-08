@@ -43,21 +43,26 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
       ? question.options.find((option) => option.optionId === question.userOptionId)?.optionText || 'Chưa trả lời'
       : question.userTextAnswer || 'Chưa trả lời';
 
+    const optionsList = isMultipleChoice
+      ? question.options.map((opt, idx) => `${String.fromCharCode(65 + idx)}. ${opt.optionText}`).join('\n')
+      : '';
+  
     const prompt = `Giải thích giúp mình câu này: "${question.questionText}"`;
     const hiddenContext = `Học viên vừa làm một câu hỏi ngữ pháp.
-  Thông tin nội bộ (không hiển thị nguyên văn cho học viên):
+  Thông tin nội bộ:
   - Câu hỏi: "${question.questionText}"
+  ${isMultipleChoice ? `- Danh sách các lựa chọn:\n${optionsList}` : ''}
   - Đáp án của học viên: "${userAnswer}"
   - Đáp án đúng: "${question.correctTextAnswer}"
-  - Lời giải thích ngắn: "${question.explanation || 'Không có'}"
+  - Lời giải thích gốc: "${question.explanation || 'Không có'}"
+  
   Yêu cầu phản hồi:
-  - Trả lời bằng tiếng Việt.
-  - Giải thích vì sao đáp án của học viên đúng/sai.
-  - Phải giải thích tất cả các đáp án.
-  - Đáp án nào sai thì giải thích tại sao sai. Đáp án nào đúng thì giải thích tại sao đúng.
-  - Nêu rõ cấu trúc ngữ pháp áp dụng.
-  - Cho thêm 2 ví dụ tương tự.`;
-
+  - Trả lời bằng tiếng Việt, giọng điệu thân thiện, chuyên nghiệp.
+  - PHẢI phân tích và giải thích TẤT CẢ các lựa chọn (A, B, C, D...) nếu có.
+  - Với mỗi lựa chọn, hãy nêu rõ tại sao nó ĐÚNG hoặc tại sao nó SAI trong ngữ cảnh này.
+  - Nêu rõ chủ điểm ngữ pháp và cấu trúc áp dụng.
+  - Cho thêm 2 ví dụ tương tự để củng cố kiến thức.`;
+  
     setAiPrompt(prompt);
     setAiHiddenContext(hiddenContext);
     setIsAiModalVisible(true);
@@ -97,7 +102,6 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
             {question.options.map((option, optIdx) => {
               const letter = String.fromCharCode(65 + optIdx);
               const isUserChoice = option.optionId === question.userOptionId;
-              // Fallback check against correctOptionId if isCorrect is missing or inconsistent
               const isCorrectChoice = option.isCorrect || (question.correctOptionId === option.optionId);
               
               let optionStyle = styles.optionItem;
@@ -114,21 +118,22 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
                   <View style={[styles.optionLetterCircle, isActive ? styles.optionLetterCircleActive : null]}>
                     <Text style={[styles.optionLetterText, isActive ? styles.optionLetterTextActive : null]}>{letter}</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                     <Text style={[styles.optionContentText, isActive ? styles.optionContentTextActive : null]}>
-                        {option.optionText}
-                     </Text>
-                     <View style={styles.labelRow}>
-                        {isUserChoice && (
-                          <Text style={[styles.choiceLabel, isCorrectChoice ? styles.labelCorrect : styles.labelWrong]}>
-                            Lựa chọn của bạn {isCorrectChoice ? '(Đúng)' : '(Sai)'}
-                          </Text>
-                        )}
-                        {isCorrectChoice && !isUserChoice && (
-                          <Text style={[styles.choiceLabel, styles.labelCorrect]}>Đáp án đúng</Text>
-                        )}
-                     </View>
-                  </View>
+                   <View style={{ flex: 1 }}>
+                      <Text style={[styles.optionContentText, isActive ? styles.optionContentTextActive : null]}>
+                         {option.optionText}
+                      </Text>
+                      <View style={styles.labelRow}>
+                         {isUserChoice && (
+                           <Text style={[styles.choiceLabel, isCorrectChoice ? styles.labelCorrect : styles.labelWrong]}>
+                             Lựa chọn của bạn {isCorrectChoice ? '(Đúng)' : '(Sai)'}
+                           </Text>
+                         )}
+                         {isCorrectChoice && !isUserChoice && (
+                           <Text style={[styles.choiceLabel, styles.labelCorrect]}>Đáp án đúng</Text>
+                         )}
+                      </View>
+                   </View>
+
                   {isCorrectChoice && <MaterialCommunityIcons name="check-circle" size={20} color="#FFF" />}
                   {isUserChoice && !isCorrectChoice && <MaterialCommunityIcons name="close-circle" size={20} color="#FFF" />}
                 </View>
@@ -290,4 +295,6 @@ const styles = StyleSheet.create({
   choiceLabel: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' },
   labelCorrect: { color: '#FFF', backgroundColor: 'rgba(255,255,255,0.2)' },
   labelWrong: { color: '#FFF', backgroundColor: 'rgba(255,255,255,0.2)' },
+
 });
+

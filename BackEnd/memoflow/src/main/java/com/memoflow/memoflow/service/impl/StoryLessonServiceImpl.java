@@ -65,6 +65,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
                 .type(STORY_TYPE)
                 .learningActivity(activity)
                 .image(buildStoryImage(image))
+                .creator(creator)
                 .build();
 
         lesson.setContent(buildStoryContent(request));
@@ -204,10 +205,8 @@ public class StoryLessonServiceImpl implements StoryLessonService {
 
         try {
             Map<String, String> uploadResult = cloudinaryService.uploadFile(image, "stories");
-            String publicId = uploadResult.get("public_id");
-            if (publicId == null) {
-                publicId = uploadResult.get("publicId");
-            }
+            String publicId = uploadResult.get("publicId");
+
             return Media.builder()
                     .url(uploadResult.get("url"))
                     .publicId(publicId)
