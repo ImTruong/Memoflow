@@ -52,6 +52,11 @@ public interface FlashcardReviewRepository extends JpaRepository<FlashcardReview
        long countDistinctWordsReviewedToday(@Param("userId") Long userId,
                      @Param("startOfDay") LocalDateTime startOfDay);
 
+       @Query(value = "SELECT COUNT(DISTINCT word_id) FROM flashcard_reviews " +
+                     "WHERE user_id = :userId AND created_at BETWEEN :start AND :end", nativeQuery = true)
+       long countDistinctWordsReviewedInPeriod(@Param("userId") Long userId,
+                     @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
        @Query(value = "SELECT COUNT(DISTINCT w.learning_lesson_id) FROM flashcard_reviews fr " +
                      "JOIN words w ON fr.word_id = w.id " +
                      "WHERE fr.user_id = :userId AND fr.created_at >= :startOfDay", nativeQuery = true)

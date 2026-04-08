@@ -110,26 +110,29 @@ public class Word2VecServiceImpl implements Word2VecService {
 
     @Override
     public double calculateSimilarity(List<String> userWords, List<String> lessonWords) {
-        if (!isLoaded || wordVectors == null || userWords == null || lessonWords == null || userWords.isEmpty() || lessonWords.isEmpty()) {
-            return 0.0;
-        }
-
         try {
-            INDArray userMean = getMeanVectorForWords(userWords);
-            INDArray lessonMean = getMeanVectorForWords(lessonWords);
+            double word2vecSim = 0.0;
+            if (isLoaded && wordVectors != null) {
+                INDArray userMean = getMeanVectorForWords(userWords);
+                INDArray lessonMean = getMeanVectorForWords(lessonWords);
 
-            if (userMean == null || lessonMean == null) {
-                return 0.0;
+                if (userMean != null && lessonMean != null) {
+                    double dot = userMean.mul(lessonMean).sumNumber().doubleValue();
+                    double normUser = userMean.norm2Number().doubleValue();
+                    double normLesson = lessonMean.norm2Number().doubleValue();
+                    if (normUser != 0 && normLesson != 0) {
+                        word2vecSim = dot / (normUser * normLesson);
+                    }
+                }
             }
 
-            // Cosine Similarity manually
-            double dot = userMean.mul(lessonMean).sumNumber().doubleValue();
-            double normUser = userMean.norm2Number().doubleValue();
-            double normLesson = lessonMean.norm2Number().doubleValue();
+            // Lexical overlap fallback/bonus
+            long overlapCount = userWords.stream()
+                .filter(uw -> lessonWords.stream().anyMatch(lw -> lw.contains(uw) || uw.contains(lw)))
+                .count();
+            double lexicalSim = (double) overlapCount / Math.max(userWords.size(), 1);
 
-            if (normUser == 0 || normLesson == 0) return 0.0;
-
-            return dot / (normUser * normLesson);
+            return (word2vecSim * 0.7) + (lexicalSim * 0.3);
 
         } catch (Exception e) {
             log.error("Error calculating similarity: {}", e.getMessage());

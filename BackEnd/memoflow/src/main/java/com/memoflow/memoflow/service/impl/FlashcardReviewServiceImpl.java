@@ -64,6 +64,7 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
                 .orElseThrow(() -> new RuntimeException("Word not found with id: " + wordId));
 
         FlashcardReview flashcardReview = new FlashcardReview();
+        flashcardReview.setCreatedAt(LocalDateTime.now());
         User user = userRepository.getReferenceById(userPrincipal.getId());
         flashcardReview.setUser(user);
         flashcardReview.setWord(word);
@@ -79,7 +80,7 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
         flashcardReview.setIntervalDays(sm2Result.getIntervalDays());
         flashcardReview.setNextReviewDate(sm2Result.getNextReviewDate());
 
-        FlashcardReview savedReview = flashcardReviewRepository.save(flashcardReview);
+        FlashcardReview savedReview = flashcardReviewRepository.saveAndFlush(flashcardReview);
 
         // Schedule notification for next review time
         if (savedReview.getNextReviewDate() != null) {

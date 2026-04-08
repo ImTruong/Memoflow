@@ -99,7 +99,7 @@ export const VocabularyStatsScreen: React.FC<VocabularyStatsScreenProps> = ({
   const fetchHistory = async (page = 0) => {
     setIsHistoryLoading(true);
     try {
-      const res = await flashcardApi.getReviewHistory(undefined, page);
+      const res = await flashcardApi.getReviewHistory(undefined, page, 50);
       if (res.success) {
         if (page === 0) setHistory(res.data.content);
         else setHistory(prev => [...prev, ...res.data.content]);

@@ -607,7 +607,7 @@ export default function App() {
         return (
           <StatsScreen 
             onNavigateToNotifications={() => setCurrentScreen('Notifications')}
-            onNavigateToVocabularyStats={() => setCurrentScreen('VocabularyStatsOverview')}
+            onNavigateToVocabularyStats={() => setCurrentScreen('VocabularyStats')}
             onNavigateToListeningStats={() => setCurrentScreen('ListeningStats')}
             onNavigateToGrammarStats={() => setCurrentScreen('GrammarStats')}
           />

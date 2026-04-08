@@ -65,7 +65,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         >
           {totalReviewsCount > 0 && !isLoading && (
             <DailyGoal 
-              percentage={dueTodayCount > 0 ? (reviewedTodayCount / (reviewedTodayCount + dueTodayCount)) * 100 : 100}
+              percentage={dueTodayCount > 0 ? Math.round((reviewedTodayCount / (reviewedTodayCount + dueTodayCount)) * 100) : 100}
               completedWords={reviewedTodayCount}
               totalWords={reviewedTodayCount + dueTodayCount}
               onPress={() => setShowDailyGoalOverlay(true)}

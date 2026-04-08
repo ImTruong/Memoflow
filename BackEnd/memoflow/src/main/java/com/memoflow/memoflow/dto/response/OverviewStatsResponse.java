@@ -15,4 +15,5 @@ public class OverviewStatsResponse {
     private long listeningCount;
     private long totalActivities;
     private String todayDate;
+    private java.util.List<Long> weeklyActivity;
 }

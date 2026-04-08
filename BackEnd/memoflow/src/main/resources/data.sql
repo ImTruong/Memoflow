@@ -101,12 +101,12 @@ INSERT IGNORE INTO learning_activities (title, description, icon_media_id, learn
 
 
 -- Create sample learning lessons (2 PUBLIC, 2 PRIVATE)
-INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id, user_id, content) VALUES
-    ('Từ vựng cơ bản', 'FLASHCARD', 'Các từ vựng phổ biến nhất cho người mới bắt đầu', 1, 1, '{"privacyMode": "PUBLIC"}'),
-    ('Chủ đề Công nghệ', 'FLASHCARD', 'Từ vựng về IT và phần mềm', 1, 1, '{"privacyMode": "PUBLIC"}'),
-    ('Ghi chú cá nhân 1', 'FLASHCARD', 'Học riêng tư phần 1', 1, 1, '{"privacyMode": "PRIVATE"}'),
-    ('Ghi chú cá nhân 2', 'FLASHCARD', 'Học riêng tư phần 2', 1, 1, '{"privacyMode": "PRIVATE"}'),
-    ('Từ vựng Giao tiếp', 'FLASHCARD', 'Các từ và cụm từ phổ biến trong giao tiếp hàng ngày', 1, 2, '{"privacyMode": "PUBLIC"}');
+INSERT IGNORE INTO learning_lessons (id, title, type, description, learning_activity_id, user_id, content) VALUES
+    (1, 'Computer Essentials', 'FLASHCARD', 'Essential vocabulary for IT and computing', 1, 1, '{"privacyMode": "PUBLIC"}'),
+    (2, 'Medical Essentials', 'FLASHCARD', 'Basic terms for healthcare and medicine', 1, 1, '{"privacyMode": "PUBLIC"}'),
+    (3, 'Travel Essentials', 'FLASHCARD', 'Keywords for tourism and exploration', 1, 3, '{"privacyMode": "PUBLIC"}'),
+    (4, 'Business Essentials', 'FLASHCARD', 'Vocabulary for professional and commercial use', 1, 2, '{"privacyMode": "PUBLIC"}'),
+    (5, 'Hardware Pro Essentials', 'FLASHCARD', 'Advanced hardware components and architecture', 1, 3, '{"privacyMode": "PUBLIC"}');
 
 INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id) VALUES
     ('Test 01 - Part 1', 'LISTENING_PART_1', 'Luyện nghe part 1', 8),
@@ -325,45 +325,44 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, co
         { "word": "Bloom" }
       ]
     }', 41),
-                                                                                                           ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, '{
-      "englishTitle": "The Wooden Bridge",
-      "paragraphs": [
-        "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
-        "Ông đo từng tấm ván theo {measure} chính xác để giữ {balance}, dù công việc {risky}.",
-        "Khi cầu hoàn thành, dân làng bày tỏ {respect} và học được giá trị của {craft} bền bỉ."
-      ],
-      "vocabulary": [
-        { "word": "River" },
-        { "word": "Carpenter" },
-        { "word": "Bridge" },
-        { "word": "Measure" },
-        { "word": "Balance" },
-        { "word": "Risky" },
-        { "word": "Respect" },
-        { "word": "Craft" }
-      ]
-    }', 42),
-                                                                                                           ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, '{
-      "englishTitle": "The Old Library",
-      "paragraphs": [
-        "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",
-        "Cô lật từng mục trong {index}, ánh mắt {curious} tìm quyển sách {fragile} bị lãng quên.",
-        "Giữa không gian {whisper} yên tĩnh, cô nghe ký ức gọi về như {memory} cũ.",
-        "Cô quyết tâm {restore} lại thư viện để những câu chuyện tiếp tục soi sáng thế hệ sau."
-      ],
-      "vocabulary": [
-        { "word": "Archive" },
-        { "word": "Dust" },
-        { "word": "Index" },
-        { "word": "Curious" },
-        { "word": "Fragile" },
-        { "word": "Whisper" },
-        { "word": "Memory" },
-        { "word": "Restore" }
-      ]
-    }', 43);
+                                                                                                                                                                                                                     ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, '{
+            "englishTitle": "The Wooden Bridge",
+            "paragraphs": [
+                "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
+                "Ông đo từng tấm ván theo {measure} chính xác để giữ {balance}, dù công việc {risky}.",
+                "Khi cầu hoàn thành, dân làng bày tỏ {respect} và học được giá trị của {craft} bền bỉ."
+            ],
+            "vocabulary": [
+                { "word": "River" },
+                { "word": "Carpenter" },
+                { "word": "Bridge" },
+                { "word": "Measure" },
+                { "word": "Balance" },
+                { "word": "Risky" },
+                { "word": "Respect" },
+                { "word": "Craft" }
+            ]
+        }', 42),
+                                                                                                                                                                                                                     ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, '{
+            "englishTitle": "The Old Library",
+            "paragraphs": [
+                "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",
+                "Cô lật từng mục trong {index}, ánh mắt {curious} tìm quyển sách {fragile} bị lãng quên.",
+                "Giữa không gian {whisper} yên tĩnh, cô nghe ký ức gọi về như {memory} cũ.",
+                "Cô quyết tâm {restore} lại thư viện để những câu chuyện tiếp tục soi sáng thế hệ sau."
+            ],
+            "vocabulary": [
+                { "word": "Archive" },
+                { "word": "Dust" },
+                { "word": "Index" },
+                { "word": "Curious" },
+                { "word": "Fragile" },
+                { "word": "Whisper" },
+                { "word": "Memory" },
+                { "word": "Restore" }
+            ]
+        }', 43);
 
--- Create 2 words for each learning lesson
 INSERT IGNORE INTO words (name, ipa, example, definition, learning_lesson_id) VALUES
     ('Hello', '/həˈloʊ/', 'Hello! How are you today?', 'Một lời chào thân mật', 1),
     ('Book', '/bʊk/', 'I am reading an interesting book.', 'Một tập hợp các trang giấy ghi chép', 1),
@@ -4646,3 +4645,30 @@ INSERT INTO quiz_answers (answer_text, quiz_question_id) VALUES
 ('had finished', (SELECT qq.id FROM quiz_questions qq JOIN quiz_groups qg ON qq.quiz_group_id = qg.id JOIN learning_lessons ll ON qg.learning_lesson_id = ll.id WHERE ll.title = 'Tổng hợp' AND JSON_UNQUOTE(JSON_EXTRACT(ll.content, '$.grammarLessonTitle')) = 'Đảo ngữ & câu tường thuật' AND qq.question_text = 'They said they ___ the report the day before.' LIMIT 1)),
 ('Only then', (SELECT qq.id FROM quiz_questions qq JOIN quiz_groups qg ON qq.quiz_group_id = qg.id JOIN learning_lessons ll ON qg.learning_lesson_id = ll.id WHERE ll.title = 'Tổng hợp' AND JSON_UNQUOTE(JSON_EXTRACT(ll.content, '$.grammarLessonTitle')) = 'Đảo ngữ & câu tường thuật' AND qq.question_text = '___ can we solve this problem.' LIMIT 1));
 
+
+-- Alex Nguyen Study History (V3 Optimized)
+INSERT IGNORE INTO flashcard_reviews (user_id, word_id, difficulty, interval_days, ease_factor, repetition, next_review_date, created_at) VALUES
+(1, 1, 'GOOD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
+(1, 2, 'EASY', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
+(1, 3, 'HARD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
+(1, 4, 'HARD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
+(1, 5, 'HARD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
+(1, 6, 'AGAIN', 4, 2.5, 9, '2026-04-08 16:45:19', '2026-04-05 16:45:19'),
+(1, 7, 'AGAIN', 4, 2.5, 9, '2026-04-08 16:45:19', '2026-04-05 16:45:19'),
+(1, 1, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
+(1, 2, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
+(1, 3, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
+(1, 4, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
+(1, 5, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
+(1, 19, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 20, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 21, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 22, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 23, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 24, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 25, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 26, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 27, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
+(1, 28, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19');
+
+INSERT IGNORE INTO user_lesson_progress (user_id, learning_lesson_id, is_completed, score, created_at, updated_at) VALUES (1, 1, 1, 100, '2026-04-08 16:10:23', '2026-04-08 16:10:23');

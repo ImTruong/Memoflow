@@ -141,15 +141,19 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
                 <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
               </View>
               <View style={styles.miniChartContainer}>
-                {[0.3, 0.5, 0.4, 0.6, 0.3, 0.7, 0.4, 0.8, 1].map((h, i) => (
-                  <View 
-                    key={i} 
-                    style={[
-                      styles.miniBar, 
-                      { height: h * 30, backgroundColor: i === 8 ? '#3B82F6' : '#EFF6FF' }
-                    ]} 
-                  />
-                ))}
+                {(stats?.weeklyActivity || [0, 0, 0, 0, 0, 0, 0]).map((h, i) => {
+                  const maxH = Math.max(...(stats?.weeklyActivity || [1]));
+                  const height = maxH === 0 ? 0 : (h / maxH) * 30;
+                  return (
+                    <View 
+                      key={i} 
+                      style={[
+                        styles.miniBar, 
+                        { height: Math.max(2, height), backgroundColor: i === 6 ? '#3B82F6' : '#EFF6FF' }
+                      ]} 
+                    />
+                  );
+                })}
               </View>
             </TouchableOpacity>
 
@@ -166,15 +170,19 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
                 <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
               </View>
               <View style={styles.miniChartContainer}>
-                {[0.2, 0.3, 0.5, 0.2, 0.6, 0.4, 0.7, 0.3, 0.9].map((h, i) => (
-                  <View 
-                    key={i} 
-                    style={[
-                      styles.miniBar, 
-                      { height: h * 30, backgroundColor: i === 8 ? '#10B981' : '#F0FDF4' }
-                    ]} 
-                  />
-                ))}
+                {(stats?.weeklyActivity || [0, 0, 0, 0, 0, 0, 0]).map((h, i) => {
+                   const maxH = Math.max(...(stats?.weeklyActivity || [1]));
+                   const height = maxH === 0 ? 0 : (h / maxH) * 30;
+                   return (
+                    <View 
+                      key={i} 
+                      style={[
+                        styles.miniBar, 
+                        { height: Math.max(2, height), backgroundColor: i === 6 ? '#10B981' : '#F0FDF4' }
+                      ]} 
+                    />
+                  );
+                })}
               </View>
             </TouchableOpacity>
 
@@ -191,15 +199,19 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
                 <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
               </View>
               <View style={styles.miniChartContainer}>
-                {[0.4, 0.2, 0.6, 0.3, 0.5, 0.7, 0.4, 0.6, 0.8].map((h, i) => (
-                  <View 
-                    key={i} 
-                    style={[
-                      styles.miniBar, 
-                      { height: h * 30, backgroundColor: i === 8 ? '#A855F7' : '#FAF5FF' }
-                    ]} 
-                  />
-                ))}
+                {(stats?.weeklyActivity || [0, 0, 0, 0, 0, 0, 0]).map((h, i) => {
+                   const maxH = Math.max(...(stats?.weeklyActivity || [1]));
+                   const height = maxH === 0 ? 0 : (h / maxH) * 30;
+                   return (
+                    <View 
+                      key={i} 
+                      style={[
+                        styles.miniBar, 
+                        { height: Math.max(2, height), backgroundColor: i === 6 ? '#A855F7' : '#FAF5FF' }
+                      ]} 
+                    />
+                  );
+                })}
               </View>
             </TouchableOpacity>
           </View>

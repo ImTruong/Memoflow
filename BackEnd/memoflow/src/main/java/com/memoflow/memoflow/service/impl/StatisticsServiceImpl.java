@@ -44,12 +44,25 @@ public class StatisticsServiceImpl implements StatisticsService {
 
                 long totalActivities = vocabularyCount + grammarCount + listeningCount;
 
+                // Activity for last 7 days
+                java.util.List<Long> weeklyActivity = new java.util.ArrayList<>();
+                for (int i = 6; i >= 0; i--) {
+                        LocalDateTime startOfThatDay = LocalDateTime.now().minusDays(i).with(LocalTime.MIN);
+                        LocalDateTime endOfThatDay = LocalDateTime.now().minusDays(i).with(LocalTime.MAX);
+                        // Sum of vocabulary, grammar, and listening for that specific day
+                        long v = flashcardReviewRepository.countDistinctWordsReviewedInPeriod(userId, startOfThatDay, endOfThatDay);
+                        long g = userLessonProgressRepository.countCompletedLessonsByTypeInPeriod(userId, startOfThatDay, endOfThatDay, "GRAMMAR_%");
+                        long l = userLessonProgressRepository.countCompletedLessonsByTypeInPeriod(userId, startOfThatDay, endOfThatDay, "LISTENING_%");
+                        weeklyActivity.add(v + g + l);
+                }
+
                 return OverviewStatsResponse.builder()
                                 .vocabularyCount(vocabularyCount)
                                 .grammarCount(grammarCount)
                                 .listeningCount(listeningCount)
                                 .totalActivities(totalActivities)
                                 .todayDate(formatTodayDate())
+                                .weeklyActivity(weeklyActivity)
                                 .build();
         }
 

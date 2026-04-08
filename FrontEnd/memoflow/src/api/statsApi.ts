@@ -6,6 +6,7 @@ export interface OverviewStats {
   listeningCount: number;
   totalActivities: number;
   todayDate: string;
+  weeklyActivity: number[];
 }
 
 export interface ListeningStatsOverview {

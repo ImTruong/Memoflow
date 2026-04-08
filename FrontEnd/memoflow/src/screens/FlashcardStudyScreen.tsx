@@ -35,6 +35,7 @@ export const FlashcardStudyScreen: React.FC<FlashcardStudyScreenProps> = ({
   const [cards, setCards] = useState<WordResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStudyComplete, setIsStudyComplete] = useState(false);
+  const [streakDays, setStreakDays] = useState(0);
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({
     visible: false,
     message: '',
@@ -45,6 +46,13 @@ export const FlashcardStudyScreen: React.FC<FlashcardStudyScreenProps> = ({
     const fetchWords = async () => {
       try {
         setLoading(true);
+        
+        // Fetch streak
+        const statsRes = await flashcardApi.getDailyStats();
+        if (statsRes.success) {
+          setStreakDays(statsRes.data.streakDays);
+        }
+
         let res;
         if (isGlobal) {
           res = await flashcardApi.getAllUserDueWords(0, 100);
@@ -262,7 +270,7 @@ export const FlashcardStudyScreen: React.FC<FlashcardStudyScreenProps> = ({
         
         <View style={styles.streakBadge}>
           <MaterialCommunityIcons name="fire" size={16} color="#F97316" />
-          <Text style={styles.streakText}>12 Ngày</Text>
+          <Text style={styles.streakText}>{streakDays} Ngày</Text>
         </View>
       </View>
 

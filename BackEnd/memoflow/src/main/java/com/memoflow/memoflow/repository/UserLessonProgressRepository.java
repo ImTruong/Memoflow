@@ -37,6 +37,16 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
                                         @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay, 
                                         @org.springframework.data.repository.query.Param("typePattern") String typePattern);
 
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp " +
+                                                "WHERE ulp.user.id = :userId " +
+                                                "AND ulp.isCompleted = true " +
+                                                "AND ulp.completedAt BETWEEN :start AND :end " +
+                                                "AND ulp.learningLesson.type LIKE :typePattern")
+    long countCompletedLessonsByTypeInPeriod(@org.springframework.data.repository.query.Param("userId") Long userId, 
+                                          @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, 
+                                          @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end, 
+                                          @org.springframework.data.repository.query.Param("typePattern") String typePattern);
+
     @org.springframework.data.jpa.repository.Query("SELECT ulp FROM UserLessonProgress ulp " +
                                                 "WHERE ulp.user.id = :userId " +
                                                 "AND ulp.isCompleted = true " +
