@@ -124,7 +124,16 @@ Yêu cầu phản hồi:
 
         <Text style={styles.sectionTitle}>Chi tiết bài làm</Text>
 
-        {result.questions.map((question, index) => (
+        {result.questions.map((question, index) => {
+          // DEBUG: Log question data
+          console.log(`Q${index + 1}:`, {
+            questionText: question.questionText,
+            correct: question.correct,
+            userOptionId: question.userOptionId,
+            options: question.options?.map(o => ({ optionId: o.optionId, text: o.optionText, isCorrect: o.isCorrect }))
+          });
+          
+          return (
           <View key={question.quizId} style={styles.quizCard}>
             <View style={styles.quizHeader}>
               <View style={styles.questionTitleRow}>
@@ -149,34 +158,36 @@ Yêu cầu phản hồi:
 
             {question.type === 'MULTIPLE_CHOICE' ? (
               <View style={styles.optionsContainer}>
-                {question.options.map((opt, oIdx) => {
+                 {question.options.map((opt, oIdx) => {
                   const label = String.fromCharCode(65 + oIdx);
                   const isUserSelected = question.userOptionId === opt.optionId;
                   const isCorrect = opt.isCorrect;
+
+                  const shouldShowGreen = isCorrect;
+                  const shouldShowRed = isUserSelected && !isCorrect;
 
                   return (
                     <View
                       key={opt.optionId}
                       style={[
                         styles.optionItem,
-                        isCorrect && question.userOptionId != null && styles.optionCorrect,
-                        (isUserSelected && !isCorrect) && styles.optionWrong,
-                        question.userOptionId == null && isCorrect && styles.optionCorrectHint
+                        shouldShowGreen && styles.optionCorrect,
+                        shouldShowRed && styles.optionWrong
                       ]}
                     >
                       <View
                         style={[
                           styles.optionCircle,
-                          (isCorrect && question.userOptionId != null) || (question.userOptionId == null && isCorrect)
+                          shouldShowGreen
                             ? { backgroundColor: '#10B981', borderColor: '#10B981' }
-                            : (isUserSelected && !isCorrect)
+                            : shouldShowRed
                             ? { backgroundColor: '#EF4444', borderColor: '#EF4444' }
                             : {}
                         ]}
                       >
                         <Text style={[
                           styles.optionLabel,
-                          (isCorrect && question.userOptionId != null) || (isUserSelected && !isCorrect) || (question.userOptionId == null && isCorrect)
+                          (shouldShowGreen || shouldShowRed)
                             ? { color: '#FFF' }
                             : {}
                         ]}>
@@ -185,13 +196,14 @@ Yêu cầu phản hồi:
                       </View>
                       <Text style={[
                         styles.optionText,
-                        (isCorrect && question.userOptionId != null) || (isUserSelected && !isCorrect) || (question.userOptionId == null && isCorrect)
+                        (shouldShowGreen || shouldShowRed)
                           ? { fontWeight: 'bold' }
                           : {}
                       ]}>
                         {opt.optionText}
                       </Text>
-                      {isCorrect && <Ionicons name="checkmark-circle" size={18} color="#10B981" style={{ marginLeft: 'auto' }} />}
+                      {shouldShowGreen && <Ionicons name="checkmark-circle" size={18} color="#10B981" style={{ marginLeft: 'auto' }} />}
+                      {shouldShowRed && <Ionicons name="close-circle" size={18} color="#EF4444" style={{ marginLeft: 'auto' }} />}
                     </View>
                   );
                 })}
@@ -238,7 +250,8 @@ Yêu cầu phản hồi:
               </View>
             )}
           </View>
-        ))}
+          );
+        })}
         
         <View style={{ height: 40 }} />
       </ScrollView>

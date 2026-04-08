@@ -65,7 +65,7 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
 
   const renderResultItem = (question: GrammarPracticeResultResponse['questions'][number], index: number) => {
     const hasOptions = question.options && question.options.length > 0;
-    const isAnswered = question.userOptionId !== null || (question.userTextAnswer !== null && question.userTextAnswer !== undefined && question.userTextAnswer.trim() !== '');
+    const isAnswered = question.userOptionId !== null && question.userOptionId !== undefined || (question.userTextAnswer !== null && question.userTextAnswer !== undefined && question.userTextAnswer.trim() !== '');
 
     let statusText = '';
     let statusColor = '';
@@ -97,31 +97,39 @@ export const QuizResultScreen: React.FC<{ route: any; navigation: any }> = ({ ro
             {question.options.map((option, optIdx) => {
               const letter = String.fromCharCode(65 + optIdx);
               const isUserChoice = option.optionId === question.userOptionId;
-              const isCorrectChoice = option.isCorrect;
-
+              // Fallback check against correctOptionId if isCorrect is missing or inconsistent
+              const isCorrectChoice = option.isCorrect || (question.correctOptionId === option.optionId);
+              
               let optionStyle = styles.optionItem;
-              if (isUserChoice) {
-                optionStyle = isCorrectChoice ? styles.optionItemCorrect : styles.optionItemWrong;
-              } else if (isCorrectChoice) {
-                optionStyle = styles.optionItemChoice; // Highlight correct answer even if not chosen
-                // We'll use a special style for correct answer when not chosen
+              if (isCorrectChoice) {
+                optionStyle = styles.optionItemCorrect;
+              } else if (isUserChoice) {
+                optionStyle = styles.optionItemWrong;
               }
 
+              const isActive = isUserChoice || isCorrectChoice;
+
               return (
-                <View key={option.optionId} style={[optionStyle, isCorrectChoice && !isUserChoice && styles.optionItemCorrectBorder]}>
-                  <View style={[styles.optionLetterCircle, (isUserChoice || isCorrectChoice) ? styles.optionLetterCircleActive : null]}>
-                    <Text style={[styles.optionLetterText, (isUserChoice || isCorrectChoice) ? styles.optionLetterTextActive : null]}>{letter}</Text>
+                <View key={option.optionId} style={optionStyle}>
+                  <View style={[styles.optionLetterCircle, isActive ? styles.optionLetterCircleActive : null]}>
+                    <Text style={[styles.optionLetterText, isActive ? styles.optionLetterTextActive : null]}>{letter}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.optionContentText, (isUserChoice || isCorrectChoice) ? styles.optionContentTextActive : null]}>
-                      {option.optionText}
-                    </Text>
-                    <View style={styles.labelRow}>
-                      {isUserChoice && <Text style={[styles.choiceLabel, isCorrectChoice ? styles.labelCorrect : styles.labelWrong]}>Lựa chọn của bạn</Text>}
-                      {isCorrectChoice && <Text style={[styles.choiceLabel, styles.labelCorrect]}>Đáp án đúng</Text>}
-                    </View>
+                     <Text style={[styles.optionContentText, isActive ? styles.optionContentTextActive : null]}>
+                        {option.optionText}
+                     </Text>
+                     <View style={styles.labelRow}>
+                        {isUserChoice && (
+                          <Text style={[styles.choiceLabel, isCorrectChoice ? styles.labelCorrect : styles.labelWrong]}>
+                            Lựa chọn của bạn {isCorrectChoice ? '(Đúng)' : '(Sai)'}
+                          </Text>
+                        )}
+                        {isCorrectChoice && !isUserChoice && (
+                          <Text style={[styles.choiceLabel, styles.labelCorrect]}>Đáp án đúng</Text>
+                        )}
+                     </View>
                   </View>
-                  {isCorrectChoice && <MaterialCommunityIcons name="check-circle" size={20} color={isUserChoice || isCorrectChoice ? "#FFF" : "#10B981"} />}
+                  {isCorrectChoice && <MaterialCommunityIcons name="check-circle" size={20} color="#FFF" />}
                   {isUserChoice && !isCorrectChoice && <MaterialCommunityIcons name="close-circle" size={20} color="#FFF" />}
                 </View>
               );
