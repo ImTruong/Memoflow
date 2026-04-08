@@ -24,6 +24,9 @@ public class QuizOption {
     @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;
 
+
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiz_question_id", nullable = false)
     private QuizQuestion quizQuestion;

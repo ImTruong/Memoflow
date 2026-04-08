@@ -115,6 +115,10 @@ export const adminApi = {
     const response = await api.get('/admin/users');
     return response.data;
   },
+  getDashboardStats: async () => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
   changeRole: async (userId: string, roleId: number) => {
     const response = await api.put(`/admin/users/${userId}/role?roleId=${roleId}`);
     return response.data;

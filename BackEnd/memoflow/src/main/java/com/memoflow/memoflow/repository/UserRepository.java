@@ -18,5 +18,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByFacebookId(String facebookId);
 
-    User findByEmailAndVerificationCodeValueAndVerificationCodeExpiresAtAfter(String email, String code, LocalDateTime now);
+    User findByEmailAndVerificationCodeValueAndVerificationCodeExpiresAtAfter(String email, String code,
+            LocalDateTime now);
 }

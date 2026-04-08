@@ -45,3 +45,4 @@ public class GrammarPracticeResultResponse {
         private boolean isCorrect;
     }
 }
+

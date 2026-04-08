@@ -93,7 +93,7 @@ public class WordServiceImpl implements WordService {
             if (createWordRequest.getImage() != null && !createWordRequest.getImage().isEmpty()) {
                 Map<String, String> uploadResult = cloudinaryService.uploadFile(createWordRequest.getImage(), "words");
                 imageUrl = uploadResult.get("url");
-                publicId = uploadResult.get("public_id");
+                publicId = uploadResult.get("publicId");
             }
             wordResponse = saveWordToDatabase(flashcardLessonId, createWordRequest, imageUrl, publicId);
         } catch (IOException e) {
@@ -118,7 +118,7 @@ public class WordServiceImpl implements WordService {
                 Map<String, String> uploadResult = cloudinaryService.uploadFile(updateWordRequest.getImage(), "words");
                 Media imageMedia = Media.builder()
                         .url(uploadResult.get("url"))
-                        .publicId(uploadResult.get("public_id"))
+                        .publicId(uploadResult.get("publicId"))
                         .type(MediaType.IMAGE)
                         .build();
                 word.setImage(imageMedia);
@@ -150,7 +150,12 @@ public class WordServiceImpl implements WordService {
     @Transactional
     public WordResponse saveWordToDatabase(Long flashcardLessonId, CreateWordRequest createWordRequest, String imageUrl,
             String publicId) {
-        Word word = modelMapper.map(createWordRequest, Word.class);
+        Word word = Word.builder()
+                .name(createWordRequest.getName())
+                .ipa(createWordRequest.getIpa())
+                .definition(createWordRequest.getDefinition())
+                .example(createWordRequest.getExample())
+                .build();
         LearningLesson learningLesson = learningLessonRepository
                 .getReferenceById(flashcardLessonId);
         word.setLearningLesson(learningLesson);

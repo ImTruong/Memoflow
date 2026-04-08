@@ -1391,6 +1391,7 @@ public class LearningLessonServiceImpl implements LearningLessonService {
                                 .isCorrect(Boolean.TRUE.equals(option.getIsCorrect()))
                                 .build();
                     })
+
                     .toList();
 
             if (isFillQuestion) {

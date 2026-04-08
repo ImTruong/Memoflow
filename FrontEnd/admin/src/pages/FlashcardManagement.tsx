@@ -25,9 +25,13 @@ interface FlashcardSet {
 interface Word {
   id: number;
   name: string;
-  meaning: string;
-  exampleSentence?: string;
+  ipa?: string;
+  definition?: string;
+  meaning?: string; // Support both naming conventions
+  example?: string;
+  exampleSentence?: string; // Support both
   imageUrl?: string;
+  audioUrl?: string;
 }
 
 const FlashcardManagement: React.FC = () => {
@@ -221,14 +225,17 @@ const FlashcardManagement: React.FC = () => {
                           )}
                         </div>
                         <div className="word-main">
-                          <div className="word-name">{word.name}</div>
-                          <div className="word-meaning">{word.meaning}</div>
-                        </div>
-                        {word.exampleSentence && (
-                          <div className="word-example">
-                            <em>{word.exampleSentence}</em>
+                          <div className="word-header">
+                            <span className="word-name">{word.name}</span>
+                            {word.ipa && <span className="word-ipa">/{word.ipa}/</span>}
                           </div>
-                        )}
+                          <div className="word-definition">{word.definition || word.meaning}</div>
+                          {(word.example || word.exampleSentence) && (
+                            <div className="word-example">
+                              <strong>Ví dụ:</strong> {word.example || word.exampleSentence}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -553,9 +560,21 @@ const FlashcardManagement: React.FC = () => {
           background: #000;
         }
 
-        .word-main { flex: 1; }
-        .word-name { font-weight: 700; color: white; }
-        .word-meaning { font-size: 0.9rem; color: var(--text-secondary); }
+        .word-main { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .word-header { display: flex; align-items: baseline; gap: 12px; }
+        .word-name { font-size: 1.1rem; font-weight: 700; color: white; }
+        .word-ipa { font-size: 0.9rem; color: var(--primary); font-family: 'Inter', sans-serif; }
+        .word-definition { font-size: 0.95rem; color: #cbd5e1; line-height: 1.4; }
+        .word-example { 
+          font-size: 0.85rem; 
+          color: var(--text-secondary); 
+          background: rgba(0,0,0,0.2); 
+          padding: 8px 12px; 
+          border-radius: 8px;
+          margin-top: 4px;
+          border-left: 3px solid var(--primary);
+        }
+        .word-example strong { color: var(--text-primary); font-size: 0.8rem; margin-right: 4px; }
 
         .modal-footer {
           margin-top: 32px;

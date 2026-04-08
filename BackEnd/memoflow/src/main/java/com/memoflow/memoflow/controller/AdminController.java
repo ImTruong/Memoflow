@@ -1,20 +1,16 @@
 package com.memoflow.memoflow.controller;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.memoflow.memoflow.dto.response.ApiResponse;
-import com.memoflow.memoflow.dto.response.FlashcardLessonDetailResponse;
-import com.memoflow.memoflow.dto.response.FlashcardLessonSummaryResponse;
-import com.memoflow.memoflow.dto.response.PageResponse;
-import com.memoflow.memoflow.dto.response.UserResponse;
+import com.memoflow.memoflow.dto.response.*;
 import com.memoflow.memoflow.entity.User;
 import com.memoflow.memoflow.service.LearningLessonService;
+import com.memoflow.memoflow.service.StatisticsService;
 import com.memoflow.memoflow.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +22,14 @@ public class AdminController {
 
     private final UserService userService;
     private final LearningLessonService learningLessonService;
+    private final StatisticsService statisticsService;
     private final ModelMapper modelMapper;
+
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<AdminDashboardStatsResponse>> getAdminStats() {
+        AdminDashboardStatsResponse response = statisticsService.getAdminDashboardStats();
+        return ResponseEntity.ok(ApiResponse.success(response, "Admin internal statistics retrieved"));
+    }
 
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {

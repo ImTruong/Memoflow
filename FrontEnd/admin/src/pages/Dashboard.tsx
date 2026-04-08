@@ -1,17 +1,42 @@
-import React from 'react';
-import { 
-  Users, 
-  BookOpen, 
-  TrendingUp, 
-  Clock 
+import React, { useEffect, useState } from 'react';
+import {
+  Users,
+  BookOpen,
+  Zap,
+  FileText,
+  MessageSquare,
+  Globe
 } from 'lucide-react';
+import { adminApi } from '../api/api';
 
 const Dashboard: React.FC = () => {
+  const [statsData, setStatsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const res = await adminApi.getDashboardStats();
+        if (res.success) {
+          setStatsData(res.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const stats = [
-    { title: 'Tổng người dùng', value: '1,234', icon: <Users size={24} />, color: '#6366f1' },
-    { title: 'Bài học hoàn thành', value: '8,567', icon: <BookOpen size={24} />, color: '#10b981' },
-    { title: 'Tỷ lệ tương tác', value: '+12.5%', icon: <TrendingUp size={24} />, color: '#f59e0b' },
-    { title: 'Thời gian trung bình', value: '24m', icon: <Clock size={24} />, color: '#ef4444' },
+    { title: 'Tổng người dùng', value: statsData?.totalUsers?.toLocaleString() || '0', icon: <Users size={24} />, color: '#6366f1' },
+    { title: 'Bộ Flashcard', value: statsData?.totalFlashcardSets?.toLocaleString() || '0', icon: <Zap size={24} />, color: '#10b981' },
+    { title: 'Tổng số từ vựng', value: statsData?.totalWords?.toLocaleString() || '0', icon: <BookOpen size={24} />, color: '#f59e0b' },
+    { title: 'Truyện chêm', value: statsData?.totalStoryLessons?.toLocaleString() || '0', icon: <FileText size={24} />, color: '#ef4444' },
+    { title: 'Luyện nghe', value: statsData?.totalListeningLessons?.toLocaleString() || '0', icon: <MessageSquare size={24} />, color: '#8b5cf6' },
+    { title: 'Song ngữ', value: statsData?.totalBilingualLessons?.toLocaleString() || '0', icon: <Globe size={24} />, color: '#ec4899' },
   ];
 
   return (
@@ -22,34 +47,29 @@ const Dashboard: React.FC = () => {
       </header>
 
       <section className="stats-grid">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="stat-card">
-            <div className="stat-icon" style={{ backgroundColor: stat.color }}>
-              {stat.icon}
+        {loading ? (
+          Array(6).fill(0).map((_, i) => (
+            <div key={i} className="stat-card skeleton">
+              <div className="stat-icon gray"></div>
+              <div className="stat-content">
+                <div className="skeleton-line short"></div>
+                <div className="skeleton-line"></div>
+              </div>
             </div>
-            <div className="stat-content">
-              <span className="stat-label">{stat.title}</span>
-              <span className="stat-value">{stat.value}</span>
+          ))
+        ) : (
+          stats.map((stat, idx) => (
+            <div key={idx} className="stat-card">
+              <div className="stat-icon" style={{ backgroundColor: stat.color }}>
+                {stat.icon}
+              </div>
+              <div className="stat-content">
+                <span className="stat-label">{stat.title}</span>
+                <span className="stat-value">{stat.value}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="charts-placeholder">
-        <div className="placeholder-card big">
-          <h2>Biểu đồ Tăng trưởng</h2>
-          <div className="chart-empty">
-            <div className="loader-pulse"></div>
-            <span>Đang thu thập dữ liệu thống kê...</span>
-          </div>
-        </div>
-        
-        <div className="placeholder-card small">
-          <h2>Hoạt động gần đây</h2>
-          <div className="activity-empty">
-            <span>Chưa có hoạt động mới</span>
-          </div>
-        </div>
+          ))
+        )}
       </section>
 
       <style>{`
@@ -124,61 +144,36 @@ const Dashboard: React.FC = () => {
           color: var(--text-primary);
         }
 
-        .charts-placeholder {
-          display: grid;
-          grid-template-columns: 2fr 1fr;
-          gap: 24px;
+        .skeleton-line {
+          height: 20px;
+          width: 100px;
+          background: rgba(255,255,255,0.05);
+          border-radius: 4px;
+          position: relative;
+          overflow: hidden;
         }
 
-        .placeholder-card {
-          background-color: var(--bg-card);
-          border-radius: 16px;
-          padding: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          min-height: 400px;
-          display: flex;
-          flex-direction: column;
+        .skeleton-line.short {
+          height: 14px;
+          width: 60px;
+          margin-bottom: 8px;
         }
 
-        .placeholder-card h2 {
-          font-size: 1.1rem;
-          margin-bottom: 24px;
-          color: var(--text-secondary);
+        .skeleton-line::after {
+          content: "";
+          position: absolute;
+          top: 0; right: 0; bottom: 0; left: 0;
+          transform: translateX(-100%);
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+          animation: shimmer 1.5s infinite;
         }
 
-        .chart-empty {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-          border: 2px dashed rgba(255,255,255,0.05);
-          border-radius: 12px;
+        .stat-icon.gray {
+          background-color: rgba(255,255,255,0.05);
         }
 
-        .activity-empty {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-secondary);
-          font-size: 0.9rem;
-          opacity: 0.5;
-        }
-
-        .loader-pulse {
-          width: 40px;
-          height: 10px;
-          background: var(--primary);
-          border-radius: 5px;
-          animation: pulse 1s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1); opacity: 0.5; }
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
         }
 
         @keyframes fadeIn {
