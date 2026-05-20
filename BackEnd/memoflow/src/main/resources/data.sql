@@ -101,12 +101,12 @@ INSERT IGNORE INTO learning_activities (title, description, icon_media_id, learn
 
 
 -- Create sample learning lessons (2 PUBLIC, 2 PRIVATE)
-INSERT IGNORE INTO learning_lessons (id, title, type, description, learning_activity_id, user_id, content) VALUES
-    (1, 'Computer Essentials', 'FLASHCARD', 'Essential vocabulary for IT and computing', 1, 1, '{"privacyMode": "PUBLIC"}'),
-    (2, 'Medical Essentials', 'FLASHCARD', 'Basic terms for healthcare and medicine', 1, 1, '{"privacyMode": "PUBLIC"}'),
-    (3, 'Travel Essentials', 'FLASHCARD', 'Keywords for tourism and exploration', 1, 3, '{"privacyMode": "PUBLIC"}'),
-    (4, 'Business Essentials', 'FLASHCARD', 'Vocabulary for professional and commercial use', 1, 2, '{"privacyMode": "PUBLIC"}'),
-    (5, 'Hardware Pro Essentials', 'FLASHCARD', 'Advanced hardware components and architecture', 1, 3, '{"privacyMode": "PUBLIC"}');
+INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id, user_id, content) VALUES
+    ('Từ vựng cơ bản', 'FLASHCARD', 'Các từ vựng phổ biến nhất cho người mới bắt đầu', 1, 1, '{"privacyMode": "PUBLIC"}'),
+    ('Chủ đề Công nghệ', 'FLASHCARD', 'Từ vựng về IT và phần mềm', 1, 1, '{"privacyMode": "PUBLIC"}'),
+    ('Ghi chú cá nhân 1', 'FLASHCARD', 'Học riêng tư phần 1', 1, 1, '{"privacyMode": "PRIVATE"}'),
+    ('Ghi chú cá nhân 2', 'FLASHCARD', 'Học riêng tư phần 2', 1, 1, '{"privacyMode": "PRIVATE"}'),
+    ('Từ vựng Giao tiếp', 'FLASHCARD', 'Các từ và cụm từ phổ biến trong giao tiếp hàng ngày', 1, 2, '{"privacyMode": "PUBLIC"}');
 
 INSERT IGNORE INTO learning_lessons (title, type, description, learning_activity_id) VALUES
     ('Test 01 - Part 1', 'LISTENING_PART_1', 'Luyện nghe part 1', 8),
@@ -325,44 +325,45 @@ INSERT INTO learning_lessons (title, type, description, learning_activity_id, co
         { "word": "Bloom" }
       ]
     }', 41),
-                                                                                                                                                                                                                     ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, '{
-            "englishTitle": "The Wooden Bridge",
-            "paragraphs": [
-                "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
-                "Ông đo từng tấm ván theo {measure} chính xác để giữ {balance}, dù công việc {risky}.",
-                "Khi cầu hoàn thành, dân làng bày tỏ {respect} và học được giá trị của {craft} bền bỉ."
-            ],
-            "vocabulary": [
-                { "word": "River" },
-                { "word": "Carpenter" },
-                { "word": "Bridge" },
-                { "word": "Measure" },
-                { "word": "Balance" },
-                { "word": "Risky" },
-                { "word": "Respect" },
-                { "word": "Craft" }
-            ]
-        }', 42),
-                                                                                                                                                                                                                     ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, '{
-            "englishTitle": "The Old Library",
-            "paragraphs": [
-                "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",
-                "Cô lật từng mục trong {index}, ánh mắt {curious} tìm quyển sách {fragile} bị lãng quên.",
-                "Giữa không gian {whisper} yên tĩnh, cô nghe ký ức gọi về như {memory} cũ.",
-                "Cô quyết tâm {restore} lại thư viện để những câu chuyện tiếp tục soi sáng thế hệ sau."
-            ],
-            "vocabulary": [
-                { "word": "Archive" },
-                { "word": "Dust" },
-                { "word": "Index" },
-                { "word": "Curious" },
-                { "word": "Fragile" },
-                { "word": "Whisper" },
-                { "word": "Memory" },
-                { "word": "Restore" }
-            ]
-        }', 43);
+                                                                                                           ('Chiếc cầu gỗ', 'TRUYEN_CHEM', 'Sự tận tâm tạo nên những kết nối bền vững', 2, '{
+      "englishTitle": "The Wooden Bridge",
+      "paragraphs": [
+        "Con {river} chia đôi làng, người thợ {carpenter} nhận làm chiếc {bridge} nối bờ.",
+        "Ông đo từng tấm ván theo {measure} chính xác để giữ {balance}, dù công việc {risky}.",
+        "Khi cầu hoàn thành, dân làng bày tỏ {respect} và học được giá trị của {craft} bền bỉ."
+      ],
+      "vocabulary": [
+        { "word": "River" },
+        { "word": "Carpenter" },
+        { "word": "Bridge" },
+        { "word": "Measure" },
+        { "word": "Balance" },
+        { "word": "Risky" },
+        { "word": "Respect" },
+        { "word": "Craft" }
+      ]
+    }', 42),
+                                                                                                           ('Thư viện cũ', 'TRUYEN_CHEM', 'Gìn giữ tri thức là giữ gìn ký ức của cộng đồng', 2, '{
+      "englishTitle": "The Old Library",
+      "paragraphs": [
+        "Cô thủ thư mở cánh cửa {archive} phủ {dust}, nơi lưu giữ bao câu chuyện của thị trấn.",
+        "Cô lật từng mục trong {index}, ánh mắt {curious} tìm quyển sách {fragile} bị lãng quên.",
+        "Giữa không gian {whisper} yên tĩnh, cô nghe ký ức gọi về như {memory} cũ.",
+        "Cô quyết tâm {restore} lại thư viện để những câu chuyện tiếp tục soi sáng thế hệ sau."
+      ],
+      "vocabulary": [
+        { "word": "Archive" },
+        { "word": "Dust" },
+        { "word": "Index" },
+        { "word": "Curious" },
+        { "word": "Fragile" },
+        { "word": "Whisper" },
+        { "word": "Memory" },
+        { "word": "Restore" }
+      ]
+    }', 43);
 
+-- Create 2 words for each learning lesson
 INSERT IGNORE INTO words (name, ipa, example, definition, learning_lesson_id) VALUES
     ('Hello', '/həˈloʊ/', 'Hello! How are you today?', 'Một lời chào thân mật', 1),
     ('Book', '/bʊk/', 'I am reading an interesting book.', 'Một tập hợp các trang giấy ghi chép', 1),
@@ -4646,29 +4647,137 @@ INSERT INTO quiz_answers (answer_text, quiz_question_id) VALUES
 ('Only then', (SELECT qq.id FROM quiz_questions qq JOIN quiz_groups qg ON qq.quiz_group_id = qg.id JOIN learning_lessons ll ON qg.learning_lesson_id = ll.id WHERE ll.title = 'Tổng hợp' AND JSON_UNQUOTE(JSON_EXTRACT(ll.content, '$.grammarLessonTitle')) = 'Đảo ngữ & câu tường thuật' AND qq.question_text = '___ can we solve this problem.' LIMIT 1));
 
 
--- Alex Nguyen Study History (V3 Optimized)
-INSERT IGNORE INTO flashcard_reviews (user_id, word_id, difficulty, interval_days, ease_factor, repetition, next_review_date, created_at) VALUES
-(1, 1, 'GOOD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
-(1, 2, 'EASY', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
-(1, 3, 'HARD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
-(1, 4, 'HARD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
-(1, 5, 'HARD', 4, 2.5, 9, '2026-04-12 16:45:19', '2026-04-05 16:45:19'),
-(1, 6, 'AGAIN', 4, 2.5, 9, '2026-04-08 16:45:19', '2026-04-05 16:45:19'),
-(1, 7, 'AGAIN', 4, 2.5, 9, '2026-04-08 16:45:19', '2026-04-05 16:45:19'),
-(1, 1, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
-(1, 2, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
-(1, 3, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
-(1, 4, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
-(1, 5, 'GOOD', 1, 2.5, 1, '2026-04-06 16:45:19', '2026-04-05 16:45:19'),
-(1, 19, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 20, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 21, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 22, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 23, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 24, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 25, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 26, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 27, 'AGAIN', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19'),
-(1, 28, 'HARD', 1, 2.5, 1, '2026-04-08 16:45:19', '2026-04-08 16:45:19');
+-- REAL MEDIA UPDATES FOR FLASHCARDS AND WORDS
+UPDATE media SET url = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e' WHERE id = 33;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1519389950473-47ba0277781c' WHERE id = 34;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773' WHERE id = 35;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7da05' WHERE id = 36;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1501504905252-473c47e087f8' WHERE id = 37;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1454789548928-150a5a67f163' WHERE id = 38;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f' WHERE id = 39;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1474487022152-b619b81230a5' WHERE id = 40;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2' WHERE id = 41;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1445307806294-bff7f67ff225' WHERE id = 42;
+UPDATE media SET url = 'https://images.unsplash.com/photo-1507842217343-583bb7270b66' WHERE id = 43;
 
-INSERT IGNORE INTO user_lesson_progress (user_id, learning_lesson_id, is_completed, score, created_at, updated_at) VALUES (1, 1, 1, 100, '2026-04-08 16:10:23', '2026-04-08 16:10:23');
+-- Insert new media for lessons and words
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1546410531-bb4caa6b424d', 'lessons/từ_vựng_cơ_bản', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-151877066bb637-c2369533e50b', 'lessons/chủ_đề_công_nghệ', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1517842645537-4d257902454a', 'lessons/ghi_chú_cá_nhân_1', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1517842645537-4d257902454a', 'lessons/ghi_chú_cá_nhân_2', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1521791136064-7986c29598a5', 'lessons/từ_vựng_giao_tiếp', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1496181133206-80ce9b88a853', 'lessons/computer_basics', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-151877066bb637-c2369533e50b', 'lessons/computer_systems', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d', 'lessons/medical_basics', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae', 'lessons/medical_care', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1535930891776-02946c11a095', 'lessons/pet_care', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/hello-au.mp3', 'words/hello/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1516733958632-afb5fd805908', 'words/hello/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/book-uk.mp3', 'words/book/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1495446815901-a7297e633e8d', 'words/book/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/computer-uk.mp3', 'words/computer/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1496181133206-80ce9b88a853', 'words/computer/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/software-us.mp3', 'words/software/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1555066931-4365d14bab8c', 'words/software/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/private-us.mp3', 'words/private/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1506126613408-eca07ce68773', 'words/private/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/secret-us.mp3', 'words/secret/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1511216335778-7cb8f49fa7a3', 'words/secret/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/study-uk.mp3', 'words/study/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1434030216411-0b793f4b4173', 'words/study/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/learn-us.mp3', 'words/learn/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1503676260728-1c00da094a0b', 'words/learn/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/keyboard-us.mp3', 'words/keyboard/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1511467687858-23d96c32e4ae', 'words/keyboard/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/screen-au.mp3', 'words/screen/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1517694712202-14dd9538aa97', 'words/screen/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/monitor-uk.mp3', 'words/monitor/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1527443224154-c4a3942d3acf', 'words/monitor/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/algorithm-us.mp3', 'words/algorithm/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1504384308090-c894fdcc538d', 'words/algorithm/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/network-us.mp3', 'words/network/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1451187580459-43490279c0fa', 'words/network/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/cloud-uk.mp3', 'words/cloud/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1534088568595-a066f410bcda', 'words/cloud/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/browser-us.mp3', 'words/browser/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e', 'words/browser/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/doctor-uk.mp3', 'words/doctor/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1612349317150-e413f6a5b16d', 'words/doctor/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/nurse-us.mp3', 'words/nurse/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1576091160550-217359f41f18', 'words/nurse/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/hospital-uk.mp3', 'words/hospital/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d', 'words/hospital/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/medicine-uk.mp3', 'words/medicine/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae', 'words/medicine/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/vaccine.mp3', 'words/vaccine/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1618961734760-466bc74ee444', 'words/vaccine/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/patient-uk.mp3', 'words/patient/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1527613426441-4da17471b66d', 'words/patient/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/diagnosis-uk.mp3', 'words/diagnosis/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1504813184591-01592f279dce', 'words/diagnosis/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/treatment-us.mp3', 'words/treatment/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1583337130417-3346a1be7dee', 'words/treatment/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/pharmacy-uk.mp3', 'words/pharmacy/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1576602976047-174e57a47881', 'words/pharmacy/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/surgeon-uk.mp3', 'words/surgeon/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1579684385127-1ef15d508118', 'words/surgeon/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/dog-uk.mp3', 'words/dog/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1517849845537-4d257902454a', 'words/dog/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/cat-uk.mp3', 'words/cat/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1514888286872-01d6d8841428', 'words/cat/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/hamster-uk.mp3', 'words/hamster/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1548767791-514d3aeec440', 'words/hamster/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/leash-us.mp3', 'words/leash/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1544568100-847a948585b9', 'words/leash/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/kennel-1-uk.mp3', 'words/kennel/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1535930891776-02946c11a095', 'words/kennel/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/communication-us.mp3', 'words/communication/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1521791136064-7986c29598a5', 'words/communication/image', 'IMAGE');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://api.dictionaryapi.dev/media/pronunciations/en/router-us.mp3', 'words/router/audio', 'AUDIO');
+INSERT IGNORE INTO media (url, public_id, type) VALUES ('https://images.unsplash.com/photo-1544197150-b99a580bb7a8', 'words/router/image', 'IMAGE');
+
+-- Update flashcard sets with real images
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d' LIMIT 1) WHERE title = 'Từ vựng cơ bản';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-151877066bb637-c2369533e50b' LIMIT 1) WHERE title = 'Chủ đề Công nghệ';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1517842645537-4d257902454a' LIMIT 1) WHERE title = 'Ghi chú cá nhân 1';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1517842645537-4d257902454a' LIMIT 1) WHERE title = 'Ghi chú cá nhân 2';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1521791136064-7986c29598a5' LIMIT 1) WHERE title = 'Từ vựng Giao tiếp';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853' LIMIT 1) WHERE title = 'Computer Basics';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-151877066bb637-c2369533e50b' LIMIT 1) WHERE title = 'Computer Systems';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d' LIMIT 1) WHERE title = 'Medical Basics';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae' LIMIT 1) WHERE title = 'Medical Care';
+UPDATE learning_lessons SET image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1535930891776-02946c11a095' LIMIT 1) WHERE title = 'Pet Care';
+
+-- Update words with dictionary data and real images
+UPDATE words SET ipa = '/həˈləʊ/', definition = '"Hello!" or an equivalent greeting.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/hello-au.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1516733958632-afb5fd805908' LIMIT 1) WHERE name = 'Hello';
+UPDATE words SET ipa = '/buːk/', definition = 'A collection of sheets of paper bound together to hinge at one edge, containing printed or written material, pictures, etc.', example = 'He was frustrated because he couldn''t find anything about dinosaurs in the book.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/book-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d' LIMIT 1) WHERE name = 'Book';
+UPDATE words SET ipa = '/kəmˈpjuːtə/', definition = 'A person employed to perform computations; one who computes.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/computer-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853' LIMIT 1) WHERE name = 'Computer';
+UPDATE words SET ipa = '/ˈsɑftˌwɛɹ/', definition = 'Encoded computer instructions, usually modifiable (unless stored in some form of unalterable memory such as ROM).', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/software-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c' LIMIT 1) WHERE name = 'Software';
+UPDATE words SET ipa = '/ˈpɹaɪvət/', definition = 'A soldier of the lowest rank in the army.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/private-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773' LIMIT 1) WHERE name = 'Private';
+UPDATE words SET ipa = '/ˈsiːkɹət/', definition = 'A piece of knowledge that is hidden and intended to be kept hidden.', example = '"Can you keep a secret?" "Yes." "So can I."', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/secret-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1511216335778-7cb8f49fa7a3' LIMIT 1) WHERE name = 'Secret';
+UPDATE words SET ipa = '/ˈstʌdi/', definition = '(usually academic) To review materials already learned in order to make sure one does not forget them, usually in preparation for an examination.', example = 'I need to study my biology notes.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/study-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173' LIMIT 1) WHERE name = 'Study';
+UPDATE words SET ipa = '/lɜːn/', definition = 'The act of learning something', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/learn-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b' LIMIT 1) WHERE name = 'Learn';
+UPDATE words SET ipa = '/ˈkiːbɔːd/', definition = '(etc.) A set of keys used to operate a typewriter, computer etc.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/keyboard-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae' LIMIT 1) WHERE name = 'Keyboard';
+UPDATE words SET ipa = '/skɹiːn/', definition = 'A physical divider intended to block an area from view, or provide shelter from something dangerous.', example = 'a fire screen', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/screen-au.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97' LIMIT 1) WHERE name = 'Screen';
+UPDATE words SET ipa = '/ˈmɒnɨtə/', definition = 'Someone who watches over something; a person in charge of something or someone.', example = 'The camp monitors look after the children during the night, when the teachers are asleep.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/monitor-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf' LIMIT 1) WHERE name = 'Monitor';
+UPDATE words SET ipa = '/ˈælɡəɹɪðm̩/', definition = 'A collection of ordered steps that solve a mathematical problem. A precise step-by-step plan for a computational procedure that possibly begins with an input value and yields an output value in a finite number of steps.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/algorithm-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d' LIMIT 1) WHERE name = 'Algorithm';
+UPDATE words SET ipa = '/nɛtwɜːk/', definition = 'A fabric or structure of fibrous elements attached to each other at regular intervals.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/network-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa' LIMIT 1) WHERE name = 'Network';
+UPDATE words SET ipa = '/klaʊd/', definition = 'A rock; boulder; a hill.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/cloud-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1534088568595-a066f410bcda' LIMIT 1) WHERE name = 'Cloud';
+UPDATE words SET ipa = '/ˈbɹaʊzə(ɹ)/', definition = 'A person or animal who browses.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/browser-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e' LIMIT 1) WHERE name = 'Browser';
+UPDATE words SET ipa = '/ˈdɒktə/', definition = 'A physician; a member of the medical profession; one who is trained and licensed to heal the sick or injured. The final examination and qualification may award a doctor degree in which case the post-nominal letters are D.O., DPM, M.D., DMD, DDS, in the US or MBBS in the UK.', example = 'If you still feel unwell tomorrow, see your doctor.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/doctor-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d' LIMIT 1) WHERE name = 'Doctor';
+UPDATE words SET ipa = '/nɜːs/', definition = 'A wet nurse.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/nurse-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1576091160550-217359f41f18' LIMIT 1) WHERE name = 'Nurse';
+UPDATE words SET ipa = '/ˈhɒs.pɪ.tl̩/', definition = 'A large medical facility, usually in a building with multiple floors, where seriously ill or injured patients are given extensive medical and/or surgical treatment.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/hospital-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d' LIMIT 1) WHERE name = 'Hospital';
+UPDATE words SET ipa = '/ˈmed(ɪ).sn̩/', definition = 'A substance which specifically promotes healing when ingested or consumed in some way.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/medicine-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae' LIMIT 1) WHERE name = 'Medicine';
+UPDATE words SET ipa = '/vækˈsaɪn/', definition = 'A substance given to stimulate the body''s production of antibodies and provide immunity against a disease without causing the disease itself in the treatment, prepared from the agent that causes the disease (or a related, also effective, but safer disease), or a synthetic substitute.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/vaccine.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1618961734760-466bc74ee444' LIMIT 1) WHERE name = 'Vaccine';
+UPDATE words SET ipa = '/ˈpeɪʃənt/', definition = 'A person or animal who receives treatment from a doctor or other medically educated person.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/patient-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1527613426441-4da17471b66d' LIMIT 1) WHERE name = 'Patient';
+UPDATE words SET ipa = '/daɪəɡˈnəʊsɪs/', definition = 'To determine which disease is causing a sick person''s signs and symptoms; to find the diagnosis.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/diagnosis-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1504813184591-01592f279dce' LIMIT 1) WHERE name = 'Diagnosis';
+UPDATE words SET ipa = '/ˈtɹiːtmənt/', definition = 'The process or manner of treating someone or something.', example = 'He still has nightmares resulting from the treatment he received from his captors.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/treatment-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee' LIMIT 1) WHERE name = 'Treatment';
+UPDATE words SET ipa = '/ˈfɑːməsi/', definition = '(countable) A place where prescription drugs are dispensed; a dispensary.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/pharmacy-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1576602976047-174e57a47881' LIMIT 1) WHERE name = 'Pharmacy';
+UPDATE words SET ipa = '/ˈsɜːdʒən/', definition = 'One who performs surgery; a doctor who performs operations on people or animals.', example = 'The surgeon refused to operate because the patient was her son.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/surgeon-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1579684385127-1ef15d508118' LIMIT 1) WHERE name = 'Surgeon';
+UPDATE words SET ipa = '/dɑɡ/', definition = 'A mammal, Canis familiaris or Canis lupus familiaris, that has been domesticated for thousands of years, of highly variable appearance due to human breeding.', example = 'The dog barked all night long.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/dog-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1517849845537-4d257902454a' LIMIT 1) WHERE name = 'Dog';
+UPDATE words SET ipa = '/kat/', definition = 'An animal of the family Felidae:', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/cat-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1514888286872-01d6d8841428' LIMIT 1) WHERE name = 'Cat';
+UPDATE words SET ipa = '/ˈhæm(p)stɚ/', definition = 'Any of various Old-World rodent species belonging to the subfamily Cricetinae.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/hamster-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1548767791-514d3aeec440' LIMIT 1) WHERE name = 'Hamster';
+UPDATE words SET ipa = '/liːʃ/', definition = 'A strap, cord or rope with which to restrain an animal, often a dog.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/leash-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1544568100-847a948585b9' LIMIT 1) WHERE name = 'Leash';
+UPDATE words SET ipa = '/ˈkɛnəl/', definition = 'A house or shelter for a dog.', example = '', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/kennel-1-uk.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1535930891776-02946c11a095' LIMIT 1) WHERE name = 'Kennel';
+UPDATE words SET ipa = '/kəˌmjuːnɪˈkeɪʃən/', definition = 'The act or an instance of communicating; the imparting or interchange of thoughts, opinions, or information by speech, writing, or signs.', example = 'Good communication is essential in the workplace.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/communication-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1521791136064-7986c29598a5' LIMIT 1) WHERE name = 'Communication';
+UPDATE words SET ipa = '/ˈɹuːtəɹ/', definition = 'A device that forwards data packets between computer networks.', example = 'I need a new router for better Wi-Fi.', audio_media_id = (SELECT id FROM media WHERE url = 'https://api.dictionaryapi.dev/media/pronunciations/en/router-us.mp3' LIMIT 1), image_media_id = (SELECT id FROM media WHERE url = 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8' LIMIT 1) WHERE name = 'Router';

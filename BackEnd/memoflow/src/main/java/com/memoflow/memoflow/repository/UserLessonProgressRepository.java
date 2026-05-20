@@ -4,6 +4,8 @@ import com.memoflow.memoflow.entity.LearningLesson;
 import com.memoflow.memoflow.entity.User;
 import com.memoflow.memoflow.entity.UserLessonProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -28,30 +30,33 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     boolean existsByUserIdAndLearningLessonIdAndIsCompletedTrue(Long userId, Long lessonId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp " +
-                                                "WHERE ulp.user.id = :userId " +
-                                                "AND ulp.isCompleted = true " +
-                                                "AND ulp.completedAt >= :startOfDay " +
-                                                "AND ulp.learningLesson.type LIKE :typePattern")
-    long countCompletedLessonsByTypeToday(@org.springframework.data.repository.query.Param("userId") Long userId, 
-                                        @org.springframework.data.repository.query.Param("startOfDay") java.time.LocalDateTime startOfDay, 
-                                        @org.springframework.data.repository.query.Param("typePattern") String typePattern);
+    @Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp " +
+            "WHERE ulp.user.id = :userId " +
+            "AND ulp.isCompleted = true " +
+            "AND ulp.completedAt >= :startOfDay " +
+            "AND ulp.learningLesson.type LIKE :typePattern")
+    long countCompletedLessonsByTypeToday(@Param("userId") Long userId, 
+                                        @Param("startOfDay") LocalDateTime startOfDay, 
+                                        @Param("typePattern") String typePattern);
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp " +
-                                                "WHERE ulp.user.id = :userId " +
-                                                "AND ulp.isCompleted = true " +
-                                                "AND ulp.completedAt BETWEEN :start AND :end " +
-                                                "AND ulp.learningLesson.type LIKE :typePattern")
-    long countCompletedLessonsByTypeInPeriod(@org.springframework.data.repository.query.Param("userId") Long userId, 
-                                          @org.springframework.data.repository.query.Param("start") java.time.LocalDateTime start, 
-                                          @org.springframework.data.repository.query.Param("end") java.time.LocalDateTime end, 
-                                          @org.springframework.data.repository.query.Param("typePattern") String typePattern);
+    @Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp " +
+            "WHERE ulp.user.id = :userId " +
+            "AND ulp.isCompleted = true " +
+            "AND ulp.completedAt BETWEEN :start AND :end " +
+            "AND ulp.learningLesson.type LIKE :typePattern")
+    long countCompletedLessonsByTypeInPeriod(@Param("userId") Long userId, 
+                                          @Param("start") LocalDateTime start, 
+                                          @Param("end") LocalDateTime end, 
+                                          @Param("typePattern") String typePattern);
 
-    @org.springframework.data.jpa.repository.Query("SELECT ulp FROM UserLessonProgress ulp " +
-                                                "WHERE ulp.user.id = :userId " +
-                                                "AND ulp.isCompleted = true " +
-                                                "AND ulp.learningLesson.type = :type " +
-                                                "ORDER BY ulp.completedAt DESC")
-    List<UserLessonProgress> findCompletedLessonsByUserIdAndType(@org.springframework.data.repository.query.Param("userId") Long userId, 
-                                                               @org.springframework.data.repository.query.Param("type") String type);
+    @Query("SELECT ulp FROM UserLessonProgress ulp " +
+            "WHERE ulp.user.id = :userId " +
+            "AND ulp.isCompleted = true " +
+            "AND ulp.learningLesson.type = :type " +
+            "ORDER BY ulp.completedAt DESC")
+    List<UserLessonProgress> findCompletedLessonsByUserIdAndType(@Param("userId") Long userId, 
+                                                               @Param("type") String type);
+
+    @Query(value = "SELECT DISTINCT CAST(updated_at AS DATE) FROM user_lesson_progress WHERE user_id = :userId AND updated_at IS NOT NULL ORDER BY CAST(updated_at AS DATE) DESC", nativeQuery = true)
+    List<Object> findActivityDatesByUserId(@Param("userId") Long userId);
 }

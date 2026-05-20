@@ -12,6 +12,7 @@ import com.memoflow.memoflow.repository.UserRepository;
 import com.memoflow.memoflow.entity.Word;
 import com.memoflow.memoflow.repository.FlashcardReviewRepository;
 import com.memoflow.memoflow.repository.WordRepository;
+import com.memoflow.memoflow.repository.UserLessonProgressRepository;
 import com.memoflow.memoflow.service.FlashcardReviewService;
 import com.memoflow.memoflow.service.NotificationSchedulerService;
 import com.memoflow.memoflow.util.SM2Calculator;
@@ -26,8 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +38,7 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
     private final FlashcardReviewRepository flashcardReviewRepository;
     private final WordRepository wordRepository;
     private final UserRepository userRepository;
+    private final UserLessonProgressRepository userLessonProgressRepository;
     private final SM2Calculator sm2Calculator;
     private final NotificationSchedulerService notificationSchedulerService;
 
@@ -127,11 +128,10 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
     @Transactional(readOnly = true)
     public DailyStudyStatsResponse getDailyStats(UserPrincipal userPrincipal) {
         LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
-        LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
-
         long reviewedToday = flashcardReviewRepository.countDistinctWordsReviewedToday(userPrincipal.getId(),
                 startOfDay);
-        long dueToday = flashcardReviewRepository.countTotalDueWordsByUserId(userPrincipal.getId(), endOfDay);
+        long dueToday = flashcardReviewRepository.countTotalDueWordsByUserId(userPrincipal.getId(), 
+                LocalDateTime.now().with(LocalTime.MAX));
         long totalReviews = flashcardReviewRepository.countByUserId(userPrincipal.getId());
         int streak = calculateStreak(userPrincipal.getId());
 
@@ -147,29 +147,48 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
     @Transactional(readOnly = true)
     public int calculateStreak(Long userId) {
         List<Object> reviewDates = flashcardReviewRepository.findReviewDatesByUserId(userId);
-        if (reviewDates.isEmpty())
+        List<Object> lessonDates = userLessonProgressRepository.findActivityDatesByUserId(userId);
+
+        if (reviewDates.isEmpty() && lessonDates.isEmpty())
             return 0;
 
+        // Use a Set to store unique dates and sort them in descending order
+        Set<LocalDate> allActivityDates = new TreeSet<>(Collections.reverseOrder());
+
+        for (Object dateObj : reviewDates) {
+            if (dateObj != null) {
+                allActivityDates.add(convertToLocalDate(dateObj));
+            }
+        }
+        for (Object dateObj : lessonDates) {
+            if (dateObj != null) {
+                allActivityDates.add(convertToLocalDate(dateObj));
+            }
+        }
+
+        if (allActivityDates.isEmpty())
+            return 0;
+
+        List<LocalDate> sortedDates = new ArrayList<>(allActivityDates);
         int streak = 0;
         LocalDate today = LocalDate.now();
+        LocalDate lastDate = sortedDates.get(0);
 
-        // Handle potential different types returned by the query based on DB (e.g.
-        // java.sql.Date or java.time.LocalDate)
-        LocalDate lastDate = convertToLocalDate(reviewDates.get(0));
-
+        // If the user didn't study today or yesterday, the streak is broken
         if (!lastDate.equals(today) && !lastDate.equals(today.minusDays(1))) {
             return 0;
         }
 
         LocalDate current = lastDate;
-        for (Object dateObj : reviewDates) {
-            LocalDate d = convertToLocalDate(dateObj);
+        for (LocalDate d : sortedDates) {
             if (d.equals(current)) {
                 streak++;
                 current = current.minusDays(1);
             } else if (d.isAfter(current)) {
+                // Skip if we have multiple records for the same day (should be handled by Set, but safe-guard)
                 continue;
             } else {
+                // Gap found
                 break;
             }
         }
@@ -197,10 +216,6 @@ public class FlashcardReviewServiceImpl implements FlashcardReviewService {
             start = date.atStartOfDay();
             end = date.atTime(LocalTime.MAX);
         } else {
-            // Default to all history if no date provided? Better to provide a default range
-            // or just all if possible.
-            // But the repository method expects start/end. Let's use a very old date as
-            // start if null.
             start = LocalDateTime.of(2000, 1, 1, 0, 0);
             end = LocalDateTime.now();
         }
