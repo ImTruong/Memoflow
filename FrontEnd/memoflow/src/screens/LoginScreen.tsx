@@ -19,18 +19,11 @@ import { ForgotPasswordModal } from '../components/ForgotPassword';
 import { authApi } from '../api/authApi';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Svg, { Path } from 'react-native-svg';
-import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
-import { LoginManager, AccessToken, Settings } from 'react-native-fbsdk-next';
-
-Settings.initializeSDK();
 
 const { width, height } = Dimensions.get('window');
 
-GoogleSignin.configure({
-  webClientId: '742848434445-lo5epsqjkqd887c43rkbdvvuns5rd826.apps.googleusercontent.com',
-  iosClientId: '742848434445-l6gbkf7q2sq4ai27n6s6srmt4le34j1r.apps.googleusercontent.com',
-  offlineAccess: true,
-});
+const SHOW_THIRD_PARTY_LOGIN = false;
+
 
 type LoginScreenProps = {
   onNavigateToHome: () => void;
@@ -83,50 +76,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
-    try {
-      await GoogleSignin.signOut();
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      if (isSuccessResponse(response)) {
-        const token = response.data.idToken;
-        if (!token) {
-          Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra. Vui lòng thử lại sau.', [{ text: 'OK' }]);
-          return;
-        }
-        const backendRes = await authApi.loginGoogle({ token });
-        await AsyncStorage.setItem('authToken', backendRes.data.token);
-        onNavigateToHome();
-      }
-    } catch (err: any) {
-      Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra. Vui lòng thử lại sau.', [{ text: 'OK' }]);
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    console.log('Google login disabled');
   };
 
   const handleFacebookLogin = async () => {
-    setIsFacebookLoading(true);
-    try {
-      LoginManager.logOut();
-      const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-      if (result.isCancelled) return;
-
-      const data = await AccessToken.getCurrentAccessToken();
-      if (!data) {
-        Alert.alert('Đăng nhập thất bại', 'Không lấy được token Facebook.', [{ text: 'OK' }]);
-        return;
-      }
-
-      const token = data.accessToken.toString();
-      const backendRes = await authApi.loginFacebook({ token });
-      await AsyncStorage.setItem('authToken', backendRes.data.token);
-      onNavigateToHome();
-    } catch (err: any) {
-      Alert.alert('Đăng nhập thất bại', 'Có lỗi xảy ra. Vui lòng thử lại sau.', [{ text: 'OK' }]);
-    } finally {
-      setIsFacebookLoading(false);
-    }
+    console.log('Facebook login disabled');
   };
 
   return (
@@ -216,56 +170,60 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 )}
               </TouchableOpacity>
 
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>Hoặc</Text>
-                <View style={styles.dividerLine} />
-              </View>
+              {SHOW_THIRD_PARTY_LOGIN && (
+                <>
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>Hoặc</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
 
-              <TouchableOpacity
-                style={styles.googleButton}
-                onPress={handleGoogleLogin}
-                disabled={isAnyLoading}
-                activeOpacity={0.85}
-              >
-                {isGoogleLoading ? (
-                  <ActivityIndicator style={styles.socialIconBox} color="#4285F4" />
-                ) : (
-                  <>
-                    <View style={styles.socialIconBox}>
-                      <Svg width={20} height={20} viewBox="0 0 18 18">
-                        <Path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
-                        <Path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
-                        <Path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
-                        <Path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z" />
-                      </Svg>
-                    </View>
-                    <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.facebookButton}
-                onPress={handleFacebookLogin}
-                disabled={isAnyLoading}
-                activeOpacity={0.85}
-              >
-                {isFacebookLoading ? (
-                  <ActivityIndicator style={styles.socialIconBox} color="#1877F2" />
-                ) : (
-                  <>
-                    <View style={styles.facebookIconBox}>
-                      <Svg width={20} height={20} viewBox="0 0 24 24">
-                        <Path
-                          fill="#1877F2"
-                          d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
-                        />
-                      </Svg>
-                    </View>
-                    <Text style={styles.facebookButtonText}>Tiếp tục với Facebook</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.googleButton}
+                    onPress={handleGoogleLogin}
+                    disabled={isAnyLoading}
+                    activeOpacity={0.85}
+                  >
+                    {isGoogleLoading ? (
+                      <ActivityIndicator style={styles.socialIconBox} color="#4285F4" />
+                    ) : (
+                      <>
+                        <View style={styles.socialIconBox}>
+                          <Svg width={20} height={20} viewBox="0 0 18 18">
+                            <Path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+                            <Path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+                            <Path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+                            <Path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z" />
+                          </Svg>
+                        </View>
+                        <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.facebookButton}
+                    onPress={handleFacebookLogin}
+                    disabled={isAnyLoading}
+                    activeOpacity={0.85}
+                  >
+                    {isFacebookLoading ? (
+                      <ActivityIndicator style={styles.socialIconBox} color="#1877F2" />
+                    ) : (
+                      <>
+                        <View style={styles.facebookIconBox}>
+                          <Svg width={20} height={20} viewBox="0 0 24 24">
+                            <Path
+                              fill="#1877F2"
+                              d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
+                            />
+                          </Svg>
+                        </View>
+                        <Text style={styles.facebookButtonText}>Tiếp tục với Facebook</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
 
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Chưa có tài khoản? </Text>

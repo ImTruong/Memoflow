@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<title>Kiến trúc tổng quan hệ thống</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f0f2f5;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 48px;
+  }
+  .wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1.5px solid #ccc;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+    padding: 20px 24px 24px;
+    display: inline-block;
+  }
+  .fig-title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<svg width="980" height="1150" xmlns="http://www.w3.org/2000/svg"
+     font-family="Segoe UI, Arial, sans-serif" font-size="11">
+<defs>
+  <filter id="sh">
+    <feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="#00000018"/>
+  </filter>
+</defs>
+
+<!-- ===================== CLIENT LAYER  y=10 h=110 ===================== -->
+<rect x="10" y="10" width="960" height="110" rx="10" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.8" filter="url(#sh)"/>
+<text x="490" y="30" text-anchor="middle" font-size="12" font-weight="bold" fill="#1565c0">TẦNG GIAO DIỆN NGƯỜI DÙNG  (Client Layer)</text>
+
+<!-- Mobile App  x=30 y=42 w=400 h=66 -->
+<rect x="30" y="42" width="400" height="66" rx="8" fill="#bbdefb" stroke="#1976d2" stroke-width="1.4"/>
+<text x="230" y="61" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d47a1">Mobile App — React Native (Expo)</text>
+<text x="230" y="77" text-anchor="middle" font-size="9.5" fill="#333">Flashcard · Quiz · Trò chơi từ vựng · Chatbot AI</text>
+<text x="230" y="91" text-anchor="middle" font-size="9.5" fill="#333">Thống kê cá nhân · Local Notification</text>
+<text x="230" y="103" text-anchor="middle" font-size="9" fill="#666" font-style="italic">REST  +  WebSocket</text>
+
+<!-- Admin Dashboard  x=550 y=42 w=400 h=66 -->
+<rect x="550" y="42" width="400" height="66" rx="8" fill="#bbdefb" stroke="#1976d2" stroke-width="1.4"/>
+<text x="750" y="61" text-anchor="middle" font-size="11" font-weight="bold" fill="#0d47a1">Admin Dashboard — React (Vite)</text>
+<text x="750" y="77" text-anchor="middle" font-size="9.5" fill="#333">Quản lý người dùng · Từ vựng · Bài học · Bài tập</text>
+<text x="750" y="91" text-anchor="middle" font-size="9.5" fill="#333">Theo dõi thống kê và vận hành hệ thống</text>
+<text x="750" y="103" text-anchor="middle" font-size="9" fill="#666" font-style="italic">REST only</text>
+
+<!-- GAP y=120 → 170 (50px) -->
+
+<!-- ===================== NETWORK LAYER  y=170 h=90 ===================== -->
+<rect x="10" y="170" width="960" height="90" rx="10" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.8" filter="url(#sh)"/>
+<text x="490" y="190" text-anchor="middle" font-size="12" font-weight="bold" fill="#6a1b9a">TẦNG KẾT NỐI  (Network Layer)</text>
+
+<!-- REST  x=60 y=200 w=380 h=50 -->
+<rect x="60" y="200" width="380" height="50" rx="7" fill="#e1bee7" stroke="#7b1fa2" stroke-width="1.3"/>
+<text x="250" y="220" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#4a148c">REST API / HTTP</text>
+<text x="250" y="235" text-anchor="middle" font-size="9.5" fill="#333">Trao đổi JSON · Auth · Học tập · Chat AI · Thống kê · Quản trị</text>
+<text x="250" y="246" text-anchor="middle" font-size="8.5" fill="#666" font-style="italic">JSON over HTTPS</text>
+
+<!-- WebSocket  x=540 y=200 w=390 h=50 -->
+<rect x="540" y="200" width="390" height="50" rx="7" fill="#e1bee7" stroke="#7b1fa2" stroke-width="1.3"/>
+<text x="735" y="220" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#4a148c">WebSocket / STOMP</text>
+<text x="735" y="235" text-anchor="middle" font-size="9.5" fill="#333">Realtime Notification · Fallback iOS · Thay thế Firebase</text>
+<text x="735" y="246" text-anchor="middle" font-size="8.5" fill="#666" font-style="italic">STOMP over WS</text>
+
+<!-- GAP y=260 → 310 (50px) -->
+
+<!-- ===================== BACKEND LAYER  y=310 h=540 ===================== -->
+<rect x="10" y="310" width="960" height="540" rx="10" fill="#fff8f0" stroke="#ef6c00" stroke-width="1.8" filter="url(#sh)"/>
+<text x="490" y="330" text-anchor="middle" font-size="12" font-weight="bold" fill="#bf360c">️  TẦNG XỬ LÝ NGHIỆP VỤ  (Backend Server — Spring Boot)</text>
+
+<!-- Security  x=30 y=340 w=920 h=40 -->
+<rect x="30" y="340" width="920" height="40" rx="7" fill="#fff9e6" stroke="#ff8f00" stroke-width="1.2" stroke-dasharray="6,3"/>
+<text x="490" y="357" text-anchor="middle" font-size="10" font-weight="bold" fill="#e65100">Security Layer</text>
+<text x="490" y="372" text-anchor="middle" font-size="9.5" fill="#444">JWT Authentication Filter  ·  CORS Configuration  ·  Request Validation</text>
+
+<!-- GAP 340+40=380 → 400 (20px) -->
+
+<!-- API Layer  x=30 y=410 w=920 h=100 -->
+<rect x="30" y="410" width="920" height="100" rx="7" fill="#fff3e8" stroke="#ef6c00" stroke-width="1.2" stroke-dasharray="6,3"/>
+<text x="490" y="430" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c" letter-spacing="0.5">API &amp; REALTIME ENDPOINT LAYER</text>
+
+<!-- REST Controllers  x=46 y=445 w=420 h=56 -->
+<rect x="46" y="445" width="420" height="56" rx="6" fill="#ffe0b2" stroke="#ef6c00" stroke-width="1.2"/>
+<text x="256" y="463" text-anchor="middle" font-size="10" font-weight="bold" fill="#bf360c">REST Controllers</text>
+<text x="256" y="477" text-anchor="middle" font-size="9" fill="#333">Auth · User · Word · Lesson · Flashcard</text>
+<text x="256" y="490" text-anchor="middle" font-size="9" fill="#333">Quiz · Game · Story · Statistics · Admin · AI Chat</text>
+
+<!-- WS Broker  x=514 y=445 w=420 h=56 -->
+<rect x="514" y="445" width="420" height="56" rx="6" fill="#ffe0b2" stroke="#ef6c00" stroke-width="1.2"/>
+<text x="724" y="463" text-anchor="middle" font-size="10" font-weight="bold" fill="#bf360c">WebSocket Broker</text>
+<text x="724" y="477" text-anchor="middle" font-size="9" fill="#333">Quản lý kết nối realtime</text>
+<text x="724" y="490" text-anchor="middle" font-size="9" fill="#333">Điều phối và đẩy thông báo tới Mobile App</text>
+
+<!-- GAP 400+90=490 → 510 (20px) -->
+
+<!-- Business Logic  x=30 y=550 w=920 h=190 -->
+<rect x="30" y="550" width="920" height="190" rx="7" fill="#ffeedc" stroke="#e65100" stroke-width="1.2" stroke-dasharray="6,3"/>
+<text x="490" y="570" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c" letter-spacing="0.5">️ BUSINESS LOGIC LAYER — SERVICE COMPONENTS</text>
+
+<!-- Row 1 services  y=534 h=56 -->
+<rect x="46"  y="585" width="280" height="56" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.1"/>
+<text x="186" y="602" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">Learning Services</text>
+<text x="186" y="616" text-anchor="middle" font-size="9" fill="#333">Từ vựng · Ngữ pháp · Luyện nghe</text>
+<text x="186" y="629" text-anchor="middle" font-size="9" fill="#333">Flashcard · Bài tập học tập</text>
+
+<rect x="370" y="585" width="240" height="56" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.1"/>
+<text x="490" y="602" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">Game Services</text>
+<text x="490" y="616" text-anchor="middle" font-size="9" fill="#333">Game điền từ · Game đua từ với bot</text>
+<text x="490" y="629" text-anchor="middle" font-size="9" fill="#333">Game tìm mặt từ</text>
+
+<rect x="664" y="585" width="270" height="56" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.1"/>
+<text x="799" y="602" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">User &amp; Auth Services</text>
+<text x="799" y="616" text-anchor="middle" font-size="9" fill="#333">Tài khoản · Hồ sơ cá nhân</text>
+<text x="799" y="629" text-anchor="middle" font-size="9" fill="#333">Đăng nhập Google · Phân quyền</text>
+
+<!-- Row 2 services  y=604 h=56 -->
+<rect x="46"  y="665" width="280" height="56" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.1"/>
+<text x="186" y="682" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">AI &amp; Recommendation</text>
+<text x="186" y="696" text-anchor="middle" font-size="9" fill="#333">Chatbot học tập · Gợi ý từ vựng</text>
+<text x="186" y="709" text-anchor="middle" font-size="9" fill="#333">Tạo bài tập bằng AI</text>
+
+<rect x="370" y="665" width="240" height="56" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.1"/>
+<text x="490" y="682" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">Statistics Services</text>
+<text x="490" y="696" text-anchor="middle" font-size="9" fill="#333">Tiến độ học · Kết quả luyện tập</text>
+<text x="490" y="709" text-anchor="middle" font-size="9" fill="#333">Thống kê cá nhân / hệ thống</text>
+
+<rect x="664" y="665" width="270" height="56" rx="6" fill="#ffcc80" stroke="#ef6c00" stroke-width="1.1"/>
+<text x="799" y="682" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">Notification Services</text>
+<text x="799" y="696" text-anchor="middle" font-size="9" fill="#333">Nhắc học · Lưu thông báo</text>
+<text x="799" y="709" text-anchor="middle" font-size="9" fill="#333">Gửi qua WebSocket Broker</text>
+
+<!-- GAP 510+174=684 → 700 (16px) -->
+
+<!-- DAO  x=30 y=795 w=920 h=38 -->
+<rect x="30" y="795" width="920" height="38" rx="6" fill="#ffe9cc" stroke="#ef6c00" stroke-width="1.2" stroke-dasharray="6,3"/>
+<text x="490" y="818" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#bf360c">️ Data Access Layer  —  Spring Data JPA Repositories  (ORM via Hibernate)</text>
+<text x="490" y="727" text-anchor="middle" font-size="0" fill="#bf360c"></text>
+
+<!-- GAP 310+540=850 → 900 (50px) -->
+
+<!-- ===================== DATABASE LAYER  y=900 h=210 ===================== -->
+<rect x="10" y="900" width="590" height="210" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.8" filter="url(#sh)"/>
+<text x="305" y="920" text-anchor="middle" font-size="12" font-weight="bold" fill="#1b5e20">TẦNG CƠ SỞ DỮ LIỆU  (MySQL)</text>
+
+<!-- DB row 1  y=820 h=58 -->
+<rect x="26"  y="930" width="172" height="58" rx="6" fill="#c8e6c9" stroke="#388e3c" stroke-width="1.1"/>
+<text x="112" y="947" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1b5e20">User &amp; Auth Data</text>
+<text x="112" y="961" text-anchor="middle" font-size="9" fill="#333">Users · Roles</text>
+<text x="112" y="973" text-anchor="middle" font-size="9" fill="#333">Verification Tokens</text>
+
+<rect x="214" y="930" width="172" height="58" rx="6" fill="#c8e6c9" stroke="#388e3c" stroke-width="1.1"/>
+<text x="300" y="947" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1b5e20">Learning Data</text>
+<text x="300" y="961" text-anchor="middle" font-size="9" fill="#333">Words · Lessons</text>
+<text x="300" y="973" text-anchor="middle" font-size="9" fill="#333">Grammar · Listening</text>
+
+<rect x="402" y="930" width="172" height="58" rx="6" fill="#c8e6c9" stroke="#388e3c" stroke-width="1.1"/>
+<text x="488" y="947" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1b5e20">Practice &amp; Game</text>
+<text x="488" y="961" text-anchor="middle" font-size="9" fill="#333">Quiz · Answers</text>
+<text x="488" y="973" text-anchor="middle" font-size="9" fill="#333">Game Records</text>
+
+<!-- DB row 2  y=892 h=58 -->
+<rect x="26"  y="1002" width="172" height="58" rx="6" fill="#c8e6c9" stroke="#388e3c" stroke-width="1.1"/>
+<text x="112" y="1019" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1b5e20">Progress &amp; Stats</text>
+<text x="112" y="1033" text-anchor="middle" font-size="9" fill="#333">Learning Progress</text>
+<text x="112" y="1045" text-anchor="middle" font-size="9" fill="#333">Activities · Results</text>
+
+<rect x="214" y="1002" width="172" height="58" rx="6" fill="#c8e6c9" stroke="#388e3c" stroke-width="1.1"/>
+<text x="300" y="1019" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1b5e20">Chat &amp; Notification</text>
+<text x="300" y="1033" text-anchor="middle" font-size="9" fill="#333">Sessions · Messages</text>
+<text x="300" y="1045" text-anchor="middle" font-size="9" fill="#333">Notifications</text>
+
+<rect x="402" y="1002" width="172" height="58" rx="6" fill="#c8e6c9" stroke="#388e3c" stroke-width="1.1"/>
+<text x="488" y="1019" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#1b5e20">Media Metadata</text>
+<text x="488" y="1033" text-anchor="middle" font-size="9" fill="#333">Image / Audio URLs</text>
+<text x="488" y="1045" text-anchor="middle" font-size="9" fill="#555" font-style="italic">(Cloudinary CDN)</text>
+
+<!-- ===================== EXTERNAL SERVICES  y=790 h=210 ===================== -->
+<rect x="618" y="900" width="352" height="210" rx="10" fill="#fce4ec" stroke="#ad1457" stroke-width="1.8" filter="url(#sh)"/>
+<text x="794" y="920" text-anchor="middle" font-size="12" font-weight="bold" fill="#880e4f">️  DỊCH VỤ NGOÀI  (External Services)</text>
+
+<!-- Gemini  x=634 y=820 w=96 h=86 -->
+<rect x="634" y="930" width="96" height="86" rx="6" fill="#f8bbd0" stroke="#ad1457" stroke-width="1.1"/>
+<text x="682" y="948" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#880e4f">Google</text>
+<text x="682" y="961" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#880e4f">Gemini AI</text>
+<text x="682" y="975" text-anchor="middle" font-size="9" fill="#333">Chatbot học tập</text>
+<text x="682" y="987" text-anchor="middle" font-size="9" fill="#333">Giải nghĩa từ</text>
+<text x="682" y="999" text-anchor="middle" font-size="9" fill="#333">Tạo bài tập AI</text>
+<text x="682" y="1011" text-anchor="middle" font-size="8" fill="#666" font-style="italic">REST API</text>
+
+<!-- Cloudinary  x=748 y=820 w=96 h=86 -->
+<rect x="748" y="930" width="96" height="86" rx="6" fill="#f8bbd0" stroke="#ad1457" stroke-width="1.1"/>
+<text x="796" y="948" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#880e4f">Cloudinary</text>
+<text x="796" y="964" text-anchor="middle" font-size="9" fill="#333">Lưu trữ ảnh</text>
+<text x="796" y="976" text-anchor="middle" font-size="9" fill="#333">và âm thanh</text>
+<text x="796" y="988" text-anchor="middle" font-size="9" fill="#333">Trả URL media</text>
+<text x="796" y="1000" text-anchor="middle" font-size="9" fill="#333">cho hệ thống</text>
+<text x="796" y="1011" text-anchor="middle" font-size="8" fill="#666" font-style="italic">Upload / CDN</text>
+
+<!-- Google OAuth  x=862 y=820 w=96 h=86 -->
+<rect x="862" y="930" width="96" height="86" rx="6" fill="#f8bbd0" stroke="#ad1457" stroke-width="1.1"/>
+<text x="910" y="948" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#880e4f">Google</text>
+<text x="910" y="961" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#880e4f">OAuth 2.0</text>
+<text x="910" y="975" text-anchor="middle" font-size="9" fill="#333">Đăng nhập</text>
+<text x="910" y="987" text-anchor="middle" font-size="9" fill="#333">bằng Google</text>
+<text x="910" y="999" text-anchor="middle" font-size="9" fill="#333">Xác minh</text>
+<text x="910" y="1011" text-anchor="middle" font-size="8" fill="#666" font-style="italic">OAuth Token</text>
+
+</svg>
+</div>
+</body>
+</html>

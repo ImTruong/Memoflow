@@ -46,18 +46,6 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker",
-      "@react-native-google-signin/google-signin",
-      [
-        "react-native-fbsdk-next",
-        {
-          "appID": "2700529490321136",
-          "clientToken": "6d6a1cbf1121dbd10176dd471da7cf8d",
-          "displayName": "memoflow",
-          "scheme": "fb2700529490321136",
-          "advertiserIDCollectionEnabled": false,
-          "autoLogAppEventsEnabled": false
-        }
-      ],
       [
         "expo-notifications",
         {

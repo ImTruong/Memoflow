@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://172.20.10.4:8080';
+const API_URL = 'http://192.168.1.171:8080';
 const DICTIONARY_EN_ENDPOINT = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 const ENGLISH_WORD_PATTERN = /^[A-Za-z]+(?:['-][A-Za-z]+)*$/;
 
