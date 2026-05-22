@@ -1,46 +1,53 @@
+version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
     container_name: memoflow-mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: 12345678
-      MYSQL_DATABASE: memoflow
-      MYSQL_USER: memoflow
-      MYSQL_PASSWORD: 12345678
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     ports:
-      - "3306:3306"
+      - "${DB_LOCAL_PORT:-3306}:3306"
     volumes:
-      - mysql_data1:/var/lib/mysql
-    networks:
-      - memoflow-network
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     build:
       context: ./BackEnd/memoflow
       dockerfile: Dockerfile
     container_name: memoflow-backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://memoflow-mysql:3306/memoflow?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 12345678
-      SPRING_SQL_INIT_MODE: never
     ports:
-      - "8080:8080"
+      - "${BE_LOCAL_PORT:-8080}:8080"
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_SQL_INIT_MODE: ${SPRING_SQL_INIT_MODE}
+      WORD2VEC_MODEL_PATH: ${WORD2VEC_MODEL_PATH}
+    volumes:
+      - ${LOCAL_MODEL_DIR:-./models}:/app/models
     depends_on:
       mysql:
         condition: service_healthy
-    networks:
-      - memoflow-network
+
+  admin:
+    build:
+      context: ./FrontEnd/admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    container_name: memoflow-admin
+    ports:
+      - "${FE_ADMIN_LOCAL_PORT:-8081}:80"
+    depends_on:
+      - backend
 
 volumes:
-  mysql_data1:
-
-networks:
-  memoflow-network:
-    driver: bridge
+  mysql_data:

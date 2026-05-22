@@ -7,10 +7,16 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,19 +29,34 @@ public class Word2VecServiceImpl implements Word2VecService {
     private WordVectors wordVectors;
     private boolean isLoaded = false;
 
+    @Value("${word2vec.model-path}")
+    private Resource modelResource;
+
     @PostConstruct
     public void init() {
         // Load model in a separate thread to not block Spring startup too long
         new Thread(() -> {
             try {
-                log.info("Starting to load Word2Vec model...");
+                log.info("Starting to load Word2Vec model from {}...", modelResource);
                 long startTime = System.currentTimeMillis();
                 
-                // Using ClassPathResource to find the SLIM model
-                File modelFile = new ClassPathResource("GoogleNews-vectors-negative300-SLIM.bin").getFile();
+                File modelFile;
+                try {
+                    // Try to get it directly if it resides on the filesystem (e.g. file:... or local file)
+                    modelFile = modelResource.getFile();
+                } catch (IOException e) {
+                    // If packaged in a JAR (e.g. classpath:), extract to a temporary file
+                    log.info("Word2Vec model is inside JAR. Extracting to temporary file...");
+                    modelFile = File.createTempFile("GoogleNews-vectors-negative300-SLIM-", ".bin");
+                    modelFile.deleteOnExit();
+                    try (InputStream in = modelResource.getInputStream()) {
+                        Files.copy(in, modelFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    log.info("Extraction completed to {}", modelFile.getAbsolutePath());
+                }
                 
                 if (!modelFile.exists()) {
-                    throw new FileNotFoundException("Word2Vec model file not found in resources");
+                    throw new FileNotFoundException("Word2Vec model file not found at " + modelFile.getAbsolutePath());
                 }
 
                 // Load Google model (binary format) using the correct method for DL4J 1.0.0-M2.1

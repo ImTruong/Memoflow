@@ -10,7 +10,8 @@ INSERT IGNORE INTO users (name, email, password, role_id, is_registered) VALUES
 ('Alex Nguyen', 'alex.nguyen@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1),
 -- admin (pass: 123456)
 ('Admin', 'admin@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 2, 1),
-('Linh Tran', 'linh.tran@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1);
+('Linh Tran', 'linh.tran@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1),
+('Test User', 'testuser@example.com', '$2a$10$evGFmusQ6XqGTNCsj2OheOj25175Ond90MiSxns/jjy/M.ip1nTuG', 1, 1);
 
 
 -- Insert Sample Notifications
