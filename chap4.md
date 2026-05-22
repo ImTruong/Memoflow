@@ -151,44 +151,53 @@ docker compose down -v
 
 ---
 
-### 4.2.4. Quy trình cài đặt và khởi chạy Mobile App (Expo Go)
+### 4.2.4. Quy trình khởi chạy tự động hóa bằng Script (Khuyên dùng)
 
-Do Mobile App chạy bên ngoài môi trường ảo hóa Docker và chạy trực tiếp trên thiết bị di động thật để hỗ trợ quét QR, các bước thực hiện như sau:
+Để đơn giản hóa việc triển khai cho lập trình viên và người dùng chạy thử nghiệm, dự án cung cấp một kịch bản khởi chạy tự động mang tên `run_app.sh` đặt tại thư mục gốc. Script này sẽ tự động thực hiện các nhiệm vụ sau:
+1. Dò tìm địa chỉ IP mạng LAN/Wi-Fi của máy tính đang chạy.
+2. Ghi và cấu hình động địa chỉ IP này vào file `FrontEnd/memoflow/.env` dưới dạng biến môi trường `EXPO_PUBLIC_API_URL` để ứng dụng di động tự động đọc.
+3. Kích hoạt toàn bộ các container Docker (Cơ sở dữ liệu MySQL, Spring Boot Backend và React Admin Web Dashboard) chạy nền.
+4. Di chuyển vào thư mục Frontend Mobile, kiểm tra cài đặt dependencies (`npm install`) và khởi động Expo Server hiển thị mã QR.
 
-#### Bước 1: Cấu hình địa chỉ IP máy chủ cho Mobile App
-1. Tìm địa chỉ IP nội bộ của máy tính của bạn trong mạng LAN/Wi-Fi:
-   * Trên macOS/Linux: Mở terminal và chạy lệnh `ifconfig` hoặc xem trong mục cài đặt Network Wi-Fi.
-   * Trên Windows: Mở Command Prompt và chạy lệnh `ipconfig`.
-   * Ví dụ địa chỉ IP tìm được: `192.168.1.5` hoặc `172.20.10.4`.
-2. Truy cập vào tệp tin cấu hình API của Mobile App tại địa chỉ: `FrontEnd/memoflow/src/api/apiClient.ts`.
-3. Sửa dòng cấu hình `API_BASE_URL` trỏ về địa chỉ IP của máy tính của bạn (đổi cổng thành `8080` theo cấu hình của Backend Container):
+#### Các bước thực hiện:
+1. Mở Terminal tại thư mục gốc dự án:
+   ```bash
+   chmod +x run_app.sh # Cấp quyền thực thi nếu chạy lần đầu
+   ./run_app.sh
+   ```
+2. Đợi Docker Compose khởi động xong, màn hình Terminal sẽ hiển thị mã QR Code lớn của Expo.
+3. Kết nối điện thoại di động cá nhân vào **chung mạng Wi-Fi/LAN** với máy tính.
+4. Quét mã QR hiển thị để trải nghiệm ứng dụng:
+   * **Android:** Sử dụng chức năng quét mã QR trong ứng dụng **Expo Go**.
+   * **iOS (iPhone):** Mở ứng dụng **Camera** mặc định, quét mã và đồng ý mở liên kết bằng ứng dụng **Expo Go**.
+
+---
+
+### 4.2.5. Quy trình cấu hình và khởi chạy Mobile App thủ công
+
+Trong trường hợp muốn chạy thủ công từng phần, bạn thực hiện theo các bước sau:
+
+#### Bước 1: Tìm IP máy chủ và cấu hình động cho Mobile
+1. Tìm địa chỉ IP LAN nội bộ của máy tính của bạn (Ví dụ: `192.168.1.5`).
+2. Tạo file `FrontEnd/memoflow/.env` và thêm biến môi trường sau:
+   ```env
+   EXPO_PUBLIC_API_URL=http://192.168.1.5:8080
+   ```
+3. Lúc này, [apiClient.ts](file:///Users/truong/year4semester2/MAD/Memoflow/FrontEnd/memoflow/src/api/apiClient.ts) sẽ tự động nạp Endpoint này thông qua biến môi trường của Expo:
    ```typescript
-   // Thay '172.20.10.4' bằng địa chỉ IP máy chủ thực tế của bạn
-   export const API_BASE_URL = 'http://192.168.1.5:8080';
+   export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
    ```
 
-#### Bước 2: Cài đặt thư viện phụ thuộc của Mobile App
-1. Di chuyển vào thư mục ứng dụng Mobile:
+#### Bước 2: Cài đặt thư viện và khởi chạy
+1. Di chuyển vào thư mục Mobile và cài đặt:
    ```bash
    cd FrontEnd/memoflow
-   ```
-2. Thực hiện cài đặt các thư viện Node.js:
-   ```bash
    npm install
    ```
+2. Khởi chạy máy chủ phát triển của Expo:
+   ```bash
+   npx expo start
+   ```
+3. Quét mã QR code hiển thị trên terminal bằng ứng dụng **Expo Go** trên thiết bị di động (đảm bảo thiết bị di động và máy tính dùng chung mạng Wi-Fi).
 
-#### Bước 3: Khởi động Expo Server
-Khởi chạy máy chủ ảo hóa của Expo:
-```bash
-npx expo start
-# hoặc dùng lệnh: npm start
-```
-*Lúc này, trên giao diện Terminal sẽ hiển thị một mã QR Code lớn.*
-
-#### Bước 4: Quét mã QR và trải nghiệm trên điện thoại
-1. Kết nối điện thoại di động cá nhân vào **chung một mạng Wi-Fi/LAN** với máy tính chạy Docker.
-2. Mở ứng dụng điện thoại:
-   * Với **Android**: Mở ứng dụng **Expo Go** và chọn chức năng **Scan QR Code**, quét mã hiển thị trên Terminal.
-   * Với **iOS (iPhone)**: Mở ứng dụng **Camera** mặc định, quét mã QR và nhấn vào liên kết mở trong ứng dụng **Expo Go**.
-3. Hệ thống Expo sẽ tiến hành tải bundle JavaScript của ứng dụng về máy và khởi chạy trực tiếp trên điện thoại của bạn. Mọi dữ liệu thao tác của học viên trên app di động sẽ đồng bộ theo thời gian thực tới Backend Container chạy trên Docker Host.
 
