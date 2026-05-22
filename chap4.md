@@ -7,53 +7,67 @@ Khác với kiến trúc logic (chỉ tả luồng nghiệp vụ giữa các l�
 ```mermaid
 flowchart TD
     subgraph ClientHost["Thiết bị Client"]
-        Browser["Web Browser (Admin Dashboard)"]
-        MobileApp["Mobile App (Expo Go / Android / iOS)"]
+        Browser["Trình duyệt Web \n(Admin Dashboard)"]
+        MobileApp["Mobile App (Expo Go) \n- Chạy trên thiết bị di động thật \n- KHÔNG chạy trong Docker"]
     end
 
-    subgraph HostMachine["Docker Host (Máy chủ / Máy cá nhân chạy Docker)"]
+    subgraph HostMachine["Máy chủ Host (Máy tính cá nhân / PC)"]
         subgraph Ports["Cổng kết nối vật lý (Host Ports)"]
             HostPort8081["Port 8081 (Admin Web)"]
             HostPort8080["Port 8080 (API Backend)"]
             HostPort3306["Port 3306 (MySQL DB)"]
+            HostPort8082["Port 8082 (Expo Metro Bundler)"]
         end
 
-        subgraph DockerNet["Docker Network (memoflow_default)"]
-            MySQL["MySQL Container (memoflow-mysql) \n- Image: mysql:8.0 \n- Cổng nội bộ: 3306"]
-            Backend["Spring Boot Backend Container (memoflow-backend) \n- JRE 17 (Eclipse Temurin) \n- Cổng nội bộ: 8080"]
-            Admin["React Admin Container (memoflow-admin) \n- Nginx Alpine \n- Cổng nội bộ: 80"]
+        subgraph DockerHost["Môi trường Docker"]
+            subgraph DockerNet["Docker Network (memoflow_default)"]
+                MySQL["MySQL Container (memoflow-mysql) \n- Image: mysql:8.0 \n- Cổng nội bộ: 3306"]
+                Backend["Spring Boot Backend Container (memoflow-backend) \n- JRE 17 (Eclipse Temurin) \n- Cổng nội bộ: 8080"]
+                Admin["React Admin Container (memoflow-admin) \n- Nginx Alpine \n- Cổng nội bộ: 80"]
+            end
+            
+            DBVolume["Volume: mysql_data \n(Persistent DB)"] <-->|Volume Mount| MySQL
+            ModelDir["Thư mục: ./models/ \n(Word2Vec Model)"] -.->|Bind Mount| Backend
         end
 
-        subgraph Volumes["Lưu trữ dữ liệu vật lý (Host Storage)"]
-            DBVolume["Volume: mysql_data \n(Persistent MySQL Data)"]
-            ModelDir["Thư mục: ./models/ \n(Chứa file Word2Vec *.bin)"]
-        end
+        ExpoProcess["Expo CLI / Metro Bundler \n- Môi trường: Node.js (Host OS) \n- KHÔNG chạy trong Docker"]
     end
 
     %% Client kết nối tới cổng vật lý
     Browser -->|HTTP - Cổng 8081| HostPort8081
     Browser -->|API Requests - Cổng 8080| HostPort8080
-    MobileApp -->|HTTP / WebSockets - Cổng 8080| HostPort8080
+    
+    MobileApp -->|1. Quét QR / Tải JS Bundle| HostPort8082
+    MobileApp -->|2. Gọi API / WebSockets| HostPort8080
 
-    %% Cổng vật lý định tuyến vào Container
+    %% Cổng vật lý định tuyến vào Container/Process
     HostPort8081 <-->|Port Forwarding: 8081->80| Admin
     HostPort8080 <-->|Port Forwarding: 8080->8080| Backend
     HostPort3306 <-->|Port Forwarding: 3306->3306| MySQL
+    HostPort8082 <-->|Kết nối Metro| ExpoProcess
 
-    %% Liên kết dữ liệu & Network nội bộ
+    %% Liên kết Network nội bộ của Docker
     Backend -->|Kết nối DB nội bộ: mysql:3306| MySQL
-    DBVolume <-->|Volume Mount: /var/lib/mysql| MySQL
-    ModelDir -.->|Bind Mount: /app/models| Backend
 
     classDef container fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
     classDef volume fill:#efebe9,stroke:#4e342e,stroke-width:2px;
-  ### Mô tả cơ chế hoạt động của mô hình triển khai:
-1. **Network Cô Lập (Docker Network):** Ba container (`memoflow-mysql`, `memoflow-backend`, `memoflow-admin`) được đặt chung trong một mạng ảo nội bộ để giao tiếp an sau và nhanh chóng thông qua Service Name (ví dụ: Backend gọi Database qua `jdbc:mysql://mysql:3306/memoflow`).
+    classDef port fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef native fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
+    
+    class MySQL,Backend,Admin container;
+    class DBVolume,ModelDir volume;
+    class HostPort8080,HostPort8081,HostPort3306,HostPort8082 port;
+    class ExpoProcess,MobileApp native;
+```
+
+### Mô tả cơ chế hoạt động của mô hình triển khai:
+1. **Network Cô Lập (Docker Network):** Ba container (`memoflow-mysql`, `memoflow-backend`, `memoflow-admin`) được đặt chung trong một mạng ảo nội bộ để giao tiếp an toàn và nhanh chóng thông qua Service Name (ví dụ: Backend gọi Database qua `jdbc:mysql://mysql:3306/memoflow`).
 2. **Decouple Word2Vec Model (Tách biệt Model nặng):** 
    Do file model Word2Vec (`GoogleNews-vectors-negative300-SLIM.bin`) có dung lượng lớn (~1.5 GB), việc đóng gói trực tiếp vào Docker Image sẽ làm tăng kích thước image lên mức không thể chấp nhận được. Hệ thống giải quyết bằng cách áp dụng **Bind Mount Volume** từ thư mục `./models` trên máy host vào `/app/models` trong Container. Điều này giữ Docker Image của Backend luôn nhẹ gọn (~250MB) và dễ phân phối.
 3. **Data Persistence:** Phân vùng lưu trữ cơ sở dữ liệu được map vào ổ cứng máy host thông qua Docker volume named `mysql_data` để đảm bảo dữ liệu không bị mất khi dừng hoặc restart container.
 4. **Triển khai Mobile App ngoài Docker:**
    Ứng dụng di động (Mobile App) được phát triển bằng React Native & Expo Go. Thành phần này **không chạy trong Docker** mà được khởi chạy trực tiếp trên máy host qua môi trường Node.js. Quyết định này giúp lập trình viên/người dùng có thể quét mã QR bằng điện thoại cá nhân (để mở qua app Expo Go) hoặc chạy qua Emulator/Simulator. Thiết bị di động sẽ giao tiếp với Backend Container thông qua cổng `8080` của máy Host bằng địa chỉ IP mạng nội bộ (mạng LAN/Wi-Fi chung).
+
 
 ---
 
