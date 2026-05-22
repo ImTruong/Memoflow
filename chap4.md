@@ -47,18 +47,13 @@ flowchart TD
 
     classDef container fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
     classDef volume fill:#efebe9,stroke:#4e342e,stroke-width:2px;
-    classDef port fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    
-    class MySQL,Backend,Admin container;
-    class DBVolume,ModelDir volume;
-    class HostPort8080,HostPort8081,HostPort3306 port;
-```
-
-### Mô tả cơ chế hoạt động của mô hình triển khai:
-1. **Network Cô Lập (Docker Network):** Ba container (`memoflow-mysql`, `memoflow-backend`, `memoflow-admin`) được đặt chung trong một mạng ảo nội bộ để giao tiếp an toàn và nhanh chóng thông qua Service Name (ví dụ: Backend gọi Database qua `jdbc:mysql://mysql:3306/memoflow`).
+  ### Mô tả cơ chế hoạt động của mô hình triển khai:
+1. **Network Cô Lập (Docker Network):** Ba container (`memoflow-mysql`, `memoflow-backend`, `memoflow-admin`) được đặt chung trong một mạng ảo nội bộ để giao tiếp an sau và nhanh chóng thông qua Service Name (ví dụ: Backend gọi Database qua `jdbc:mysql://mysql:3306/memoflow`).
 2. **Decouple Word2Vec Model (Tách biệt Model nặng):** 
    Do file model Word2Vec (`GoogleNews-vectors-negative300-SLIM.bin`) có dung lượng lớn (~1.5 GB), việc đóng gói trực tiếp vào Docker Image sẽ làm tăng kích thước image lên mức không thể chấp nhận được. Hệ thống giải quyết bằng cách áp dụng **Bind Mount Volume** từ thư mục `./models` trên máy host vào `/app/models` trong Container. Điều này giữ Docker Image của Backend luôn nhẹ gọn (~250MB) và dễ phân phối.
 3. **Data Persistence:** Phân vùng lưu trữ cơ sở dữ liệu được map vào ổ cứng máy host thông qua Docker volume named `mysql_data` để đảm bảo dữ liệu không bị mất khi dừng hoặc restart container.
+4. **Triển khai Mobile App ngoài Docker:**
+   Ứng dụng di động (Mobile App) được phát triển bằng React Native & Expo Go. Thành phần này **không chạy trong Docker** mà được khởi chạy trực tiếp trên máy host qua môi trường Node.js. Quyết định này giúp lập trình viên/người dùng có thể quét mã QR bằng điện thoại cá nhân (để mở qua app Expo Go) hoặc chạy qua Emulator/Simulator. Thiết bị di động sẽ giao tiếp với Backend Container thông qua cổng `8080` của máy Host bằng địa chỉ IP mạng nội bộ (mạng LAN/Wi-Fi chung).
 
 ---
 
@@ -71,6 +66,8 @@ flowchart TD
 *   **Hệ điều hành:** macOS, Linux hoặc Windows 10/11 (hỗ trợ WSL2).
 *   **Phần mềm yêu cầu:**
     *   **Docker Desktop** (hoặc Docker Engine & Docker Compose phiên bản v2.0 trở lên).
+    *   **Node.js (v18 trở lên)** và **npm** để chạy ứng dụng Mobile.
+    *   Ứng dụng **Expo Go** đã được cài đặt sẵn trên điện thoại di động (Android / iOS).
     *   **Git** để clone mã nguồn.
 *   **Yêu cầu tài nguyên tối thiểu:**
     *   **RAM trống:** Tối thiểu **6GB - 8GB** (Spring Boot chiếm ~1GB, MySQL chiếm ~500MB, và thư viện DeepLearning4J khi nạp model Word2Vec cần tối thiểu khoảng **4GB RAM** để ánh xạ các véc-tơ từ).
@@ -116,7 +113,7 @@ cd Memoflow
 
 ---
 
-### 4.2.3. Các bước chạy hệ thống
+### 4.2.3. Các bước chạy hệ thống Docker (Database, Backend, Admin Web)
 
 #### Bước 1: Build và khởi động các Container
 Thực hiện lệnh sau tại thư mục gốc của dự án để tải thư viện, biên dịch ứng dụng và khởi chạy các dịch vụ chạy ngầm:
@@ -135,7 +132,7 @@ Tomcat started on port 8080 (http) with context path '/'
 Started MemoflowApplication in XX.XXX seconds
 ```
 
-#### Bước 3: Truy cập và kiểm thử ứng dụng
+#### Bước 3: Truy cập và kiểm thử ứng dụng Web
 *   **Giao diện Quản trị viên (Admin Web Dashboard):** Truy cập địa chỉ [http://localhost:8081](http://localhost:8081)
 *   **Địa chỉ API Backend:** [http://localhost:8080](http://localhost:8080)
 *   **Tài khoản Test mặc định (Đã có sẵn dữ liệu mẫu):**
@@ -151,3 +148,47 @@ Nếu muốn xóa sạch container và dữ liệu để chạy lại từ đầ
 ```bash
 docker compose down -v
 ```
+
+---
+
+### 4.2.4. Quy trình cài đặt và khởi chạy Mobile App (Expo Go)
+
+Do Mobile App chạy bên ngoài môi trường ảo hóa Docker và chạy trực tiếp trên thiết bị di động thật để hỗ trợ quét QR, các bước thực hiện như sau:
+
+#### Bước 1: Cấu hình địa chỉ IP máy chủ cho Mobile App
+1. Tìm địa chỉ IP nội bộ của máy tính của bạn trong mạng LAN/Wi-Fi:
+   * Trên macOS/Linux: Mở terminal và chạy lệnh `ifconfig` hoặc xem trong mục cài đặt Network Wi-Fi.
+   * Trên Windows: Mở Command Prompt và chạy lệnh `ipconfig`.
+   * Ví dụ địa chỉ IP tìm được: `192.168.1.5` hoặc `172.20.10.4`.
+2. Truy cập vào tệp tin cấu hình API của Mobile App tại địa chỉ: `FrontEnd/memoflow/src/api/apiClient.ts`.
+3. Sửa dòng cấu hình `API_BASE_URL` trỏ về địa chỉ IP của máy tính của bạn (đổi cổng thành `8080` theo cấu hình của Backend Container):
+   ```typescript
+   // Thay '172.20.10.4' bằng địa chỉ IP máy chủ thực tế của bạn
+   export const API_BASE_URL = 'http://192.168.1.5:8080';
+   ```
+
+#### Bước 2: Cài đặt thư viện phụ thuộc của Mobile App
+1. Di chuyển vào thư mục ứng dụng Mobile:
+   ```bash
+   cd FrontEnd/memoflow
+   ```
+2. Thực hiện cài đặt các thư viện Node.js:
+   ```bash
+   npm install
+   ```
+
+#### Bước 3: Khởi động Expo Server
+Khởi chạy máy chủ ảo hóa của Expo:
+```bash
+npx expo start
+# hoặc dùng lệnh: npm start
+```
+*Lúc này, trên giao diện Terminal sẽ hiển thị một mã QR Code lớn.*
+
+#### Bước 4: Quét mã QR và trải nghiệm trên điện thoại
+1. Kết nối điện thoại di động cá nhân vào **chung một mạng Wi-Fi/LAN** với máy tính chạy Docker.
+2. Mở ứng dụng điện thoại:
+   * Với **Android**: Mở ứng dụng **Expo Go** và chọn chức năng **Scan QR Code**, quét mã hiển thị trên Terminal.
+   * Với **iOS (iPhone)**: Mở ứng dụng **Camera** mặc định, quét mã QR và nhấn vào liên kết mở trong ứng dụng **Expo Go**.
+3. Hệ thống Expo sẽ tiến hành tải bundle JavaScript của ứng dụng về máy và khởi chạy trực tiếp trên điện thoại của bạn. Mọi dữ liệu thao tác của học viên trên app di động sẽ đồng bộ theo thời gian thực tới Backend Container chạy trên Docker Host.
+
