@@ -103,7 +103,7 @@ flowchart TD
    * **Admin Web Dashboard:** [http://localhost:8081](http://localhost:8081)
      * *Đăng nhập Admin:* `admin@example.com` / `123456`
    * **Backend REST API:** [http://localhost:8080](http://localhost:8080)
-     * *Đăng nhập Học viên (Mobile):* `testuser@example.com` / `123456`
+     * *Đăng nhập Học viên (Mobile):* `alex.nguyen@example.com` / `123456`
 
 4. **Tắt hệ thống:**
    ```bash

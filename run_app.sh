@@ -22,11 +22,10 @@ docker compose up -d
 echo "📱 Đang chuẩn bị chạy ứng dụng Mobile (Expo Go)..."
 cd FrontEnd/memoflow
 
-# Kiểm tra nếu chưa cài node_modules thì tự cài
-if [ ! -d "node_modules" ]; then
-    echo "📦 Chưa phát hiện node_modules trong FrontEnd/memoflow. Tiến hành cài đặt dependencies..."
-    npm install
-fi
+# Đảm bảo cài đặt/cập nhật đầy đủ các thư viện Node.js (tránh lỗi thiếu plugin)
+echo "📦 Đang kiểm tra và cập nhật dependencies trong FrontEnd/memoflow..."
+npm install
 
-echo "✨ Khởi chạy Expo Server. Hãy dùng ứng dụng Expo Go quét mã QR hiển thị dưới đây:"
-npx expo start
+echo "✨ Khởi chạy Expo Server trên cổng 8082. Hãy dùng ứng dụng Expo Go quét mã QR hiển thị dưới đây:"
+npx expo start --port 8082
+
