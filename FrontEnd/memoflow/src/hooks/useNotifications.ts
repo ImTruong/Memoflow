@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { notificationApi, NotificationResponse } from '../api/notificationApi';
+import { API_BASE_URL } from '../api/apiClient';
 
 const DEFAULT_PAGE_SIZE = 20;
-const WS_URL = 'http://172.20.10.4:8080/ws/notifications'; // Change to your backend URL
+const WS_URL = `${API_BASE_URL}/ws/notifications`;
+
 
 export const useNotifications = () => {
   const [items, setItems] = useState<NotificationResponse[]>([]);
