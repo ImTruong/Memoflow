@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+// Service xu ly nghiep vu truyen chem, upload anh va tien do doc cua user.
 public class StoryLessonServiceImpl implements StoryLessonService {
 
     private static final String STORY_TYPE = "TRUYEN_CHEM";
@@ -49,6 +50,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
     private final CloudinaryService cloudinaryService;
 
     @Override
+    // Tao truyen chem moi, upload anh neu co va luu noi dung vao content JSON.
     public StoryLessonResponse createLesson(Long learningActivityId,
                                             CreateStoryLearningLessonRequest request,
                                             MultipartFile image,
@@ -74,6 +76,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
     }
 
     @Override
+    // Cap nhat truyen chem, cho phep sua noi dung va thay anh minh hoa.
     public StoryLessonResponse updateLesson(Long lessonId,
                                             UpdateStoryLearningLessonRequest request,
                                             MultipartFile image,
@@ -115,6 +118,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
     }
 
     @Override
+    // Xoa truyen chem sau khi kiem tra lesson dung loai TRUYEN_CHEM.
     public void deleteLesson(Long lessonId, UserPrincipal userPrincipal) {
         LearningLesson lesson = findStoryLessonById(lessonId);
         learningLessonRepository.delete(lesson);
@@ -122,6 +126,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay danh sach truyen chem va ghep tien do doc cua user hien tai.
     public PageResponse<StoryLessonProgressResponse> getLessons(UserPrincipal userPrincipal, Pageable pageable) {
         Page<LearningLesson> lessonPage = learningLessonRepository.findByType(STORY_TYPE, pageable);
 
@@ -158,6 +163,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay chi tiet mot truyen chem kem tien do doc cua user.
     public StoryLessonProgressResponse getLessonDetail(Long lessonId, UserPrincipal userPrincipal) {
         LearningLesson lesson = findStoryLessonById(lessonId);
         UserLessonProgress progress = userLessonProgressRepository
@@ -167,6 +173,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
     }
 
     @Override
+    // Danh dau user da hoan thanh bai doc va cap nhat progressPercent len 100.
     public void completeLesson(Long lessonId, UserPrincipal userPrincipal) {
         LearningLesson lesson = findStoryLessonById(lessonId);
 
@@ -187,6 +194,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
         userLessonProgressRepository.save(progress);
     }
 
+    // Tim lesson va chan viec truy cap nham sang loai bai hoc khac.
     private LearningLesson findStoryLessonById(Long lessonId) {
         LearningLesson lesson = learningLessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story Lesson", "id", lessonId));
@@ -198,12 +206,14 @@ public class StoryLessonServiceImpl implements StoryLessonService {
         return lesson;
     }
 
+    // Goi CloudinaryService de upload anh minh hoa truyen, sau do tao Media entity.
     private Media buildStoryImage(MultipartFile image) {
         if (image == null || image.isEmpty()) {
             return null;
         }
 
         try {
+            // API ngoai: upload file len Cloudinary thong qua CloudinaryService.
             Map<String, String> uploadResult = cloudinaryService.uploadFile(image, "stories");
             String publicId = uploadResult.get("publicId");
 
@@ -217,6 +227,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
         }
     }
 
+    // Dong goi englishTitle, paragraphs va vocabulary thanh JSON content cho truyen chem.
     private Map<String, Object> buildStoryContent(CreateStoryLearningLessonRequest request) {
         Map<String, Object> content = new HashMap<>();
 
@@ -237,6 +248,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
         return content;
     }
 
+    // Chuyen LearningLesson thanh DTO truyen chem tra ve cho client.
     private StoryLessonResponse mapToLessonResponse(LearningLesson lesson) {
         StoryLessonResponse.Media image = null;
         if (lesson.getImage() != null) {
@@ -256,6 +268,7 @@ public class StoryLessonServiceImpl implements StoryLessonService {
                 .build();
     }
 
+    // Ghep thong tin truyen voi progress cua user de mobile biet da doc hay chua.
     private StoryLessonProgressResponse mapToProgressResponse(LearningLesson lesson, UserLessonProgress progress) {
         StoryLessonResponse lessonResponse = mapToLessonResponse(lesson);
         boolean isCompleted = progress != null && Boolean.TRUE.equals(progress.getIsCompleted());

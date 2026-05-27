@@ -11,12 +11,14 @@ import BilingualManagement from './pages/BilingualManagement';
 import WordRaceManagement from './pages/WordRaceManagement';
 import WordHuntManagement from './pages/WordHuntManagement';
 
+// Route bao ve cac trang admin, chua co token thi day ve man dang nhap.
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
   if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
+// Root app cua admin web, khai bao layout sidebar va cac route quan ly noi dung.
 const App: React.FC = () => {
   return (
     <Router>

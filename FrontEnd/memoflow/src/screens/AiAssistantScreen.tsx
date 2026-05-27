@@ -44,17 +44,20 @@ const QUICK_PROMPTS = [
   'Luyen tap ngay',
 ];
 
+// Rut gon chuoi de hien thi preview phien chat trong danh sach lich su.
 const truncate = (value: string, maxLength: number) => {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength).trim()}...`;
 };
 
+// Format gio gui tin nhan trong bong chat.
 const formatTime = (isoDate: string) => {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
+// Format thoi gian cap nhat gan nhat cua phien chat trong lich su.
 const formatRelativeTime = (isoDate: string) => {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) return '';
@@ -78,6 +81,7 @@ const formatRelativeTime = (isoDate: string) => {
   return days === 1 ? 'Yesterday' : `${days}d ago`;
 };
 
+// Parse markdown inline don gian: bold, italic va code.
 const parseInlineMarkdown = (value: string): InlinePart[] => {
   const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
   const parts: InlinePart[] = [];
@@ -109,6 +113,7 @@ const parseInlineMarkdown = (value: string): InlinePart[] => {
   return parts;
 };
 
+// Tach noi dung assistant thanh cac block paragraph/bullet de render dep hon.
 const parseMarkdownBlocks = (content: string): MarkdownBlock[] => {
   return content
     .split('\n')
@@ -130,6 +135,7 @@ const parseMarkdownBlocks = (content: string): MarkdownBlock[] => {
     });
 };
 
+// Man hinh giao dien chatbot hoc tap, quan ly session, history va gui prompt toi AI.
 export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, route, navigation }) => {
   const insets = useSafeAreaInsets();
   const [sessions, setSessions] = useState<AiChatSession[]>([]);
@@ -157,6 +163,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     [activeSessionId, sessions],
   );
 
+  // Lay lich su tin nhan cua mot session tu backend.
   const loadMessages = useCallback(async (sessionId: number) => {
     setLoadingMessages(true);
     try {
@@ -170,6 +177,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     }
   }, []);
 
+  // Tao session chat moi va dua session do len dau danh sach.
   const createAndOpenSession = useCallback(async () => {
     const response = await aiChatApi.createSession();
     const created = response.data;
@@ -182,6 +190,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     return created;
   }, []);
 
+  // Khoi tao man chat: tai session, tao session neu chua co va xu ly autoSend tu man hoc.
   const bootstrap = useCallback(async () => {
     setLoadingInitial(true);
     try {
@@ -244,6 +253,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     void bootstrap();
   }, [bootstrap]);
 
+  // Tu dong cuon xuong tin nhan moi nhat khi danh sach thay doi.
   useEffect(() => {
     if (messages.length === 0) return;
 
@@ -254,6 +264,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     return () => clearTimeout(timer);
   }, [messages.length]);
 
+  // Theo doi ban phim de giu o nhap va danh sach chat khong bi che.
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -278,6 +289,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     };
   }, []);
 
+  // Cap nhat preview session sau khi assistant tra loi.
   const upsertSessionAfterReply = (
     replySessionId: number,
     title: string,
@@ -298,6 +310,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     });
   };
 
+  // Gui tin nhan: luu user message, goi AI provider/proxy, luu assistant message vao backend.
   const submitMessage = async (
     rawContent: string,
     options?: { hiddenContext?: string; sessionId?: number },
@@ -332,6 +345,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
 
       setMessages((prev) => [...prev.filter((item) => item.id !== tempId), savedUserMessage]);
 
+      // API ngoai gian tiep: aiProviderApi goi backend /ai/generate, backend proxy toi Gemini/AI provider.
       const assistantContent = await aiProviderApi.generateTutorReply(
         content,
         [...messages, savedUserMessage],
@@ -362,12 +376,14 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     }
   };
 
+  // Chuyen sang session cu khi user chon trong history.
   const handleSelectSession = async (session: AiChatSession) => {
     setActiveSessionId(session.id);
     setShowHistory(false);
     await loadMessages(session.id);
   };
 
+  // Tu dong gui prompt neu man khac dieu huong sang AI Assistant voi autoSend.
   useEffect(() => {
     if (!pendingAutoSend || loadingInitial || sending) return;
 
@@ -379,6 +395,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     });
   }, [loadingInitial, pendingAutoSend, sending]);
 
+  // Render mot bong chat, assistant co ho tro markdown co ban.
   const renderMessageItem = ({ item }: { item: AiChatMessage }) => {
     const isUser = item.role === 'user';
     const markdownBlocks = !isUser ? parseMarkdownBlocks(item.content) : [];
@@ -431,6 +448,7 @@ export const AiAssistantScreen: React.FC<AiAssistantScreenProps> = ({ onBack, ro
     );
   };
 
+  // Render mot dong lich su phien chat.
   const renderHistoryItem = ({ item }: { item: AiChatSession }) => {
     const active = item.id === activeSessionId;
 

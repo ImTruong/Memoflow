@@ -73,6 +73,7 @@ const clamp = (value: number, min: number, max: number): number => {
   return Math.max(min, Math.min(max, value));
 };
 
+// Quy doi huong keo cua ngon tay thanh 1 trong 8 huong tren bang chu.
 const getDirectionByDelta = (rowDelta: number, colDelta: number): DragDirection => {
   const angle = Math.atan2(rowDelta, colDelta);
   const directionIndex = Math.round(angle / (Math.PI / 4));
@@ -80,6 +81,7 @@ const getDirectionByDelta = (rowDelta: number, colDelta: number): DragDirection 
   return DIRECTION_STEPS[normalizedIndex];
 };
 
+// Lay danh sach o theo huong da khoa, giup thao tac keo khong bi lech duong.
 const getDirectionalLineCells = (
   start: WordHuntCell,
   direction: DragDirection,
@@ -104,6 +106,7 @@ const getDirectionalLineCells = (
   return cells;
 };
 
+// Tinh so o can chon dua tren khoang cach ngon tay di chuyen tu o bat dau.
 const getStepsByFingerDistance = (
   start: WordHuntCell,
   localX: number,
@@ -122,16 +125,17 @@ const getStepsByFingerDistance = (
   const dx = clampedX - startCenterX;
   const dy = clampedY - startCenterY;
 
-  // Project finger movement onto locked direction axis.
+  // Chieu chuyen dong ngon tay len truc huong da khoa.
   const directionNormSq =
     direction.rowStep * direction.rowStep + direction.colStep * direction.colStep;
   const axisProjectionRaw = (dy / step) * direction.rowStep + (dx / step) * direction.colStep;
   const axisProjection = axisProjectionRaw / Math.max(directionNormSq, 1);
 
-  // Require crossing most of a cell before advancing to next one.
+  // Can vuot qua gan het mot o moi chuyen sang o tiep theo.
   return Math.max(0, Math.floor(axisProjection + 0.15));
 };
 
+// Format thoi gian con lai ve mm:ss.
 const formatTime = (seconds: number): string => {
   const minute = Math.floor(seconds / 60)
     .toString()
@@ -143,6 +147,7 @@ const formatTime = (seconds: number): string => {
   return `${minute}:${second}`;
 };
 
+// Tao key ngay hien tai de dem so luot goi y theo ngay.
 const getTodayDateKey = (): string => {
   const now = new Date();
   const year = now.getFullYear();
@@ -151,6 +156,7 @@ const getTodayDateKey = (): string => {
   return `${year}-${month}-${day}`;
 };
 
+// Man hinh game Word Hunt: sinh bang, xu ly keo chon, goi y va luu tien do.
 export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress, onBack, onFinish }) => {
   const content = progress.learningLesson.content;
   const boardSize = useMemo(() => {
@@ -213,6 +219,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
   const clearErrorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wordMeaningMapRef = useRef<Record<string, string>>({});
 
+  // Lay nghia da cache cua tu neu truoc do da dich bang MyMemory.
   const getKnownMeaning = useCallback((word: string): string | null => {
     const upperWord = word.toUpperCase();
     const localMeaning = wordMeaningMapRef.current[upperWord];
@@ -223,6 +230,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     return getCachedVietnameseMeaning(upperWord);
   }, []);
 
+  // API ngoai gian tiep: fetchVietnameseMeaning goi MyMemory de lay nghia tieng Viet.
   const loadMeaningForWord = useCallback(
     async (word: string): Promise<string> => {
       const upperWord = word.toUpperCase();
@@ -240,6 +248,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     [getKnownMeaning]
   );
 
+  // Hien loi ngan trong game va tu an sau mot khoang thoi gian.
   const showTransientError = useCallback((message: string) => {
     setErrorMessage(message);
     if (clearErrorTimeoutRef.current) {
@@ -250,11 +259,13 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     }, 1800);
   }, []);
 
+  // Cap nhat danh sach o dang duoc user keo chon.
   const setSelection = useCallback((cells: WordHuntCell[]) => {
     selectedCellsRef.current = cells;
     setSelectedCells(cells);
   }, []);
 
+  // Doi toa do cham tren man hinh thanh o trong bang chu.
   const getCellFromLocalPoint = useCallback(
     (localX: number, localY: number, mode: 'strict' | 'drag' = 'drag'): WordHuntCell | null => {
       if (localX < 0 || localY < 0 || localX > boardGridSize || localY > boardGridSize) {
@@ -298,6 +309,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     [boardData.board, boardGridSize, boardSize, cellSize, step]
   );
 
+  // Gan chu cai vao danh sach o duoc chon de tao thanh tu dang keo.
   const mapLineWithLetters = useCallback(
     (line: WordHuntCell[]): WordHuntCell[] =>
       line.map((cell) => ({
@@ -307,6 +319,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     [boardData.board]
   );
 
+  // Kiem tra chuoi o user vua keo co trung tu can tim hay khong.
   const evaluateSelection = useCallback(
     (lineCells: WordHuntCell[]) => {
       if (lineCells.length < 2) {
@@ -371,6 +384,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     ]
   );
 
+  // Tao lai bang moi va reset toan bo trang thai cua luot choi.
   const handleRestart = useCallback(() => {
     const regenerated = generateWordHuntBoard(lessonWords, boardSize);
     setBoardData(regenerated);
@@ -389,6 +403,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     setErrorMessage(null);
   }, [boardSize, content.timeLimitSeconds, lessonWords, setSelection]);
 
+  // Dong goi tien do hien tai de gui ve backend khi thang, thua hoac thoat game.
   const finishGame = useCallback(
     (isCompleted: boolean) => {
       const progressPercent = targetWordCount === 0 ? 0 : Math.round((foundWords.size / targetWordCount) * 100);
@@ -407,6 +422,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     [foundWords.size, hintsUsed, onFinish, progress.completedAt, progress.id, progress.progressPercent, targetWordCount]
   );
 
+  // PanResponder xu ly thao tac cham/keo/tha tren bang chu cai.
   const panResponder = useMemo<PanResponderInstance>(
     () =>
       PanResponder.create({
@@ -551,6 +567,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
 
   const hintRemaining = Math.max(content.maxHintsPerDay - hintsUsed, 0);
 
+  // Kiem tra dieu kien truoc khi mo modal xac nhan dung goi y.
   const requestHint = () => {
     if (hintRemaining <= 0 || isGameEnded) {
       showTransientError('Bạn đã hết lượt gợi ý hôm nay');
@@ -560,6 +577,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     setShowHintConfirm(true);
   };
 
+  // Chon ngau nhien mot tu chua tim thay lam goi y va tang so luot da dung.
   const confirmHint = () => {
     const remainingWords = targetWords
       .filter((word) => !foundWords.has(word));
@@ -575,6 +593,7 @@ export const WordHuntGameScreen: React.FC<WordHuntGameScreenProps> = ({ progress
     setShowHintConfirm(false);
   };
 
+  // Dong popup thong bao tu vua tim thay, neu du tu thi hien modal chien thang.
   const closeFoundPopup = () => {
     setFoundPopup(null);
     if (pendingWin) {

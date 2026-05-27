@@ -75,9 +75,11 @@ const DEFAULT_STORY_ACTIVITY_ID = 2;
 const MAX_PARAGRAPH_PREVIEW = 3;
 const PLACEHOLDER_PATTERN = /\{([^{}]+)\}/g;
 
+// Kiem tra gia tri co phai object thuong de doc content an toan.
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// Chuyen mang bat ky ve mang string da trim.
 const toStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -88,6 +90,7 @@ const toStringArray = (value: unknown): string[] => {
     .filter((item) => item.length > 0);
 };
 
+// Lay danh sach tu vung tu content, ho tro ca dang string va object { word }.
 const parseVocabularyFromContent = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -112,6 +115,7 @@ const parseVocabularyFromContent = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+// Tach editor thanh cac doan van, moi doan cach nhau bang dong trong.
 const parseParagraphEditor = (value: string): string[] => {
   return value
     .split(/\n\s*\n/g)
@@ -138,6 +142,7 @@ const toTitleCaseWord = (value: string): string => {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 };
 
+// Chuan hoa token trong cap ngoac {word} de backend/frontend highlight on dinh.
 const normalizePlaceholderToken = (value: string): string => {
   return value
     .trim()
@@ -149,6 +154,7 @@ const normalizePlaceholderToken = (value: string): string => {
     .toLowerCase();
 };
 
+// Chuan hoa toan bo placeholder trong noi dung truyen.
 const normalizePlaceholderBraces = (value: string): string => {
   return value.replace(PLACEHOLDER_PATTERN, (fullMatch: string, rawToken: string) => {
     const normalized = normalizePlaceholderToken(rawToken);
@@ -156,6 +162,7 @@ const normalizePlaceholderBraces = (value: string): string => {
   });
 };
 
+// Dem so lan xuat hien cua tung placeholder trong editor.
 const countPlaceholderTokens = (value: string): Map<string, number> => {
   const counts = new Map<string, number>();
 
@@ -171,6 +178,7 @@ const countPlaceholderTokens = (value: string): Map<string, number> => {
   return counts;
 };
 
+// Phat hien truong hop admin doi ten dung mot placeholder de dong bo vocabulary.
 const detectSinglePlaceholderRename = (
   previousEditor: string,
   nextEditor: string,
@@ -213,6 +221,7 @@ const detectSinglePlaceholderRename = (
   };
 };
 
+// Thay token placeholder cu bang token moi trong toan bo doan van.
 const replacePlaceholderToken = (value: string, fromToken: string, toToken: string): string => {
   if (!fromToken || !toToken || fromToken === toToken) {
     return value;
@@ -249,6 +258,7 @@ const extractUniquePlaceholderTokens = (value: string): string[] => {
   return tokens;
 };
 
+// Tao danh sach tu vung tu cac placeholder dang {word} trong doan van.
 const buildVocabularyFromParagraphs = (paragraphs: string[]): string[] => {
   const paragraphText = paragraphs.join('\n\n');
   const tokens = extractUniquePlaceholderTokens(paragraphText);
@@ -307,6 +317,7 @@ const syncParagraphEditorState = (
   };
 };
 
+// Map response backend thanh record de bang admin hien thi.
 const mapToStoryRecord = (item: StoryProgressItem): StoryLessonRecord => {
   const lesson = item.learningLesson;
   const content = isRecord(lesson?.content) ? lesson.content : {};
@@ -327,6 +338,7 @@ const mapToStoryRecord = (item: StoryProgressItem): StoryLessonRecord => {
   };
 };
 
+// Tao form rong khi admin bam them moi truyen chem.
 const buildDefaultForm = (): StoryFormState => ({
   title: '',
   description: '',
@@ -382,6 +394,7 @@ const getApiErrorMessage = (error: unknown, fallback: string): string => {
   return fallback;
 };
 
+// Trang admin quan ly truyen chem: danh sach, upload Word, upload anh va CRUD lesson.
 const StoryLessonManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [lessons, setLessons] = useState<StoryLessonRecord[]>([]);
@@ -404,6 +417,7 @@ const StoryLessonManagement: React.FC = () => {
 
   const [formState, setFormState] = useState<StoryFormState>(buildDefaultForm());
 
+  // API noi bo: tai danh sach truyen chem tu backend admin.
   const fetchLessons = useCallback(async (targetPage: number) => {
     try {
       setRefreshing(true);
@@ -449,6 +463,7 @@ const StoryLessonManagement: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  // Loc truyen tren client theo tieu de, mo ta hoac tu vung.
   const filteredLessons = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
     if (!keyword) {
@@ -464,12 +479,14 @@ const StoryLessonManagement: React.FC = () => {
     });
   }, [lessons, searchTerm]);
 
+  // Mo form them moi truyen chem.
   const openCreateModal = () => {
     setEditingLesson(null);
     setFormState(buildDefaultForm());
     setShowFormModal(true);
   };
 
+  // Mo form sua va tai chi tiet moi nhat cua truyen.
   const openEditModal = async (lesson: StoryLessonRecord) => {
     setEditingLesson(lesson);
     setShowFormModal(true);
@@ -491,6 +508,7 @@ const StoryLessonManagement: React.FC = () => {
     }
   };
 
+  // Dong form va reset trang thai dang sua.
   const closeFormModal = () => {
     if (submitting) {
       return;
@@ -501,6 +519,7 @@ const StoryLessonManagement: React.FC = () => {
     setFormState(buildDefaultForm());
   };
 
+  // Nhan file anh minh hoa va tao preview tren giao dien.
   const handleImageChange = (file?: File) => {
     if (!file) {
       return;
@@ -514,6 +533,7 @@ const StoryLessonManagement: React.FC = () => {
     }));
   };
 
+  // Doc file Word .docx, parse doan van va tu in dam thanh noi dung truyen chem.
   const handleWordFileChange = async (file?: File) => {
     if (!file) {
       return;
@@ -554,6 +574,7 @@ const StoryLessonManagement: React.FC = () => {
     }
   };
 
+  // Dong bo paragraph editor voi danh sach tu vung khi admin sua placeholder.
   const handleParagraphEditorChange = (value: string) => {
     setFormState((prev) => ({
       ...prev,
@@ -561,6 +582,7 @@ const StoryLessonManagement: React.FC = () => {
     }));
   };
 
+  // Tao payload multipart phan JSON dung format backend yeu cau.
   const buildStoryPayload = (): StoryLessonPayload | null => {
     const title = formState.title.trim();
     if (!title) {
@@ -598,6 +620,7 @@ const StoryLessonManagement: React.FC = () => {
     };
   };
 
+  // Goi API tao moi hoac cap nhat truyen chem.
   const handleSubmit = async () => {
     const payload = buildStoryPayload();
     if (!payload) {
@@ -632,6 +655,7 @@ const StoryLessonManagement: React.FC = () => {
     }
   };
 
+  // Goi API xoa truyen chem dang duoc chon.
   const handleDelete = async () => {
     if (!selectedLesson) {
       return;

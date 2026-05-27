@@ -56,9 +56,11 @@ type Notice = {
 
 const DEFAULT_WORD_HUNT_ACTIVITY_ID = 5;
 
+// Kiem tra gia tri co phai object thuong de doc content an toan.
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// Chuyen gia tri tu API ve number, neu sai kieu thi dung fallback.
 const toNumberOr = (value: unknown, fallback: number): number => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
@@ -74,6 +76,7 @@ const toNumberOr = (value: unknown, fallback: number): number => {
   return fallback;
 };
 
+// Chuan hoa danh sach tu trong content backend ve uppercase va loai trung.
 const parseWords = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -96,6 +99,7 @@ const parseWords = (value: unknown): string[] => {
 
 const normalizeWord = (value: string): string => value.trim().toUpperCase();
 
+// Tao categoryKey khong dau tu ten chu de admin nhap.
 const toCategoryKey = (value: string): string => {
   return value
     .normalize('NFD')
@@ -105,6 +109,7 @@ const toCategoryKey = (value: string): string => {
     .replace(/^_+|_+$/g, '');
 };
 
+// Map response backend thanh record de bang admin hien thi.
 const mapToRecord = (item: WordHuntProgressItem): WordHuntRecord => {
   const lesson = item.learningLesson;
   const content = isRecord(lesson?.content) ? lesson.content : {};
@@ -130,6 +135,7 @@ const mapToRecord = (item: WordHuntProgressItem): WordHuntRecord => {
   };
 };
 
+// Tao form rong khi admin bam them moi Word Hunt.
 const buildDefaultForm = (): WordHuntFormState => ({
   title: '',
   categoryLabel: 'Chủ đề tổng hợp',
@@ -143,6 +149,7 @@ const buildDefaultForm = (): WordHuntFormState => ({
   wordInput: '',
 });
 
+// Do du lieu record vao form khi admin sua man choi.
 const mapToForm = (record: WordHuntRecord): WordHuntFormState => ({
   title: record.title,
   categoryLabel: record.content.categoryLabel,
@@ -156,6 +163,7 @@ const mapToForm = (record: WordHuntRecord): WordHuntFormState => ({
   wordInput: '',
 });
 
+// Trang admin quan ly danh sach va form cau hinh Word Hunt.
 const WordHuntManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [records, setRecords] = useState<WordHuntRecord[]>([]);
@@ -179,6 +187,7 @@ const WordHuntManagement: React.FC = () => {
 
   const [formState, setFormState] = useState<WordHuntFormState>(buildDefaultForm());
 
+  // API noi bo: tai danh sach Word Hunt tu backend admin.
   const fetchRecords = useCallback(async (targetPage: number) => {
     try {
       setRefreshing(true);
@@ -225,6 +234,7 @@ const WordHuntManagement: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  // Loc ban ghi tren client theo tieu de, chu de hoac danh sach tu.
   const filteredRecords = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
     if (!keyword) {
@@ -241,12 +251,14 @@ const WordHuntManagement: React.FC = () => {
     });
   }, [records, searchTerm]);
 
+  // Mo form them moi Word Hunt.
   const openCreateModal = () => {
     setEditingRecord(null);
     setFormState(buildDefaultForm());
     setShowFormModal(true);
   };
 
+  // Mo form sua va tai chi tiet moi nhat cua man choi.
   const openEditModal = async (record: WordHuntRecord) => {
     setEditingRecord(record);
     setShowFormModal(true);
@@ -269,12 +281,14 @@ const WordHuntManagement: React.FC = () => {
     }
   };
 
+  // Dong form va reset trang thai dang sua.
   const closeFormModal = () => {
     setShowFormModal(false);
     setEditingRecord(null);
     setFormState(buildDefaultForm());
   };
 
+  // Them tu vao danh sach, co goi API validate tu tieng Anh neu co cau hinh.
   const addWord = async (value: string) => {
     const word = normalizeWord(value);
     if (!word) {
@@ -314,6 +328,7 @@ const WordHuntManagement: React.FC = () => {
     setValidatingWord(false);
   };
 
+  // Xoa tu khoi danh sach cau hinh.
   const removeWord = (word: string) => {
     setFormState((prev) => ({
       ...prev,
@@ -325,6 +340,7 @@ const WordHuntManagement: React.FC = () => {
     }));
   };
 
+  // Cho phep nhan Enter hoac dau phay de them nhanh tu.
   const handleWordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter') {
       return;
@@ -334,6 +350,7 @@ const WordHuntManagement: React.FC = () => {
     void addWord(formState.wordInput);
   };
 
+  // Tao payload dung format backend yeu cau truoc khi submit.
   const buildPayload = (): WordHuntLessonPayload | null => {
     const title = formState.title.trim();
     if (!title) {
@@ -377,6 +394,7 @@ const WordHuntManagement: React.FC = () => {
     };
   };
 
+  // Goi API tao moi hoac cap nhat Word Hunt.
   const handleSubmit = async () => {
     const payload = buildPayload();
     if (!payload) {
@@ -410,6 +428,7 @@ const WordHuntManagement: React.FC = () => {
     }
   };
 
+  // Goi API xoa Word Hunt dang duoc chon.
   const handleDelete = async () => {
     if (!selectedRecord) {
       return;

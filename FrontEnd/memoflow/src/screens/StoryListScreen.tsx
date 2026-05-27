@@ -39,6 +39,7 @@ export const StoryListScreen: React.FC<StoryListScreenProps> = ({
   const horizontalScrollRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
 
+  // Chuyen tab bang nut bam va dong bo vi tri FlatList ngang.
   const handleTabPress = (tab: 'TRUYEN' | 'DA_DOC') => {
     setActiveTab(tab);
     horizontalScrollRef.current?.scrollToIndex({ 
@@ -47,13 +48,14 @@ export const StoryListScreen: React.FC<StoryListScreenProps> = ({
     });
   };
 
+  // Cap nhat tab hien tai khi user vuot ngang giua danh sach chua doc/da doc.
   const handleScrollEnd = (e: any) => {
     const offsetX = e.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / width);
     setActiveTab(index === 0 ? 'TRUYEN' : 'DA_DOC');
   };
 
-  // Interpolations for smooth UI
+  // Tao hieu ung opacity cho tab khi user vuot ngang.
   const truyenOpacity = scrollX.interpolate({
     inputRange: [0, width],
     outputRange: [1, 0.5],
@@ -72,8 +74,9 @@ export const StoryListScreen: React.FC<StoryListScreenProps> = ({
     extrapolate: 'clamp',
   });
 
+  // Render mot card truyen chem kem anh minh hoa va nut doc/doc lai.
   const renderStoryCard = ({ item, index }: { item: UserLessonProgress, index: number }) => {
-    // Determine card accent color
+    // Doi mau nhan theo vi tri de danh sach de phan biet hon.
     const colors_list = [colors.primary, '#9F7AEA', '#F6AD55', '#4299E1', '#48BB78'];
     const accentColor = colors_list[index % colors_list.length];
     const lesson = item.learningLesson;

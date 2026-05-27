@@ -23,6 +23,7 @@ const isUnlocked = (allProgresses: WordHuntProgress[], index: number): boolean =
   return allProgresses[index - 1]?.isCompleted === true;
 };
 
+// Man hinh danh sach chu de Word Hunt, co tim kiem va khoa/mo khoa theo tien do.
 export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
   progresses,
   onBack,
@@ -31,6 +32,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
   const [searchValue, setSearchValue] = useState('');
   const [lockedLesson, setLockedLesson] = useState<WordHuntProgress | null>(null);
 
+  // Loc chu de theo tu khoa user nhap trong o tim kiem.
   const filtered = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
     if (!keyword) return progresses;
@@ -38,6 +40,7 @@ export const WordHuntListScreen: React.FC<WordHuntListScreenProps> = ({
     return progresses.filter((item) => item.learningLesson.title.toLowerCase().includes(keyword));
   }, [progresses, searchValue]);
 
+  // Tim man dau tien da mo khoa nhung chua hoan thanh de gan trang thai dang choi.
   const firstUnlockedIncompleteId = useMemo(() => {
     for (let i = 0; i < progresses.length; i += 1) {
       if (isUnlocked(progresses, i) && !progresses[i].isCompleted) {

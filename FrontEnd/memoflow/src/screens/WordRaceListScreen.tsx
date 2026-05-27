@@ -24,11 +24,13 @@ const FALLBACK_VISUALS = [
   { accentColor: '#B45309', iconBackground: '#FEF3C7', iconName: 'flash' },
 ];
 
+// Ep gia tri cau hinh ve number an toan de UI khong bi loi khi content thieu field.
 const toSafeNumber = (value: unknown, fallback: number): number => {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
 };
 
+// Suy luan mau sac va icon cua card dua tren do kho cua cau hinh man choi.
 const inferVisual = (lesson: WordRaceLesson) => {
   const content = (lesson.content || {}) as WordRaceLessonContent;
   const timeLimit = toSafeNumber(content.timeLimit, 12);
@@ -95,6 +97,7 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Tai danh sach man Word Race tu backend va sap xep theo id de hien thi on dinh.
   const loadLessons = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -116,11 +119,13 @@ export const WordRaceListScreen: React.FC<WordRaceListScreenProps> = ({ onBack, 
     void loadLessons();
   }, [loadLessons]);
 
+  // Mo modal chon do kho truoc khi vao man choi.
   const handleSelectMode = (lesson: LearningLesson) => {
     setSelectedLesson(lesson);
     setShowLevelModal(true);
   };
 
+  // Bat dau game voi do kho user da chon.
   const handleStartGame = (difficulty: BotDifficulty) => {
     if (!selectedLesson) return;
 

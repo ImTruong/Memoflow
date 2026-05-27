@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { 
+import {
   Users, 
   LogOut, 
   LayoutDashboard,
@@ -13,16 +13,19 @@ import {
   Headphones,
 } from 'lucide-react';
 
+// Sidebar dieu huong chinh cua admin web.
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [vocabOpen, setVocabOpen] = React.useState(false);
 
+  // Cac menu cap cao khong thuoc nhom tu vung.
   const menuItems = [
     { title: 'Thống kê', icon: <LayoutDashboard size={20} />, path: '/' },
     { title: 'Người dùng', icon: <Users size={20} />, path: '/users' },
     { title: 'Luyện nghe', icon: <Headphones size={20}/>, path: '/listening' },
   ];
 
+  // Cac menu quan ly noi dung tu vung, bao gom phan tinh nang ca nhan phu trach.
   const vocabItems = [
     { title: 'Flashcards', icon: <Zap size={18} />, path: '/vocab/flashcards' },
     { title: 'Truyện chêm', icon: <BookOpenCheck size={18} />, path: '/vocab/story-lessons' },
@@ -31,6 +34,7 @@ const Sidebar: React.FC = () => {
     { title: 'Song ngữ', icon: <BookOpen size={18} />, path: '/vocab/bilingual' },
   ];
 
+  // Dang xuat admin bang cach xoa token local va quay ve login.
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

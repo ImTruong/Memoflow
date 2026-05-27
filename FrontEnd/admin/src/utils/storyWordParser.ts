@@ -1,6 +1,7 @@
 const TRANSLATE_ENDPOINT = 'https://api.mymemory.translated.net/get';
 const DICTIONARY_ENDPOINT = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
+// Cache ban dich va tin hieu tu dien de viec parse file Word nhanh hon.
 const translationCache = new Map<string, string>();
 const dictionarySignalCache = new Map<string, { hasEntry: boolean; hasAudio: boolean }>();
 
@@ -38,12 +39,14 @@ type TranslationCandidate = {
   fromPrimary: boolean;
 };
 
+// Ket qua thay mot cum tu tieng Viet bang placeholder/tieng Anh trong truyen.
 export type StoryWordReplacement = {
   source: string;
   english: string;
   placeholder: string;
 };
 
+// Ket qua parse file Word de nap vao form admin truyen chem.
 export type ParsedStoryWordFile = {
   paragraphs: string[];
   vocabulary: string[];
@@ -52,6 +55,7 @@ export type ParsedStoryWordFile = {
   replacements: StoryWordReplacement[];
 };
 
+// Chuan hoa khoang trang trong text lay tu file Word.
 const normalizeWhitespace = (value: string): string => {
   return value.replace(/\s+/g, ' ').trim();
 };
@@ -82,6 +86,7 @@ const isLikelyEnglishDefinition = (value: string): boolean => {
   return /[.!?]/.test(value) || stopWordCount >= 3;
 };
 
+// Kiem tra nhanh mot cum co kha nang da la tieng Anh hay khong.
 const isLikelyEnglish = (value: string): boolean => {
   return /^[A-Za-z][A-Za-z\s'-]*$/.test(value.trim());
 };
@@ -101,6 +106,7 @@ const toTitleCaseWord = (value: string): string => {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 };
 
+// Chuan hoa cum tieng Anh thanh dang hien thi trong danh sach tu vung.
 const toVocabularyWord = (value: string): string => {
   const normalized = normalizeEnglishPhrase(value);
   if (!normalized) {
@@ -113,6 +119,7 @@ const toVocabularyWord = (value: string): string => {
     .join(' ');
 };
 
+// Tao placeholder khong dau/khong ky tu la de chen vao doan van.
 const toPlaceholder = (value: string): string => {
   const normalized = normalizeEnglishPhrase(value);
   if (!normalized) {
@@ -153,6 +160,7 @@ const toNormalizedScore = (value: unknown): number => {
   return 0;
 };
 
+// Doc cac ung vien ban dich tu response cua MyMemory.
 const getTranslationCandidates = (payload: unknown): TranslationCandidate[] => {
   const candidates: TranslationCandidate[] = [];
   const root = toRecord(payload);
@@ -194,6 +202,7 @@ const canLookupDictionary = (value: string): boolean => {
   return /^[A-Za-z]+(?:['-][A-Za-z]+)*$/.test(normalized);
 };
 
+// API ngoai: goi Dictionary API de kiem tra tu co entry/audio hay khong.
 const fetchDictionarySignal = async (
   candidate: string,
 ): Promise<{ hasEntry: boolean; hasAudio: boolean }> => {
@@ -235,6 +244,7 @@ const fetchDictionarySignal = async (
   }
 };
 
+// Cham diem ung vien ban dich de chon cum tieng Anh phu hop nhat.
 const scoreTranslationCandidate = (
   candidate: TranslationCandidate,
   normalizedText: string,
@@ -284,6 +294,7 @@ const escapeRegExp = (value: string): string => {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
+// Thay cac cum duoc parse bang placeholder trong doan van.
 const applyReplacementTerms = (
   value: string,
   replacements: StoryWordReplacement[],
@@ -305,6 +316,7 @@ const applyReplacementTerms = (
   }, value);
 };
 
+// API ngoai: goi MyMemory Translate va ket hop Dictionary API de lay tu tieng Anh.
 const translateTermToEnglish = async (sourceTerm: string): Promise<string> => {
   const source = normalizeWhitespace(sourceTerm);
   if (!source) {
@@ -391,6 +403,7 @@ const translateTermToEnglish = async (sourceTerm: string): Promise<string> => {
   return fallback;
 };
 
+// Ham chinh: doc file .docx, tim tu in dam, dich sang tieng Anh va tao noi dung truyen chem.
 export async function parseStoryWordFile(file: File): Promise<ParsedStoryWordFile> {
   if (!file.name.toLowerCase().endsWith('.docx')) {
     throw new Error('Hiện tại chỉ hỗ trợ file Word định dạng .docx.');

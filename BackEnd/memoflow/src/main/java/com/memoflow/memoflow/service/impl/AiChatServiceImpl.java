@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
+// Service quan ly phien chat, tin nhan va quyen truy cap lich su chatbot cua user.
 public class AiChatServiceImpl implements AiChatService {
 
     private static final String DEFAULT_SESSION_TITLE = "Cuộc trò truyện mới";
@@ -34,6 +35,7 @@ public class AiChatServiceImpl implements AiChatService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay danh sach phien chat cua user, sap xep theo lan cap nhat gan nhat.
     public List<AiChatSessionResponse> getUserSessions(Long userId) {
         return chatSessionRepository.findByUserIdOrderByUpdatedAtDesc(userId)
                 .stream()
@@ -42,6 +44,7 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     @Override
+    // Tao phien chat moi cho user, tu dong gan tieu de mac dinh neu khong co title.
     public AiChatSessionResponse createSession(Long userId, String title) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
@@ -56,6 +59,7 @@ public class AiChatServiceImpl implements AiChatService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay tin nhan cua mot phien chat sau khi kiem tra phien do thuoc user.
     public List<AiChatMessageResponse> getSessionMessages(Long userId, Long sessionId) {
         ChatSession session = findOwnedSession(userId, sessionId);
         return messageRepository.findByChatSessionIdOrderByCreatedAtAsc(session.getId())
@@ -65,6 +69,7 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     @Override
+    // Luu tin nhan user/assistant va cap nhat thoi gian moi nhat cua phien chat.
     public AiChatMessageResponse saveMessage(Long userId, Long sessionId, String role, String content) {
         ChatSession session = findOwnedSession(userId, sessionId);
 
@@ -87,11 +92,13 @@ public class AiChatServiceImpl implements AiChatService {
         return toMessageResponse(savedMessage);
     }
 
+    // Kiem tra session co ton tai va thuoc user dang thao tac hay khong.
     private ChatSession findOwnedSession(Long userId, Long sessionId) {
         return chatSessionRepository.findByIdAndUserId(sessionId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("ChatSession", "id", sessionId));
     }
 
+    // Chuan hoa role de chi chap nhan hai gia tri hop le: user va assistant.
     private String normalizeRole(String role) {
         if (!StringUtils.hasText(role)) {
             throw new IllegalArgumentException("Message role is required");
@@ -105,6 +112,7 @@ public class AiChatServiceImpl implements AiChatService {
         return normalized;
     }
 
+    // Chuan hoa noi dung tin nhan va chan chuoi rong.
     private String normalizeInput(String input) {
         if (!StringUtils.hasText(input)) {
             throw new IllegalArgumentException("Message content is required");
@@ -113,6 +121,7 @@ public class AiChatServiceImpl implements AiChatService {
         return input.trim();
     }
 
+    // Chuan hoa tieu de phien chat, gioi han do dai de hien thi on dinh tren UI.
     private String normalizeSessionTitle(String title) {
         if (!StringUtils.hasText(title)) {
             return DEFAULT_SESSION_TITLE;
@@ -122,6 +131,7 @@ public class AiChatServiceImpl implements AiChatService {
         return normalized.length() > 120 ? normalized.substring(0, 120) : normalized;
     }
 
+    // Tao tieu de ngan tu cau hoi dau tien cua user.
     private String buildTitleFromInput(String userInput) {
         String normalized = userInput.replaceAll("\\s+", " ").trim();
         if (normalized.length() <= 48) {
@@ -131,6 +141,7 @@ public class AiChatServiceImpl implements AiChatService {
         return normalized.substring(0, 48).trim() + "...";
     }
 
+    // Chuyen entity ChatSession thanh DTO tra ve cho frontend.
     private AiChatSessionResponse toSessionResponse(ChatSession chatSession) {
         String lastMessage = messageRepository.findTopByChatSessionIdOrderByCreatedAtDesc(chatSession.getId())
                 .map(message -> message.getContent().length() > 90
@@ -147,6 +158,7 @@ public class AiChatServiceImpl implements AiChatService {
                 .build();
     }
 
+    // Chuyen entity Message thanh DTO tra ve cho frontend.
     private AiChatMessageResponse toMessageResponse(Message message) {
         return AiChatMessageResponse.builder()
                 .id(message.getId())

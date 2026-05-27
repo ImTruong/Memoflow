@@ -23,6 +23,7 @@ export type GeneratedBoard = {
   placedWords: WordHuntPlacedWord[];
 };
 
+// Tao bang rong truoc khi dat tu vao Word Hunt.
 function createEmptyBoard(size: number): string[][] {
   return Array.from({ length: size }, () => Array.from({ length: size }, () => ''));
 }
@@ -35,6 +36,7 @@ function randomLetter(): string {
   return ALPHABET[randomInt(ALPHABET.length)];
 }
 
+// Kiem tra mot tu co the dat theo huong va vi tri dang thu hay khong.
 function canPlaceWord(
   board: string[][],
   word: string,
@@ -61,6 +63,7 @@ function canPlaceWord(
   return true;
 }
 
+// Dat tu vao bang va tra ve danh sach o chu cai cua tu do.
 function placeWord(
   board: string[][],
   word: string,
@@ -83,6 +86,7 @@ function placeWord(
   };
 }
 
+// Dien cac o con trong bang bang chu cai ngau nhien.
 function fillRemainingCells(board: string[][]): void {
   for (let row = 0; row < board.length; row += 1) {
     for (let col = 0; col < board[row].length; col += 1) {
@@ -93,10 +97,12 @@ function fillRemainingCells(board: string[][]): void {
   }
 }
 
+// Chuan hoa tu ve dang uppercase va chi giu chu cai A-Z.
 function normalizeWord(word: string): string {
   return word.trim().toUpperCase().replace(/[^A-Z]/g, '');
 }
 
+// Sinh bang Word Hunt tu danh sach tu va kich thuoc admin cau hinh.
 export function generateWordHuntBoard(words: string[], size: number): GeneratedBoard {
   const sanitizedWords = words
     .map(normalizeWord)
@@ -151,7 +157,7 @@ export function generateWordHuntBoard(words: string[], size: number): GeneratedB
     };
   }
 
-  // Fallback for very dense word sets.
+  // Fallback khi danh sach tu qua day va khong the dat het vao bang.
   const fallbackBoard = createEmptyBoard(size);
   fillRemainingCells(fallbackBoard);
   return {
@@ -160,6 +166,7 @@ export function generateWordHuntBoard(words: string[], size: number): GeneratedB
   };
 }
 
+// Lay cac o tren mot duong thang khi user keo chon trong bang.
 export function getLineCells(start: WordHuntCell, end: WordHuntCell): WordHuntCell[] {
   const rowDelta = end.row - start.row;
   const colDelta = end.col - start.col;

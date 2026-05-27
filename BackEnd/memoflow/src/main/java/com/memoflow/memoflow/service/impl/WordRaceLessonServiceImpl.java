@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+// Service xu ly nghiep vu tao, sua, xoa va doc cau hinh man choi Word Race.
 public class WordRaceLessonServiceImpl implements WordRaceLessonService {
 
     private static final String WORD_RACE_TYPE = "WORD_RACE";
@@ -37,6 +38,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
 
     @Override
     @Transactional
+    // Tao man choi Word Race moi va luu cau hinh vao truong content cua LearningLesson.
     public WordRaceLessonResponse createLesson(Long learningActivityId,
                                                UpsertWordRaceLessonRequest request,
                                                UserPrincipal userPrincipal) {
@@ -59,6 +61,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
 
     @Override
     @Transactional
+    // Cap nhat tieu de, mo ta va cau hinh game cua man Word Race.
     public WordRaceLessonResponse updateLesson(Long lessonId, UpsertWordRaceLessonRequest request) {
         LearningLesson lesson = findWordRaceLessonById(lessonId);
 
@@ -71,6 +74,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
 
     @Override
     @Transactional
+    // Xoa man Word Race sau khi dam bao lesson dung loai WORD_RACE.
     public void deleteLesson(Long lessonId) {
         LearningLesson lesson = findWordRaceLessonById(lessonId);
         learningLessonRepository.delete(lesson);
@@ -78,6 +82,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay danh sach man Word Race theo trang de mobile/admin hien thi.
     public PageResponse<WordRaceLessonResponse> getLessons(Pageable pageable) {
         Page<LearningLesson> lessonPage = learningLessonRepository.findByType(WORD_RACE_TYPE, pageable);
 
@@ -97,10 +102,12 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay chi tiet mot man Word Race theo id.
     public WordRaceLessonResponse getLessonDetail(Long lessonId) {
         return mapToLessonResponse(findWordRaceLessonById(lessonId));
     }
 
+    // Tim lesson va chan viec truy cap nham sang loai bai hoc khac.
     private LearningLesson findWordRaceLessonById(Long lessonId) {
         LearningLesson lesson = learningLessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Word Race Lesson", "id", lessonId));
@@ -112,6 +119,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
         return lesson;
     }
 
+    // Dong goi cau hinh Word Race thanh JSON content luu trong bang learning_lessons.
     private Map<String, Object> buildContent(UpsertWordRaceLessonRequest request) {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("targetScore", request.getTargetScore());
@@ -123,6 +131,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
         return content;
     }
 
+    // Chuan hoa danh sach ky tu ket thuc bi cam: bo rong, lowercase va loai trung.
     private List<String> sanitizeForbiddenEndings(List<String> endings) {
         if (endings == null) {
             return List.of();
@@ -137,6 +146,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
                 .collect(Collectors.toList());
     }
 
+    // Cat khoang trang va tra ve null neu chuoi khong co noi dung.
     private String trimToNull(String value) {
         if (!StringUtils.hasText(value)) {
             return null;
@@ -145,6 +155,7 @@ public class WordRaceLessonServiceImpl implements WordRaceLessonService {
         return value.trim();
     }
 
+    // Chuyen entity LearningLesson thanh DTO tra ve cho client.
     private WordRaceLessonResponse mapToLessonResponse(LearningLesson lesson) {
         return WordRaceLessonResponse.builder()
                 .id(lesson.getId())

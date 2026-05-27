@@ -19,10 +19,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+// Controller cung cap API quan ly Word Hunt va cap nhat tien do choi cua user.
 public class WordHuntLessonController {
 
     private final WordHuntLessonService wordHuntLessonService;
 
+    // API admin tao man choi Word Hunt trong mot learning activity.
     @PostMapping("/learning-activities/{learningActivityId}/word-hunt-lessons")
     @PreAuthorize("@securityService.isActivityExist(#learningActivityId) and hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<WordHuntLessonResponse>> createWordHuntLesson(
@@ -34,6 +36,7 @@ public class WordHuntLessonController {
                 .body(ApiResponse.success(response, "Word Hunt lesson created successfully"));
     }
 
+    // API admin cap nhat cau hinh man choi Word Hunt.
     @PutMapping("/word-hunt-lessons/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<WordHuntLessonResponse>> updateWordHuntLesson(
@@ -43,6 +46,7 @@ public class WordHuntLessonController {
         return ResponseEntity.ok(ApiResponse.success(response, "Word Hunt lesson updated successfully"));
     }
 
+    // API admin xoa man choi Word Hunt.
     @DeleteMapping("/word-hunt-lessons/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteWordHuntLesson(@PathVariable Long id) {
@@ -50,6 +54,7 @@ public class WordHuntLessonController {
         return ResponseEntity.ok(ApiResponse.success(null, "Word Hunt lesson deleted successfully"));
     }
 
+    // API user lay danh sach man Word Hunt kem tien do hien tai.
     @GetMapping("/word-hunt-lessons")
     public ResponseEntity<ApiResponse<PageResponse<WordHuntProgressResponse>>> getWordHuntLessons(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -58,6 +63,7 @@ public class WordHuntLessonController {
         return ResponseEntity.ok(ApiResponse.success(response, "Word Hunt lessons retrieved successfully"));
     }
 
+    // API user lay chi tiet mot man Word Hunt kem tien do hien tai.
     @GetMapping("/word-hunt-lessons/{id}")
     public ResponseEntity<ApiResponse<WordHuntProgressResponse>> getWordHuntLessonDetail(
             @PathVariable Long id,
@@ -66,6 +72,7 @@ public class WordHuntLessonController {
         return ResponseEntity.ok(ApiResponse.success(response, "Word Hunt lesson detail retrieved successfully"));
     }
 
+    // API user gui tien do sau khi thang, het gio hoac thoat game.
     @PostMapping("/word-hunt-lessons/{id}/progress")
     public ResponseEntity<ApiResponse<WordHuntProgressResponse>> updateWordHuntProgress(
             @PathVariable Long id,

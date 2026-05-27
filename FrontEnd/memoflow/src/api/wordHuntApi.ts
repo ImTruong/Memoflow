@@ -4,6 +4,7 @@ import { WordHuntProgress } from '../types/wordHunt';
 
 const TRANSLATE_ENDPOINT = 'https://api.mymemory.translated.net/get';
 
+// Cache nghia tieng Viet de tranh goi lai MyMemory cho cung mot tu.
 const meaningCache = new Map<string, string | null>();
 const inFlightMeaningRequests = new Map<string, Promise<string | null>>();
 const ENGLISH_STOP_WORDS = new Set([
@@ -121,14 +122,17 @@ export type UpdateWordHuntProgressRequest = {
 };
 
 export const wordHuntApi = {
+  // API noi bo: lay danh sach man Word Hunt kem tien do cua user.
   getWordHuntLessons: (page: number = 0, size: number = 20) =>
     apiFetch<ApiResponse<PageResponse<WordHuntProgress>>>(
       `/word-hunt-lessons?page=${page}&size=${size}&sort=id,asc`
     ),
 
+  // API noi bo: lay chi tiet mot man Word Hunt.
   getWordHuntLessonDetail: (lessonId: number) =>
     apiFetch<ApiResponse<WordHuntProgress>>(`/word-hunt-lessons/${lessonId}`),
 
+  // API noi bo: gui tien do Word Hunt sau khi user choi.
   updateWordHuntProgress: (lessonId: number, payload: UpdateWordHuntProgressRequest) =>
     apiFetch<ApiResponse<WordHuntProgress>>(`/word-hunt-lessons/${lessonId}/progress`, {
       method: 'POST',
@@ -157,6 +161,7 @@ export const prefetchVietnameseMeanings = (words: string[]): void => {
   void Promise.allSettled(uniqueWords.map((word) => fetchVietnameseMeaning(word)));
 };
 
+// API ngoai: goi MyMemory Translate de dich tu tieng Anh sang tieng Viet.
 export async function fetchVietnameseMeaning(word: string): Promise<string | null> {
   const normalizedWord = normalizeWord(word);
   if (normalizedWord.length < 2) {

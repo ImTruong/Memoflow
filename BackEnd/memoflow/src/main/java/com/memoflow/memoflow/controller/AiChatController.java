@@ -26,11 +26,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/ai")
 @RequiredArgsConstructor
+// Controller cung cap API chatbot: sinh cau tra loi AI, quan ly phien chat va tin nhan.
 public class AiChatController {
 
     private final AiChatService aiChatService;
     private final com.memoflow.memoflow.service.AiProviderService aiProviderService;
 
+    // API goi provider AI ngoai de sinh cau tra loi tu prompt cua user, co the cau hinh sang Gemini.
     @PostMapping("/generate")
     public ResponseEntity<ApiResponse<String>> generateReply(@RequestBody Map<String, String> request) {
         String prompt = request.get("prompt");
@@ -42,6 +44,7 @@ public class AiChatController {
                 .body(ApiResponse.error("Failed to generate AI reply", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 
+    // API lay danh sach phien chat cua user dang dang nhap.
     @GetMapping("/chat-sessions")
     public ResponseEntity<ApiResponse<List<AiChatSessionResponse>>> getSessions(
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
@@ -49,6 +52,7 @@ public class AiChatController {
         return ResponseEntity.ok(ApiResponse.success(sessions, "Chat sessions retrieved successfully"));
     }
 
+    // API tao phien chat moi, title co the bo trong de service gan mac dinh.
     @PostMapping("/chat-sessions")
     public ResponseEntity<ApiResponse<AiChatSessionResponse>> createSession(
             @Valid @RequestBody(required = false) CreateAiChatSessionRequest request,
@@ -59,6 +63,7 @@ public class AiChatController {
                 .body(ApiResponse.success(response, "Chat session created successfully"));
     }
 
+    // API lay toan bo tin nhan trong mot phien chat thuoc user dang dang nhap.
     @GetMapping("/chat-sessions/{sessionId}/messages")
     public ResponseEntity<ApiResponse<List<AiChatMessageResponse>>> getMessages(
             @PathVariable Long sessionId,
@@ -67,6 +72,7 @@ public class AiChatController {
         return ResponseEntity.ok(ApiResponse.success(messages, "Messages retrieved successfully"));
     }
 
+    // API luu tin nhan user hoac assistant vao lich su cua phien chat.
     @PostMapping("/chat-sessions/{sessionId}/messages")
     public ResponseEntity<ApiResponse<AiChatMessageResponse>> saveMessage(
             @PathVariable Long sessionId,

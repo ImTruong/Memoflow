@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+// Service xu ly nghiep vu Word Hunt va tien do choi cua tung user.
 public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     private static final String WORD_HUNT_TYPE = "WORD_HUNT";
@@ -45,6 +46,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     @Override
     @Transactional
+    // Tao man Word Hunt moi va luu cau hinh bang chu, tu khoa vao content JSON.
     public WordHuntLessonResponse createLesson(Long learningActivityId,
                                                UpsertWordHuntLessonRequest request,
                                                UserPrincipal userPrincipal) {
@@ -67,6 +69,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     @Override
     @Transactional
+    // Cap nhat cau hinh man Word Hunt cua admin.
     public WordHuntLessonResponse updateLesson(Long lessonId, UpsertWordHuntLessonRequest request) {
         LearningLesson lesson = findWordHuntLessonById(lessonId);
 
@@ -79,6 +82,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     @Override
     @Transactional
+    // Xoa man Word Hunt sau khi kiem tra dung loai WORD_HUNT.
     public void deleteLesson(Long lessonId) {
         LearningLesson lesson = findWordHuntLessonById(lessonId);
         learningLessonRepository.delete(lesson);
@@ -86,6 +90,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay danh sach Word Hunt va ghep tien do cua user hien tai vao tung lesson.
     public PageResponse<WordHuntProgressResponse> getLessons(UserPrincipal userPrincipal, Pageable pageable) {
         Page<LearningLesson> lessonPage = learningLessonRepository.findByType(WORD_HUNT_TYPE, pageable);
 
@@ -121,6 +126,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     @Override
     @Transactional(readOnly = true)
+    // Lay chi tiet mot man Word Hunt kem progress cua user.
     public WordHuntProgressResponse getLessonDetail(Long lessonId, UserPrincipal userPrincipal) {
         LearningLesson lesson = findWordHuntLessonById(lessonId);
         UserLessonProgress progress = userLessonProgressRepository
@@ -130,6 +136,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
 
     @Override
     @Transactional
+    // Cap nhat tien do sau moi lan user ket thuc game, giu trang thai hoan thanh neu da dat truoc do.
     public WordHuntProgressResponse updateProgress(Long lessonId,
                                                    UpdateWordHuntProgressRequest request,
                                                    UserPrincipal userPrincipal) {
@@ -179,6 +186,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
         return mapToProgressResponse(lesson, savedProgress);
     }
 
+    // Tim lesson va dam bao id thuoc dung loai WORD_HUNT.
     private LearningLesson findWordHuntLessonById(Long lessonId) {
         LearningLesson lesson = learningLessonRepository.findById(lessonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Word Hunt Lesson", "id", lessonId));
@@ -190,6 +198,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
         return lesson;
     }
 
+    // Dong goi cau hinh Word Hunt thanh JSON content luu trong bang learning_lessons.
     private Map<String, Object> buildContent(UpsertWordHuntLessonRequest request) {
         List<String> sanitizedWords = sanitizeWords(request.getWords());
         int targetWordCount = Math.min(request.getTargetWordCount(), sanitizedWords.size());
@@ -211,6 +220,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
         return content;
     }
 
+    // Chuan hoa danh sach tu: bo rong, uppercase va loai bo tu trung.
     private List<String> sanitizeWords(List<String> words) {
         return words.stream()
                 .filter(Objects::nonNull)
@@ -221,10 +231,12 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
                 .collect(Collectors.toList());
     }
 
+    // Gioi han phan tram tien do trong khoang 0 den 100.
     private double clampProgress(double progressPercent) {
         return Math.max(0.0, Math.min(100.0, progressPercent));
     }
 
+    // Chuyen LearningLesson thanh DTO cau hinh Word Hunt.
     private WordHuntLessonResponse mapToLessonResponse(LearningLesson lesson) {
         return WordHuntLessonResponse.builder()
                 .id(lesson.getId())
@@ -236,6 +248,7 @@ public class WordHuntLessonServiceImpl implements WordHuntLessonService {
                 .build();
     }
 
+    // Ghep cau hinh lesson voi progress cua user de tra ve cho mobile.
     private WordHuntProgressResponse mapToProgressResponse(LearningLesson lesson, UserLessonProgress progress) {
         boolean isCompleted = progress != null && Boolean.TRUE.equals(progress.getIsCompleted());
 

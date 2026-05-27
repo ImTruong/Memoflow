@@ -48,6 +48,7 @@ const getMergedVocab = (
   };
 };
 
+// API ngoai: goi Dictionary API de lay phien am, audio va loai tu.
 const fetchDictionaryEntry = async (word: string): Promise<DictionaryInfo | null> => {
   const response = await fetch(`${DICTIONARY_ENDPOINT}/${encodeURIComponent(word)}`);
   if (!response.ok) return null;
@@ -68,6 +69,7 @@ const fetchDictionaryEntry = async (word: string): Promise<DictionaryInfo | null
   return Object.keys(info).length ? info : null;
 };
 
+// Ket hop Dictionary API va MyMemory de bo sung thong tin tu vung trong truyen.
 const fetchDictionaryInfo = async (word: string): Promise<DictionaryInfo | null> => {
   const normalized = getWordKey(word);
   if (!normalized) return null;

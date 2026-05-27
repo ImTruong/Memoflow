@@ -105,6 +105,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
 
   // --- Logic ---
   
+  // Kiem tra tu user nhap theo luat game va Dictionary API.
   const validateWord = async (word: string) => {
     if (word.length < 2) return { valid: false, reason: "Từ quá ngắn!" };
     
@@ -126,7 +127,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
       }
     }
 
-    // API Validation
+    // API ngoai: Dictionary API xac thuc tu tieng Anh co ton tai.
     try {
       const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
       if (response.ok) return { valid: true };
@@ -196,6 +197,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
     startBotTurn(letter);
   };
 
+  // Bot goi Datamuse de tim tu bat dau bang chu cai can noi tiep.
   const startBotTurn = async (letter: string) => {
     setIsBotThinking(true);
     
@@ -208,6 +210,7 @@ export const WordRaceGameScreen: React.FC<WordRaceGameScreenProps> = ({ lesson, 
     }
 
     try {
+      // API ngoai: Datamuse tra ve danh sach tu theo pattern chu cai dau.
       const response = await fetch(`https://api.datamuse.com/words?sp=${letter}*&max=100`);
       const data = await response.json();
       

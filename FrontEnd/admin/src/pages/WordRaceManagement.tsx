@@ -37,9 +37,11 @@ type Notice = {
 
 const DEFAULT_WORD_RACE_ACTIVITY_ID = 4;
 
+// Kiem tra gia tri co phai object thuong de doc content an toan.
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// Chuyen gia tri tu API ve number, neu sai kieu thi dung fallback.
 const toNumberOr = (value: unknown, fallback: number): number => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
@@ -55,6 +57,7 @@ const toNumberOr = (value: unknown, fallback: number): number => {
   return fallback;
 };
 
+// Chuan hoa danh sach ky tu cam ket thuc tu content backend.
 const parseForbiddenEndings = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -78,6 +81,7 @@ const parseForbiddenEndings = (value: unknown): string[] => {
 
 const normalizeEnding = (value: string): string => value.trim().toLowerCase();
 
+// Map response backend thanh record de bang admin hien thi.
 const mapToWordRaceRecord = (item: WordRaceItem): WordRaceRecord => {
   const content = isRecord(item.content) ? item.content : {};
 
@@ -92,6 +96,7 @@ const mapToWordRaceRecord = (item: WordRaceItem): WordRaceRecord => {
   };
 };
 
+// Tao form rong khi admin bam them moi.
 const buildDefaultForm = (): WordRaceFormState => ({
   title: '',
   description: '',
@@ -101,6 +106,7 @@ const buildDefaultForm = (): WordRaceFormState => ({
   endingInput: '',
 });
 
+// Do du lieu record vao form khi admin sua man choi.
 const mapToForm = (record: WordRaceRecord): WordRaceFormState => ({
   title: record.title,
   description: record.description,
@@ -110,6 +116,7 @@ const mapToForm = (record: WordRaceRecord): WordRaceFormState => ({
   endingInput: '',
 });
 
+// Trang admin quan ly danh sach va form cau hinh Word Race.
 const WordRaceManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [records, setRecords] = useState<WordRaceRecord[]>([]);
@@ -132,6 +139,7 @@ const WordRaceManagement: React.FC = () => {
 
   const [formState, setFormState] = useState<WordRaceFormState>(buildDefaultForm());
 
+  // API noi bo: tai danh sach Word Race tu backend admin.
   const fetchRecords = useCallback(async (targetPage: number) => {
     try {
       setRefreshing(true);
@@ -178,6 +186,7 @@ const WordRaceManagement: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  // Loc ban ghi tren client theo tieu de, mo ta hoac ky tu cam.
   const filteredRecords = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
     if (!keyword) {
@@ -193,12 +202,14 @@ const WordRaceManagement: React.FC = () => {
     });
   }, [records, searchTerm]);
 
+  // Mo form them moi Word Race.
   const openCreateModal = () => {
     setEditingRecord(null);
     setFormState(buildDefaultForm());
     setShowFormModal(true);
   };
 
+  // Mo form sua va tai chi tiet moi nhat cua man choi.
   const openEditModal = async (record: WordRaceRecord) => {
     setEditingRecord(record);
     setShowFormModal(true);
@@ -221,12 +232,14 @@ const WordRaceManagement: React.FC = () => {
     }
   };
 
+  // Dong form va reset trang thai dang sua.
   const closeFormModal = () => {
     setShowFormModal(false);
     setEditingRecord(null);
     setFormState(buildDefaultForm());
   };
 
+  // Them mot ky tu ket thuc bi cam vao form.
   const addForbiddenEnding = (value: string) => {
     const ending = normalizeEnding(value);
     if (!ending) {
@@ -246,6 +259,7 @@ const WordRaceManagement: React.FC = () => {
     });
   };
 
+  // Xoa mot ky tu ket thuc bi cam khoi form.
   const removeForbiddenEnding = (ending: string) => {
     setFormState((prev) => ({
       ...prev,
@@ -253,6 +267,7 @@ const WordRaceManagement: React.FC = () => {
     }));
   };
 
+  // Cho phep nhan Enter hoac dau phay de them nhanh ky tu cam.
   const handleEndingKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== 'Enter') {
       return;
@@ -262,6 +277,7 @@ const WordRaceManagement: React.FC = () => {
     addForbiddenEnding(formState.endingInput);
   };
 
+  // Tao payload dung format backend yeu cau truoc khi submit.
   const buildPayload = (): WordRaceLessonPayload | null => {
     const title = formState.title.trim();
     if (!title) {
@@ -281,6 +297,7 @@ const WordRaceManagement: React.FC = () => {
     };
   };
 
+  // Goi API tao moi hoac cap nhat Word Race.
   const handleSubmit = async () => {
     const payload = buildPayload();
     if (!payload) {
@@ -314,6 +331,7 @@ const WordRaceManagement: React.FC = () => {
     }
   };
 
+  // Goi API xoa Word Race dang duoc chon.
   const handleDelete = async () => {
     if (!selectedRecord) {
       return;

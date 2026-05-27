@@ -4,12 +4,15 @@ const API_URL = 'http://localhost:8080';
 const DICTIONARY_EN_ENDPOINT = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 const ENGLISH_WORD_PATTERN = /^[A-Za-z]+(?:['-][A-Za-z]+)*$/;
 
+// Cache ket qua validate tu tieng Anh de tranh goi Dictionary API lap lai.
 const englishWordCheckCache = new Map<string, boolean>();
 
+// Axios instance dung chung cho admin web.
 const api = axios.create({
   baseURL: API_URL,
 });
 
+// Gan JWT token vao moi request admin neu user da dang nhap.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -63,6 +66,7 @@ export type WordHuntLessonPayload = {
   words: string[];
 };
 
+// Dong goi payload truyen chem va anh minh hoa thanh multipart/form-data.
 const buildStoryFormData = (payload: StoryLessonPayload, image?: File | null): FormData => {
   const formData = new FormData();
   formData.append('payload', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
@@ -75,6 +79,7 @@ const buildStoryFormData = (payload: StoryLessonPayload, image?: File | null): F
 };
 
 export const authApi = {
+  // API dang nhap admin.
   login: async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
     return response.data;
@@ -82,6 +87,7 @@ export const authApi = {
 };
 
 export const wordValidationApi = {
+  // API ngoai: goi Dictionary API de kiem tra tu tieng Anh hop le.
   isEnglishWord: async (word: string): Promise<boolean> => {
     const normalized = word.trim().toLowerCase();
     if (!normalized || !ENGLISH_WORD_PATTERN.test(normalized)) {
@@ -111,6 +117,7 @@ export const wordValidationApi = {
 };
 
 export const adminApi = {
+  // API admin: lay danh sach user.
   getAllUsers: async () => {
     const response = await api.get('/admin/users');
     return response.data;
@@ -146,24 +153,29 @@ export const adminApi = {
   },
 
   // Story lesson management (Truyen chem)
+  // API admin/user: lay danh sach truyen chem.
   getStoryLessons: async (page = 0, size = 10) => {
     const response = await api.get(`/story-lessons?page=${page}&size=${size}&sort=id,desc`);
     return response.data;
   },
+  // API admin/user: lay chi tiet truyen chem.
   getStoryLessonDetail: async (id: string | number) => {
     const response = await api.get(`/story-lessons/${id}`);
     return response.data;
   },
+  // API admin: tao truyen chem bang multipart payload + image.
   createStoryLesson: async (learningActivityId: number, payload: StoryLessonPayload, image?: File | null) => {
     const formData = buildStoryFormData(payload, image);
     const response = await api.post(`/learning-activities/${learningActivityId}/story-lessons`, formData);
     return response.data;
   },
+  // API admin: cap nhat truyen chem.
   updateStoryLesson: async (id: string | number, payload: StoryLessonPayload, image?: File | null) => {
     const formData = buildStoryFormData(payload, image);
     const response = await api.put(`/story-lessons/${id}`, formData);
     return response.data;
   },
+  // API admin: xoa truyen chem.
   deleteStoryLesson: async (id: string | number) => {
     const response = await api.delete(`/story-lessons/${id}`);
     return response.data;
@@ -260,44 +272,54 @@ export const adminApi = {
   },
 
   // Word race management (Dua tu voi Bot)
+  // API admin/user: lay danh sach man Word Race.
   getWordRaceLessons: async (page = 0, size = 10) => {
     const response = await api.get(`/word-race-lessons?page=${page}&size=${size}&sort=id,desc`);
     return response.data;
   },
+  // API admin/user: lay chi tiet man Word Race.
   getWordRaceLessonDetail: async (id: string | number) => {
     const response = await api.get(`/word-race-lessons/${id}`);
     return response.data;
   },
+  // API admin: tao man Word Race.
   createWordRaceLesson: async (learningActivityId: number, payload: WordRaceLessonPayload) => {
     const response = await api.post(`/learning-activities/${learningActivityId}/word-race-lessons`, payload);
     return response.data;
   },
+  // API admin: cap nhat man Word Race.
   updateWordRaceLesson: async (id: string | number, payload: WordRaceLessonPayload) => {
     const response = await api.put(`/word-race-lessons/${id}`, payload);
     return response.data;
   },
+  // API admin: xoa man Word Race.
   deleteWordRaceLesson: async (id: string | number) => {
     const response = await api.delete(`/word-race-lessons/${id}`);
     return response.data;
   },
 
   // Word hunt management (Tinh mat tim tu)
+  // API admin/user: lay danh sach man Word Hunt kem progress.
   getWordHuntLessons: async (page = 0, size = 10) => {
     const response = await api.get(`/word-hunt-lessons?page=${page}&size=${size}&sort=id,desc`);
     return response.data;
   },
+  // API admin/user: lay chi tiet man Word Hunt.
   getWordHuntLessonDetail: async (id: string | number) => {
     const response = await api.get(`/word-hunt-lessons/${id}`);
     return response.data;
   },
+  // API admin: tao man Word Hunt.
   createWordHuntLesson: async (learningActivityId: number, payload: WordHuntLessonPayload) => {
     const response = await api.post(`/learning-activities/${learningActivityId}/word-hunt-lessons`, payload);
     return response.data;
   },
+  // API admin: cap nhat man Word Hunt.
   updateWordHuntLesson: async (id: string | number, payload: WordHuntLessonPayload) => {
     const response = await api.put(`/word-hunt-lessons/${id}`, payload);
     return response.data;
   },
+  // API admin: xoa man Word Hunt.
   deleteWordHuntLesson: async (id: string | number) => {
     const response = await api.delete(`/word-hunt-lessons/${id}`);
     return response.data;

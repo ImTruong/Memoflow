@@ -167,6 +167,7 @@ const callFreeLlm = async (
   hiddenContext?: string,
 ): Promise<ProviderCallResult> => {
   try {
+    // API noi bo: frontend goi backend /ai/generate, backend proxy sang Gemini/AI provider da cau hinh.
     const payload = await withTimeout(
       apiFetch<any>('/ai/generate', {
         method: 'POST',
@@ -193,6 +194,7 @@ const callFreeLlm = async (
 };
 
 export const aiProviderApi = {
+  // Sinh cau tra loi tutor, co chan prompt ngoai pham vi hoc tieng Anh va fallback khi Gemini/AI provider loi.
   generateTutorReply: async (
     userPrompt: string,
     history: AiChatMessage[],

@@ -1,7 +1,9 @@
 import { ApiResponse } from './flashcard';
 
+// Vai tro cua tin nhan trong chatbot.
 export type AiChatRole = 'user' | 'assistant';
 
+// Tin nhan chat hien thi tren mobile.
 export type AiChatMessage = {
   id: number;
   role: AiChatRole;
@@ -9,6 +11,7 @@ export type AiChatMessage = {
   createdAt: string;
 };
 
+// Phien chat AI trong danh sach lich su.
 export type AiChatSession = {
   id: number;
   title: string;
@@ -17,6 +20,7 @@ export type AiChatSession = {
   updatedAt: string;
 };
 
+// Kieu response API cho danh sach/phien/tin nhan AI chat.
 export type AiChatSessionListResponse = ApiResponse<AiChatSession[]>;
 export type AiChatSessionResponse = ApiResponse<AiChatSession>;
 export type AiChatMessageListResponse = ApiResponse<AiChatMessage[]>;

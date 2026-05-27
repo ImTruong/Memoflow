@@ -17,6 +17,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+// Service goi AI provider ngoai de sinh cau tra loi cho chatbot hoc tap.
+// Hien tai apiUrl mac dinh la FreeLLM; co the doi cau hinh sang Gemini endpoint neu can.
 public class AiProviderServiceImpl implements AiProviderService {
 
     @Value("${expo.public.free-llm.api-key:apf_h4p00jki78k1ef8qokub5ite}")
@@ -31,6 +33,7 @@ public class AiProviderServiceImpl implements AiProviderService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
+    // Goi API ngoai AI provider bang prompt, tra ve noi dung response hoac null neu that bai.
     public String generateResponse(String prompt) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -43,6 +46,7 @@ public class AiProviderServiceImpl implements AiProviderService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
+            // API ngoai: POST toi AI provider/Gemini-compatible endpoint voi Authorization Bearer va JSON body.
             ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(apiUrl, entity, (Class<Map<String, Object>>) (Class<?>) Map.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
